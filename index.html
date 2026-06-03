@@ -1,1 +1,207 @@
-<html>Hello World!</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coming Soon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Raleway:wght@200;300&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #090f0b; }
+canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+
+.vignette {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 30%,
+    rgba(9,15,11,0.5) 65%,
+    rgba(9,15,11,0.85) 100%);
+}
+
+.overlay {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+
+.site-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 300;
+  font-size: clamp(2.2rem, 5.5vw, 5rem);
+  letter-spacing: 0.25em;
+  color: rgba(225, 215, 190, 0.95);
+  text-shadow: 0 2px 40px rgba(90, 130, 70, 0.4);
+  text-transform: uppercase;
+}
+
+.rule {
+  display: flex; align-items: center; gap: 1.2rem;
+  margin: 1.8rem 0;
+}
+.rule-line {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(130,165,90,0.55));
+}
+.rule-line.r { transform: scaleX(-1); }
+.rule-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(130, 165, 90, 0.7);
+}
+
+.tagline {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: clamp(0.6rem, 1.1vw, 0.8rem);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.85);
+}
+
+.coming-soon {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: clamp(0.5rem, 0.8vw, 0.65rem);
+  letter-spacing: 0.75em;
+  text-transform: uppercase;
+  color: rgba(95, 125, 70, 0.65);
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(100, 140, 75, 0.2);
+}
+
+/* Subtle fade-in on load */
+.overlay { animation: fadeIn 2.5s ease forwards; opacity: 0; }
+@keyframes fadeIn { to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<canvas id="terrain"></canvas>
+<div class="vignette"></div>
+
+<div class="overlay">
+  <!-- ✏️  Replace with your name or brand -->
+  <div class="site-name">Gaia Analytica</div>
+
+  <div class="rule">
+    <div class="rule-line"></div>
+    <div class="rule-dot"></div>
+    <div class="rule-line r"></div>
+  </div>
+
+  <!-- ✏️  Replace with your tagline -->
+  <div class="tagline">Practical Geospatial Solutions for Informed Action</div>
+
+  <div class="coming-soon">Coming Soon</div>
+</div>
+
+<script>
+const canvas = document.getElementById('terrain');
+const ctx = canvas.getContext('2d');
+let W, H, t = 0;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Multi-octave terrain field (sum of sines as cheap noise)
+function field(x, y, t) {
+  const s = 0.0028;
+  return (
+    Math.sin(x * s * 1.1 + t * 0.18 + Math.cos(y * s * 0.9 - t * 0.05)) * 1.1 +
+    Math.sin(y * s * 1.3 - t * 0.13 + Math.cos(x * s * 1.15 + t * 0.07)) * 0.85 +
+    Math.sin((x - y) * s * 0.85 + t * 0.09) * 0.65 +
+    Math.cos(x * s * 2.2 + y * s * 1.7 - t * 0.22) * 0.4 +
+    Math.sin((x * 0.7 + y * 1.3) * s * 1.6 + t * 0.12) * 0.3
+  );
+}
+
+// Earthy contour palette: deep forest → sage → ochre ridge
+const contours = [
+  { v: -2.4, rgba: [16, 34, 18, 0.85] },
+  { v: -1.8, rgba: [22, 44, 25, 0.8]  },
+  { v: -1.2, rgba: [30, 56, 33, 0.75] },
+  { v: -0.6, rgba: [42, 70, 44, 0.7]  },
+  { v:  0.0, rgba: [58, 88, 52, 0.65] },
+  { v:  0.5, rgba: [76, 105, 60, 0.6] },
+  { v:  1.0, rgba: [100, 125, 68, 0.55] },
+  { v:  1.4, rgba: [128, 148, 82, 0.5] },
+  { v:  1.8, rgba: [155, 155, 92, 0.42] },
+  { v:  2.2, rgba: [170, 148, 95, 0.35] },
+];
+
+function draw() {
+  ctx.fillStyle = '#090f0b';
+  ctx.fillRect(0, 0, W, H);
+
+  const res = 5;
+  const cols = Math.ceil(W / res) + 2;
+  const rows = Math.ceil(H / res) + 2;
+
+  // Precompute field grid
+  const g = [];
+  for (let j = 0; j < rows; j++) {
+    g[j] = new Float32Array(cols);
+    for (let i = 0; i < cols; i++) {
+      g[j][i] = field(i * res, j * res, t);
+    }
+  }
+
+  // Marching squares: draw contour lines at each threshold
+  for (const { v: thr, rgba: [r, gv, b, a] } of contours) {
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(${r},${gv},${b},${a})`;
+    ctx.lineWidth = 0.75;
+    ctx.lineCap = 'round';
+
+    for (let j = 0; j < rows - 1; j++) {
+      for (let i = 0; i < cols - 1; i++) {
+        const x0 = i * res, y0 = j * res;
+        const tl = g[j][i], tr = g[j][i+1];
+        const bl = g[j+1][i], br = g[j+1][i+1];
+
+        const pts = [];
+
+        // Top edge
+        if ((tl - thr) * (tr - thr) < 0)
+          pts.push([x0 + res * (thr - tl) / (tr - tl), y0]);
+        // Right edge
+        if ((tr - thr) * (br - thr) < 0)
+          pts.push([x0 + res, y0 + res * (thr - tr) / (br - tr)]);
+        // Bottom edge
+        if ((bl - thr) * (br - thr) < 0)
+          pts.push([x0 + res * (thr - bl) / (br - bl), y0 + res]);
+        // Left edge
+        if ((tl - thr) * (bl - thr) < 0)
+          pts.push([x0, y0 + res * (thr - tl) / (bl - tl)]);
+
+        if (pts.length === 2) {
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          ctx.lineTo(pts[1][0], pts[1][1]);
+        } else if (pts.length === 4) {
+          // Saddle: connect in two pairs
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          ctx.lineTo(pts[1][0], pts[1][1]);
+          ctx.moveTo(pts[2][0], pts[2][1]);
+          ctx.lineTo(pts[3][0], pts[3][1]);
+        }
+      }
+    }
+    ctx.stroke();
+  }
+}
+
+(function animate() {
+  t += 0.0035;
+  draw();
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>
