@@ -205,10 +205,10 @@ function draw() {
 }
 
 (function animate() {
-  t += 0.002;
+  t += 0.0035;
   draw();
   requestAnimationFrame(animate);
-  setTimeout(() => requestAnimationFrame(animate), 1000 / 30);
+  /* setTimeout(() => requestAnimationFrame(animate), 1000 / 30); */
 })();
 </script>
 </body>
