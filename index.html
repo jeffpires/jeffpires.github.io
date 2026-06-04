@@ -51,6 +51,7 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 .rule-dot {
   width: 4px; height: 4px; border-radius: 50%;
   background: rgba(130, 165, 90, 0.7);
+  transition: transform 0.6s ease-out;
 }
 
 .tagline {
@@ -210,6 +211,15 @@ function draw() {
   requestAnimationFrame(animate);
   /* setTimeout(() => requestAnimationFrame(animate), 1000 / 30); */
 })();
+
+  // Sticky dot movement
+  const dot = document.querySelector('.rule-dot');
+  document.addEventListener('mousemove', (e) => {
+  const pct = e.clientX / window.innerWidth;
+  const offset = Math.pow(pct - 0.5, 3) * 120;
+  dot.style.transform = `translateX(${offset}px)`;
+});
+  
 </script>
 </body>
 </html>
