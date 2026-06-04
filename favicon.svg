@@ -1,0 +1,9 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="10" fill="#090f0b"/>
+    <g transform="translate(32,32) rotate(15)">
+      <ellipse rx="27" ry="17" fill="none" stroke="rgba(42,70,44,0.9)" stroke-width="1.2"/>
+      <ellipse rx="20" ry="12.5" fill="none" stroke="rgba(76,105,60,0.9)" stroke-width="1.2"/>
+    </g>
+    <text x="32" y="42" text-anchor="middle" font-family="Georgia, serif" font-size="36" font-weight="400" stroke="#090f0b" stroke-width="4" stroke-linejoin="round" paint-order="stroke">GA</text>
+    <text x="32" y="42" text-anchor="middle" font-family="Georgia, serif" font-size="36" font-weight="400" fill="rgba(220,210,185,0.92)">GA</text>
+  </svg>
