@@ -226,6 +226,7 @@ function draw() {
 
   // Glow when near center
 const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 4, 1);
+console.log('proximity', proximity, 'glow', proximity * 60);
 const glowSize = proximity * 60;
 const glowOpacity = proximity * 1.0;
 dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.8}px rgba(180, 210, 120, ${glowOpacity})`;
