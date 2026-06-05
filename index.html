@@ -222,6 +222,7 @@ function draw() {
   const offset = Math.pow(pct - 0.5, 3) * 120;
   const opacity = Math.pow(1 - Math.abs(pct - 0.5) * 2, 3);
   dot.style.transform = `translateX(${offset}px)`;
+  dot.style.opacity = opacity;
 });
   
 </script>
