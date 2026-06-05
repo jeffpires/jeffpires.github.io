@@ -220,7 +220,7 @@ function draw() {
   document.addEventListener('mousemove', (e) => {
   const pct = e.clientX / window.innerWidth;
   const offset = Math.pow(pct - 0.5, 3) * 120;
-  const opacity = 1 - Math.abs(pct - 0.5) * 2; // 1 at center, 0 at edges
+  const opacity = Math.pow(1 - Math.abs(pct - 0.5) * 2, 3);
   dot.style.transform = `translateX(${offset}px)`;
 });
   
