@@ -225,10 +225,10 @@ function draw() {
   dot.style.opacity = opacity;
 
   // Glow when near center
-  const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 8, 1);
-  const glowSize = proximity * 18;
-  const glowOpacity = proximity * 0.9;
-  dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.5}px rgba(180, 210, 120, ${glowOpacity})`;
+const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 4, 1);
+const glowSize = proximity * 60;
+const glowOpacity = proximity * 1.0;
+dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.8}px rgba(180, 210, 120, ${glowOpacity})`;
 });
   
 </script>
