@@ -51,7 +51,7 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 .rule-dot {
   width: 4px; height: 4px; border-radius: 50%;
   background: rgba(130, 165, 90, 0.7);
-  transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+  transition: transform 0.6s ease-out, opacity 0.6s ease-out, box-shadow 0.3s ease-out;
 }
 
 .tagline {
@@ -223,6 +223,12 @@ function draw() {
   const opacity = Math.pow(1 - Math.abs(pct - 0.5) * 2, 3);
   dot.style.transform = `translateX(${offset}px)`;
   dot.style.opacity = opacity;
+
+  // Glow when near center
+  const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 8, 1);
+  const glowSize = proximity * 18;
+  const glowOpacity = proximity * 0.9;
+  dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.5}px rgba(180, 210, 120, ${glowOpacity})`;
 });
   
 </script>
