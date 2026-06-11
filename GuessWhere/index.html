@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guess Where — Gaia Analytica</title>
+<title>Guess Where? — Gaia Analytica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
 <style>
   :root {
@@ -87,6 +87,63 @@
     margin-top: 2px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    display: block;
+    min-height: 28px;
+  }
+
+  .subtitle-static {
+    /* warm cartographic — inherits parent styling, never changes */
+  }
+
+  .subtitle-portal {
+    cursor: pointer;
+    display: inline;
+    position: relative;
+    padding: 2px 5px;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: color 700ms ease-in-out, background-color 700ms ease-in-out,
+                box-shadow 700ms ease-in-out, letter-spacing 700ms ease-in-out;
+  }
+
+  .subtitle-portal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0,8 Q40,4 80,8 T160,8' stroke='%232D6A4F' stroke-width='0.55' fill='none' opacity='0.75'/%3E%3Cpath d='M-10,18 Q30,14 70,18 T150,18' stroke='%231D6A4A' stroke-width='0.5' fill='none' opacity='0.6'/%3E%3Cpath d='M0,28 Q40,25 80,28 T160,28' stroke='%232D6A4F' stroke-width='0.65' fill='none' opacity='0.8'/%3E%3Cpath d='M-10,38 Q30,35 70,38 T150,38' stroke='%231D6A4A' stroke-width='0.45' fill='none' opacity='0.55'/%3E%3Cpath d='M0,48 Q40,45 80,48 T160,48' stroke='%232D6A4F' stroke-width='0.55' fill='none' opacity='0.7'/%3E%3Cpath d='M-10,58 Q30,55 70,58 T150,58' stroke='%231D6A4A' stroke-width='0.4' fill='none' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: 120px 60px;
+    background-repeat: repeat;
+    opacity: 0;
+    transition: opacity 700ms ease-in-out;
+    animation: topoScroll 14s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes topoScroll {
+    from { background-position: 0 0; }
+    to   { background-position: 120px 60px; }
+  }
+
+  .subtitle-portal:hover {
+    color: #F0E8D0;
+    background-color: rgba(4, 16, 9, 0.93);
+    box-shadow: 0 0 20px rgba(29,106,74,0.55), inset 0 0 8px rgba(29,106,74,0.25);
+    letter-spacing: 0.09em;
+    font-family: 'Cinzel', 'Playfair Display', serif;
+  }
+
+  .subtitle-portal:hover::before {
+    opacity: 1;
+  }
+
+  .title-question {
+    color: var(--amber);
+    display: inline-block;
+    transition: transform 400ms ease-in-out;
+  }
+
+  .game-title:hover .title-question {
+    transform: rotate(8deg);
   }
 
   /* ── QUESTIONS COUNTER ── */
@@ -349,7 +406,7 @@
   .country-shape {
     fill: url(#countryGrad);
     stroke: #8E6340;
-    stroke-width: 1.8;
+    stroke-width: 0.9;
     stroke-linejoin: round;
     transition: fill 0.15s, stroke 0.15s;
   }
@@ -639,7 +696,7 @@
 <div class="modal-overlay show" id="introModal">
   <div class="modal-box">
     <div class="modal-flag">🗺️</div>
-    <div class="modal-title">Guess Where</div>
+    <div class="modal-title">Guess Where<span class="title-question">?</span></div>
     <div class="modal-subtitle">A geography deduction game by Gaia Analytica</div>
     <ul class="intro-list">
       <li><span>🌍</span><span>24 countries appear on the board. One is the mystery country — only you don't know which.</span></li>
@@ -692,8 +749,10 @@
 <div class="game-wrapper">
   <div class="left-panel">
     <div>
-      <div class="game-title">Guess Where</div>
-      <div class="game-subtitle">Geography Deduction · Gaia Analytica</div>
+      <div class="game-title">Guess Where<span class="title-question">?</span></div>
+      <div class="game-subtitle">
+        <span class="subtitle-static">Geography Deduction · </span><span class="subtitle-portal" onclick="window.open('https://gaiaanalytica.ch','_blank','noopener,noreferrer')">Gaia Analytica</span>
+      </div>
     </div>
     <div class="questions-counter">
       <div>
@@ -959,9 +1018,6 @@ const QUESTION_CATEGORIES = [
       { id: "q_sinotibetan",  text: "Is a Sino-Tibetan language (Mandarin, Burmese…) widely spoken?",      attr: "language_family", match: "Sino-Tibetan" },
       { id: "q_nigercongo",   text: "Is a Niger-Congo language (Swahili, Yoruba, Zulu…) widely spoken?",   attr: "language_family", match: "Niger-Congo"  },
       { id: "q_driveleft",    text: "Do people drive on the left side of the road there?",       attr: "drives_left",      match: true            },
-      { id: "q_highincome",   text: "Is this a high-income country?",                            attr: "income_tier",      match: "high"          },
-      { id: "q_lowermid",     text: "Is this a lower-middle income country?",                    attr: "income_tier",      match: "lower-middle"  },
-      { id: "q_lowincome",    text: "Is this a low or lower-middle income country?",             attr: "income_tier",      match: ["low","lower-middle"] },
     ]
   },
   {
@@ -983,6 +1039,69 @@ const QUESTION_CATEGORIES = [
       { id: "q_lowinc_ec",       text: "Is this a low-income economy?",                          attr: "income_tier",     match: "low"           },
       { id: "q_highincec",       text: "Is this a high-income economy?",                         attr: "income_tier",     match: "high"          },
       { id: "q_lowmidec",        text: "Is this a lower-middle income economy?",                 attr: "income_tier",     match: "lower-middle"  },
+    ]
+  },
+  {
+    id: "history",
+    label: "📜 History & Geopolitics",
+    questions: [
+      { id: "q_british_empire",      text: "Was this country once part of the British Empire?",
+        fn: c => ["India","Pakistan","Bangladesh","Sri Lanka","Australia","New Zealand","Canada",
+                  "South Africa","Kenya","Tanzania","Ghana","Nigeria","Zimbabwe","Zambia",
+                  "Malaysia","Jamaica","Papua New Guinea","Sudan","Jordan","Iraq","Fiji",
+                  "Myanmar","Ireland","Egypt"].includes(c.name) },
+      { id: "q_spanish_empire",      text: "Was this country once a Spanish colony?",
+        fn: c => ["Mexico","Colombia","Peru","Chile","Bolivia","Venezuela","Argentina","Ecuador",
+                  "Paraguay","Uruguay","Guatemala","Cuba","Philippines"].includes(c.name) },
+      { id: "q_french_empire",       text: "Was this country once part of the French colonial empire?",
+        fn: c => ["Senegal","Ivory Coast","Cameroon","Madagascar","Morocco","Algeria",
+                  "Vietnam","Cambodia","Laos","Lebanon"].includes(c.name) },
+      { id: "q_unsc_p5",             text: "Is this country a permanent member of the UN Security Council?",
+        fn: c => ["United States","Russia","China","United Kingdom","France"].includes(c.name) },
+      { id: "q_nuclear_weapons",     text: "Does this country possess nuclear weapons?",
+        fn: c => ["United States","Russia","China","United Kingdom","France",
+                  "India","Pakistan","North Korea"].includes(c.name) },
+      { id: "q_commonwealth",        text: "Is this country a member of the Commonwealth of Nations?",
+        fn: c => ["United Kingdom","Canada","Australia","New Zealand","India","Pakistan",
+                  "Sri Lanka","Bangladesh","Nigeria","Ghana","Kenya","Tanzania","Zambia",
+                  "Zimbabwe","Mozambique","Cameroon","Malaysia","Papua New Guinea","Fiji",
+                  "Jamaica","South Africa"].includes(c.name) },
+      { id: "q_soviet_republic",     text: "Was this country once a republic of the Soviet Union?",
+        fn: c => ["Russia","Ukraine","Kazakhstan","Uzbekistan"].includes(c.name) },
+      { id: "q_ottoman_empire",      text: "Was this country once part of the Ottoman Empire?",
+        fn: c => ["Turkey","Greece","Romania","Serbia","Hungary","Jordan","Iraq",
+                  "Lebanon","Egypt","Algeria"].includes(c.name) },
+      { id: "q_opec",                text: "Is this country an OPEC member?",
+        fn: c => ["Algeria","Iran","Iraq","Nigeria","Saudi Arabia",
+                  "United Arab Emirates","Venezuela"].includes(c.name) },
+      { id: "q_asean",               text: "Is this country a member of ASEAN?",
+        fn: c => ["Indonesia","Malaysia","Philippines","Thailand","Vietnam",
+                  "Myanmar","Cambodia","Laos"].includes(c.name) },
+      { id: "q_nato_founder",        text: "Was this country a founding member of NATO in 1949?",
+        fn: c => ["United States","Canada","United Kingdom","France","Belgium","Netherlands",
+                  "Norway","Denmark","Iceland","Italy","Portugal"].includes(c.name) },
+      { id: "q_brics",               text: "Is this country a member of the original BRICS group?",
+        fn: c => ["Brazil","Russia","India","China","South Africa"].includes(c.name) },
+      { id: "q_pre1900_state",       text: "Was this country already an independent state before 1900?",
+        fn: c => ["United States","Mexico","Canada","Brazil","Argentina","Colombia","Peru","Chile",
+                  "Bolivia","Venezuela","Ecuador","Paraguay","Uruguay","Guatemala",
+                  "United Kingdom","France","Germany","Spain","Italy","Portugal","Netherlands",
+                  "Belgium","Sweden","Denmark","Romania","Greece","Switzerland","Austria",
+                  "Russia","Serbia","China","Japan","Thailand","Iran","Ethiopia"].includes(c.name) },
+      { id: "q_post1960_independence",text: "Did this country achieve independence in 1960 or later?",
+        fn: c => ["Nigeria","Senegal","Ivory Coast","Cameroon","Madagascar","Tanzania","Kenya",
+                  "Zambia","Zimbabwe","Mozambique","Angola","Democratic Republic of Congo",
+                  "Bangladesh","Papua New Guinea","Fiji","Kazakhstan","Uzbekistan","Ukraine",
+                  "Algeria"].includes(c.name) },
+      { id: "q_olympics_host",       text: "Has this country hosted the Summer or Winter Olympic Games?",
+        fn: c => ["United States","United Kingdom","France","Germany","Japan","Australia","Canada",
+                  "China","Russia","South Korea","Italy","Spain","Brazil","Mexico","Finland",
+                  "Norway","Sweden","Netherlands","Greece","Belgium","Switzerland"].includes(c.name) },
+      { id: "q_g7",                  text: "Is this country a member of the G7?",
+        fn: c => ["United States","Canada","United Kingdom","France","Germany","Italy","Japan"].includes(c.name) },
+      { id: "q_arab_league",         text: "Is this country a member of the Arab League?",
+        fn: c => ["Egypt","Saudi Arabia","Iraq","Jordan","Algeria","Morocco","Sudan",
+                  "Lebanon","United Arab Emirates"].includes(c.name) },
     ]
   },
   {
@@ -1399,12 +1518,16 @@ function showOutOfQuestions() {
 function renderWildcard() {
   const input = document.getElementById('wildcardInput');
   const btn = document.getElementById('wildcardBtn');
+  const reasoning = document.getElementById('wildcardReasoning');
   document.getElementById('wildcardNote').textContent = state.wildcardUsed ? 'Used' : '1 remaining';
   document.getElementById('wildcardUsedNotice').style.display = state.wildcardUsed ? 'block' : 'none';
-  document.getElementById('wildcardReasoning').style.display = 'none';
+  reasoning.style.display = 'none';
+  reasoning.textContent = '';
   document.getElementById('wildcardError').style.display = 'none';
   input.disabled = state.wildcardUsed;
+  input.value = '';
   btn.disabled = state.wildcardUsed;
+  btn.innerHTML = 'Ask';
 }
 
 async function submitWildcard() {
