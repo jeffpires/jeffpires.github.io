@@ -1,1 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess Where — Gaia Analytica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
+<style>
+  :root {
+    --cream: #F5ECD7;
+    --cream-dark: #EDE0C4;
+    --ocean: #1B4F72;
+    --ocean-light: #2471A3;
+    --forest: #1D6A4A;
+    --amber: #D4882A;
+    --amber-light: #E8A040;
+    --brown: #5C3D2E;
+    --brown-light: #7A5240;
+    --yes-bg: #FFF3CD;
+    --yes-border: #D4882A;
+    --no-bg: #D6E4F0;
+    --no-border: #2471A3;
+    --spent-opacity: 0.45;
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--cream);
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(27,79,114,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(29,106,74,0.04) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    font-family: 'Inter', sans-serif;
+    color: var(--brown);
+    min-height: 100vh;
+  }
+
+  /* ── LAYOUT ── */
+  .game-wrapper {
+    display: flex;
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .left-panel {
+    width: 380px;
+    min-width: 340px;
+    flex-shrink: 0;
+    padding: 28px 24px;
+    border-right: 2px solid var(--cream-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    max-height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+
+  .right-panel {
+    flex: 1;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .game-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--ocean);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  .game-subtitle {
+    font-size: 0.78rem;
+    color: var(--brown-light);
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ── QUESTIONS COUNTER ── */
+  .questions-counter {
+    background: var(--ocean);
+    color: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .counter-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .counter-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    transition: color 0.4s;
+  }
+  .counter-pips { display: flex; gap: 5px; align-items: center; }
+  .counter-pip {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: background 0.3s;
+  }
+  .counter-pip.used { background: var(--amber); }
+  .counter-value.urgent { color: #FF8C69; }
+
+  /* ── ELIMINATION TOAST ── */
+  .elim-toast {
+    background: var(--forest);
+    color: white;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+  .elim-toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── ACCORDION ── */
+  .accordion { display: flex; flex-direction: column; gap: 8px; }
+  .accordion-section { border: 1.5px solid var(--cream-dark); border-radius: 10px; overflow: hidden; }
+  .accordion-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px;
+    cursor: pointer;
+    background: var(--cream-dark);
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .accordion-header:hover { background: #E5D6BC; }
+  .accordion-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ocean);
+  }
+  .accordion-arrow {
+    font-size: 0.75rem;
+    color: var(--brown-light);
+    transition: transform 0.25s;
+  }
+  .accordion-section.open .accordion-arrow { transform: rotate(180deg); }
+  .accordion-body {
+    display: none;
+    padding: 12px;
+    background: white;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .accordion-section.open .accordion-body { display: flex; }
+
+  /* ── QUESTION CHIPS ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid var(--cream-dark);
+    background: var(--cream);
+    color: var(--brown);
+    transition: all 0.15s;
+    user-select: none;
+    line-height: 1.3;
+  }
+  .chip:hover:not(.spent) { border-color: var(--amber); background: #FFF8EE; transform: translateY(-1px); box-shadow: 0 2px 6px rgba(92,61,46,0.1); }
+  .chip.yes { background: var(--yes-bg); border-color: var(--yes-border); color: var(--brown); }
+  .chip.no  { background: var(--no-bg);  border-color: var(--no-border);  color: var(--ocean); }
+  .chip.spent { opacity: var(--spent-opacity); cursor: default; pointer-events: none; }
+
+  /* ── WILDCARD SECTION ── */
+  .wildcard-section {
+    border: 2px solid var(--amber);
+    border-radius: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #FFF8EE, #FFF3DC);
+  }
+  .wildcard-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .wildcard-star { font-size: 1.2rem; }
+  .wildcard-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--amber);
+  }
+  .wildcard-note { font-size: 0.7rem; color: var(--brown-light); margin-left: auto; }
+  .wildcard-input-row { display: flex; gap: 8px; }
+  .wildcard-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1.5px solid var(--amber);
+    border-radius: 8px;
+    background: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.83rem;
+    color: var(--brown);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+    height: 58px;
+    line-height: 1.5;
+    overflow-y: hidden;
+    vertical-align: top;
+  }
+  .wildcard-input-row { align-items: flex-start; }
+  .wildcard-input:focus { border-color: var(--amber-light); }
+  .wildcard-input:disabled { opacity: 0.5; cursor: not-allowed; }
+  .wildcard-btn {
+    padding: 9px 14px;
+    background: var(--amber);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .wildcard-btn:hover:not(:disabled) { background: var(--amber-light); transform: translateY(-1px); }
+  .wildcard-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .wildcard-reasoning {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--forest);
+    font-style: italic;
+    display: none;
+  }
+  .wildcard-used-notice { font-size: 0.78rem; color: var(--brown-light); text-align: center; display: none; }
+  .wildcard-ai-notice { font-size: 0.68rem; color: var(--brown-light); margin-top: 6px; text-align: right; }
+
+  /* ── RIGHT PANEL HEADER ── */
+  .board-header { display: flex; align-items: center; justify-content: space-between; }
+  .board-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--brown); }
+  .remaining-count { font-size: 0.8rem; color: var(--brown-light); }
+  .remaining-count span { font-weight: 600; color: var(--forest); }
+
+  /* ── COUNTRY GRID ── */
+  .country-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+
+  .country-tile {
+    position: relative;
+    height: 130px;
+    cursor: pointer;
+    perspective: 800px;
+  }
+
+  .tile-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .country-tile.eliminated .tile-inner {
+    transform: rotateY(180deg);
+  }
+
+  .tile-front, .tile-back {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .tile-front {
+    background: white;
+    border: 2px solid var(--cream-dark);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  .tile-front:hover {
+    border-color: var(--amber);
+    box-shadow: 0 3px 10px rgba(212,136,42,0.2);
+    z-index: 1;
+  }
+  .country-tile.eliminated .tile-front {
+    border-color: var(--cream-dark);
+  }
+
+  .tile-back {
+    background: var(--cream-dark);
+    border: 2px solid #D9CCBA;
+    transform: rotateY(180deg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 5 L55 30 L30 55 L5 30Z' fill='none' stroke='%23C8B99A' stroke-width='1.5'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23C8B99A' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-size: 40px;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* ── TILE CONTENT ── */
+  .tile-flag-corner {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 1.28rem;
+    line-height: 1;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .tile-flag-corner .fi {
+    display: inline-block;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    border-radius: 2px;
+  }
+
+  .tile-svg-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px 2px;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .country-svg {
+    width: 100%;
+    height: 100%;
+    max-height: 92px;
+    overflow: visible;
+  }
+
+  .country-shape {
+    fill: url(#countryGrad);
+    stroke: #8E6340;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    transition: fill 0.15s, stroke 0.15s;
+  }
+
+  .country-tile.eliminated .country-shape {
+    fill: url(#countryGradElim);
+    stroke: #A89888;
+  }
+
+  .tile-flag-fallback {
+    font-size: 2.2rem;
+    line-height: 1;
+    opacity: 0.85;
+  }
+
+  .tile-name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--brown);
+    text-align: center;
+    padding: 2px 4px 5px;
+    line-height: 1.2;
+    transition: color 0.15s;
+  }
+
+  .country-tile.eliminated .tile-name {
+    color: #A09585;
+  }
+
+  .tile-question-mark {
+    position: absolute;
+    top: 4px; right: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--amber);
+    background: white;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    z-index: 2;
+  }
+  .country-tile.borderline .tile-question-mark { display: flex; }
+
+  /* ── FLOATING ATLAS TOOLTIP ── */
+  .floating-tooltip {
+    position: fixed;
+    z-index: 500;
+    width: 264px;
+    max-width: calc(100vw - 24px);
+    background: #FEFAF4;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 8px 32px rgba(27,79,114,0.18), 0 2px 8px rgba(27,79,114,0.08);
+    border: 1px solid var(--cream-dark);
+    pointer-events: none;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .floating-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0) !important;
+  }
+
+  .atlas-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ocean);
+    line-height: 1.2;
+  }
+  .atlas-region {
+    font-size: 0.67rem;
+    color: var(--brown-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+    margin-bottom: 8px;
+  }
+  .atlas-rule {
+    height: 2px;
+    background: linear-gradient(to right, var(--amber), rgba(212,136,42,0.08));
+    border-radius: 1px;
+    margin-bottom: 10px;
+  }
+  .atlas-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .badge {
+    background: rgba(245,236,215,0.85);
+    border: 1px solid var(--cream-dark);
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 0.67rem;
+    font-weight: 500;
+    color: var(--brown);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .atlas-fact {
+    font-style: italic;
+    font-size: 0.7rem;
+    line-height: 1.55;
+    color: var(--brown-light);
+    border-top: 1px solid var(--cream-dark);
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(27,79,114,0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-box {
+    background: var(--cream);
+    border-radius: 18px;
+    padding: 36px 40px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(27,79,114,0.25);
+    transform: translateY(16px);
+    transition: transform 0.3s;
+    text-align: center;
+  }
+  .modal-overlay.show .modal-box { transform: translateY(0); }
+  .modal-flag { font-size: 4rem; margin-bottom: 12px; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ocean); margin-bottom: 12px; }
+  .modal-subtitle { font-size: 0.9rem; color: var(--brown-light); margin-bottom: 20px; }
+  .modal-fact {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--brown);
+    margin-bottom: 24px;
+    border-left: 3px solid var(--amber);
+    text-align: left;
+  }
+  .modal-stat { font-size: 0.82rem; color: var(--brown-light); margin-bottom: 20px; }
+  .modal-stat strong { color: var(--forest); }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--ocean);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn-primary:hover { background: var(--ocean-light); transform: translateY(-1px); }
+
+  .btn-secondary {
+    display: inline-block;
+    padding: 10px 22px;
+    background: transparent;
+    color: var(--ocean);
+    border: 2px solid var(--ocean);
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--ocean); color: white; }
+
+  /* ── CONFIRM DIALOG ── */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(27,79,114,0.4);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .confirm-overlay.show { opacity: 1; pointer-events: all; }
+  .confirm-box {
+    background: white;
+    border-radius: 14px;
+    padding: 28px 32px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(27,79,114,0.2);
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .confirm-overlay.show .confirm-box { transform: scale(1); }
+  .confirm-flag { font-size: 2.5rem; margin-bottom: 10px; }
+  .confirm-text { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ocean); margin-bottom: 8px; }
+  .confirm-sub { font-size: 0.8rem; color: var(--brown-light); margin-bottom: 20px; }
+  .confirm-buttons { display: flex; gap: 10px; justify-content: center; }
+
+  /* WIN/LOSE */
+  .modal-win .modal-title { color: var(--forest); }
+  .modal-win-banner { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest); margin-bottom: 8px; }
+  .modal-lose-banner { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px; }
+
+  /* INTRO */
+  .intro-list { list-style: none; text-align: left; margin: 16px 0 24px; display: flex; flex-direction: column; gap: 10px; }
+  .intro-list li { display: flex; gap: 10px; font-size: 0.88rem; line-height: 1.5; color: var(--brown); }
+  .intro-list li span:first-child { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* SPINNER */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg { font-size: 0.78rem; color: #C0392B; margin-top: 6px; display: none; }
+
+  .left-panel::-webkit-scrollbar { width: 4px; }
+  .left-panel::-webkit-scrollbar-track { background: transparent; }
+  .left-panel::-webkit-scrollbar-thumb { background: var(--cream-dark); border-radius: 4px; }
+
+  @media (max-width: 900px) {
+    .game-wrapper { flex-direction: column; }
+    .left-panel { width: 100%; max-height: none; position: static; border-right: none; border-bottom: 2px solid var(--cream-dark); }
+    .right-panel { max-height: none; overflow-y: visible; }
+    .country-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ── CHIP ANSWER INDICATORS ── */
+  .chip-indicator-yes { color: #2D6A4F; font-weight: 700; }
+  .chip-indicator-no  { color: #C0392B; font-weight: 700; }
+
+  /* ── TOOLTIP FLAG ROW ── */
+  .atlas-name-row { display: flex; align-items: center; gap: 7px; margin-bottom: 2px; }
+  .atlas-tooltip-flag { display: inline-block; font-size: 1.35rem; line-height: 1; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- SVG gradient defs for country shape fills -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden;width:0;height:0">
+  <defs>
+    <linearGradient id="countryGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D4B888"/>
+      <stop offset="100%" stop-color="#B89460"/>
+    </linearGradient>
+    <linearGradient id="countryGradElim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#CECDCA"/>
+      <stop offset="100%" stop-color="#B5ADA5"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- FLOATING ATLAS TOOLTIP -->
+<div class="floating-tooltip" id="floatingTooltip"></div>
+
+<!-- INTRO MODAL -->
+<div class="modal-overlay show" id="introModal">
+  <div class="modal-box">
+    <div class="modal-flag">🗺️</div>
+    <div class="modal-title">Guess Where</div>
+    <div class="modal-subtitle">A geography deduction game by Gaia Analytica</div>
+    <ul class="intro-list">
+      <li><span>🌍</span><span>24 countries appear on the board. One is the mystery country — only you don't know which.</span></li>
+      <li><span>❓</span><span>Ask up to 10 yes/no questions to eliminate possibilities. Each answer narrows the field.</span></li>
+      <li><span>⭐</span><span>You have one wildcard: ask anything in your own words and our AI fact-checker will answer it.</span></li>
+      <li><span>🎯</span><span>When you're ready, click any country tile to make your final guess.</span></li>
+    </ul>
+    <button class="btn-primary" onclick="dismissIntro()">Let's Play</button>
+  </div>
+</div>
+
+<!-- CONFIRM GUESS DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-flag" id="confirmFlag">🏳️</div>
+    <div class="confirm-text" id="confirmText">Is this your final answer?</div>
+    <div class="confirm-sub">This uses your final guess — you cannot change it.</div>
+    <div class="confirm-buttons">
+      <button class="btn-secondary" onclick="cancelGuess()">Not sure yet</button>
+      <button class="btn-primary" onclick="confirmGuess()">Yes, that's it!</button>
+    </div>
+  </div>
+</div>
+
+<!-- WIN MODAL -->
+<div class="modal-overlay" id="winModal">
+  <div class="modal-box modal-win">
+    <div class="modal-win-banner">Correct!</div>
+    <div class="modal-flag" id="winFlag">🏆</div>
+    <div class="modal-title" id="winName">Country Name</div>
+    <div class="modal-stat">You found it using <strong id="winQuestions">0</strong> questions</div>
+    <div class="modal-fact" id="winFact">Interesting fact here.</div>
+    <button class="btn-primary" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<!-- LOSE MODAL -->
+<div class="modal-overlay" id="loseModal">
+  <div class="modal-box modal-lose">
+    <div class="modal-lose-banner">So close!</div>
+    <div class="modal-flag" id="loseFlag">🌐</div>
+    <div class="modal-title" id="loseName">Country Name</div>
+    <div class="modal-subtitle" id="loseSubtitle">The mystery country was…</div>
+    <div class="modal-fact" id="loseFact">Interesting fact here.</div>
+    <button class="btn-primary" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="game-wrapper">
+  <div class="left-panel">
+    <div>
+      <div class="game-title">Guess Where</div>
+      <div class="game-subtitle">Geography Deduction · Gaia Analytica</div>
+    </div>
+    <div class="questions-counter">
+      <div>
+        <div class="counter-label">Questions Left</div>
+        <div class="counter-value" id="counterValue">10</div>
+      </div>
+      <div class="counter-pips" id="counterPips"></div>
+    </div>
+    <div class="elim-toast" id="elimToast"></div>
+    <div class="accordion" id="accordion"></div>
+    <div class="wildcard-section">
+      <div class="wildcard-header">
+        <span class="wildcard-star">⭐</span>
+        <span class="wildcard-title">Your One Free Question</span>
+        <span class="wildcard-note" id="wildcardNote">1 remaining</span>
+      </div>
+      <div class="wildcard-input-row">
+        <textarea class="wildcard-input" id="wildcardInput" placeholder="Ask any yes/no geographic question…" maxlength="200"></textarea>
+        <button class="wildcard-btn" id="wildcardBtn" onclick="submitWildcard()">Ask</button>
+      </div>
+      <div class="error-msg" id="wildcardError"></div>
+      <div class="wildcard-reasoning" id="wildcardReasoning"></div>
+      <div class="wildcard-used-notice" id="wildcardUsedNotice">Wildcard used ✓</div>
+      <div class="wildcard-ai-notice">Your question is processed by AI</div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="board-header">
+      <div class="board-title">The Board</div>
+      <div class="remaining-count"><span id="remainingCount">24</span> countries remaining</div>
+    </div>
+    <div class="country-grid" id="countryGrid"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="countries.js"></script>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const WORKER_URL = "https://flat-firefly-5df7.jeff-pires.workers.dev";
+
+// ── SOUNDS ───────────────────────────────────────────────────────────────────
+const SOUNDS = {
+  yes:  new Audio('ding_correct.wav'),
+  no:   new Audio('buzzer_incorrect.wav'),
+  win:  new Audio('cheer_win.wav'),
+  lose: new Audio('womp_lose.wav'),
+};
+Object.values(SOUNDS).forEach(s => { s.preload = 'auto'; s.volume = 0.7; });
+
+function playSound(key) {
+  try {
+    const s = SOUNDS[key];
+    s.currentTime = 0;
+    s.play().catch(() => {});
+  } catch(e) {}
+}
+
+// ── FLAG ICONS (ISO 3166-1 alpha-2, lowercase) ───────────────────────────────
+const ISO2 = {
+  "Brazil":"br","Argentina":"ar","Colombia":"co","Peru":"pe","Chile":"cl",
+  "Bolivia":"bo","Venezuela":"ve","Mexico":"mx","Canada":"ca","United States":"us",
+  "Cuba":"cu","Jamaica":"jm","United Kingdom":"gb","France":"fr","Germany":"de",
+  "Spain":"es","Italy":"it","Portugal":"pt","Netherlands":"nl","Belgium":"be",
+  "Sweden":"se","Norway":"no","Denmark":"dk","Finland":"fi","Poland":"pl",
+  "Ukraine":"ua","Romania":"ro","Greece":"gr","Switzerland":"ch","Austria":"at",
+  "Russia":"ru","Turkey":"tr","Egypt":"eg","Nigeria":"ng","South Africa":"za",
+  "Ethiopia":"et","Kenya":"ke","Morocco":"ma","Tanzania":"tz","Ghana":"gh",
+  "Democratic Republic of Congo":"cd","China":"cn","India":"in","Japan":"jp",
+  "South Korea":"kr","Indonesia":"id","Pakistan":"pk","Bangladesh":"bd",
+  "Thailand":"th","Vietnam":"vn","Philippines":"ph","Malaysia":"my",
+  "Saudi Arabia":"sa","Iran":"ir","Iraq":"iq","Israel":"il",
+  "United Arab Emirates":"ae","Kazakhstan":"kz","Mongolia":"mn",
+  "Australia":"au","New Zealand":"nz","Papua New Guinea":"pg","Fiji":"fj",
+  "Nepal":"np","Sri Lanka":"lk","Myanmar":"mm","Cambodia":"kh",
+  "Afghanistan":"af","Uzbekistan":"uz","Angola":"ao","Sudan":"sd",
+  "Algeria":"dz","Mozambique":"mz","Cameroon":"cm","Senegal":"sn",
+  "Ivory Coast":"ci","Madagascar":"mg","Zimbabwe":"zw","Iceland":"is",
+  "Ireland":"ie","Czech Republic":"cz","Hungary":"hu","Serbia":"rs",
+  "Croatia":"hr","Jordan":"jo","Lebanon":"lb","Zambia":"zm","Ecuador":"ec",
+  "Paraguay":"py","Uruguay":"uy","Guatemala":"gt","Laos":"la","North Korea":"kp"
+};
+
+function flagIconHtml(country) {
+  const code = ISO2[country.name];
+  // Fall back to the stored emoji if code is missing (future-proof)
+  return code ? `<span class="fi fi-${code}"></span>` : country.flag;
+}
+
+// ── ISO NUMERIC CODES for world-atlas GeoJSON matching ──────────────────────
+const ISO_NUMERIC = {
+  "Brazil":76,"Argentina":32,"Colombia":170,"Peru":604,"Chile":152,
+  "Bolivia":68,"Venezuela":862,"Mexico":484,"Canada":124,"United States":840,
+  "Cuba":192,"Jamaica":388,"United Kingdom":826,"France":250,"Germany":276,
+  "Spain":724,"Italy":380,"Portugal":620,"Netherlands":528,"Belgium":56,
+  "Sweden":752,"Norway":578,"Denmark":208,"Finland":246,"Poland":616,
+  "Ukraine":804,"Romania":642,"Greece":300,"Switzerland":756,"Austria":40,
+  "Russia":643,"Turkey":792,"Egypt":818,"Nigeria":566,"South Africa":710,
+  "Ethiopia":231,"Kenya":404,"Morocco":504,"Tanzania":834,"Ghana":288,
+  "Democratic Republic of Congo":180,"China":156,"India":356,"Japan":392,
+  "South Korea":410,"Indonesia":360,"Pakistan":586,"Bangladesh":50,
+  "Thailand":764,"Vietnam":704,"Philippines":608,"Malaysia":458,
+  "Saudi Arabia":682,"Iran":364,"Iraq":368,"Israel":376,
+  "United Arab Emirates":784,"Kazakhstan":398,"Mongolia":496,
+  "Australia":36,"New Zealand":554,"Papua New Guinea":598,"Fiji":242,
+  "Nepal":524,"Sri Lanka":144,"Myanmar":104,"Cambodia":116,
+  "Afghanistan":4,"Uzbekistan":860,"Angola":24,"Sudan":729,"Algeria":12,
+  "Mozambique":508,"Cameroon":120,"Senegal":686,"Ivory Coast":384,
+  "Madagascar":450,"Zimbabwe":716,"Iceland":352,"Ireland":372,
+  "Czech Republic":203,"Hungary":348,"Serbia":688,"Croatia":191,
+  "Jordan":400,"Lebanon":422,"Zambia":894,"Ecuador":218,"Paraguay":600,
+  "Uruguay":858,"Guatemala":320,"Laos":418,"North Korea":408
+};
+
+// ── WORLD ATLAS STATE ────────────────────────────────────────────────────────
+let worldFeatures = null;
+const svgPathCache = {};
+
+// Countries whose world-atlas feature includes overseas territories — show mainland only
+const MAINLAND_ONLY = new Set([
+  "France","Norway","Portugal","Netherlands","Denmark",
+  "Spain","United States","New Zealand","Ecuador","Chile","Russia"
+]);
+
+// Denmark's mainland is smaller than Greenland, so coordinate-count heuristic fails.
+// Provide a centroid hint so we pick the polygon closest to metropolitan Denmark.
+const MAINLAND_CENTROID_HINT = {
+  "Denmark": { lon: 10, lat: 56 }
+};
+
+// Prepare a feature for rendering: extract mainland polygon and fix antimeridian issues.
+function prepareFeature(countryName, feature) {
+  // Deep clone geometry to avoid mutating cached atlas data
+  let f = { ...feature, geometry: JSON.parse(JSON.stringify(feature.geometry)) };
+
+  if (MAINLAND_ONLY.has(countryName) && f.geometry.type === 'MultiPolygon') {
+    const hint = MAINLAND_CENTROID_HINT[countryName];
+    let best = null, bestScore = -Infinity;
+    for (const poly of f.geometry.coordinates) {
+      const ring = poly[0];
+      let score;
+      if (hint) {
+        // Pick polygon whose centroid is closest to the hint coordinate
+        const centLon = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+        const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+        score = -(Math.hypot(centLon - hint.lon, centLat - hint.lat));
+      } else {
+        // Largest outer ring (coordinate count ≈ area for same resolution)
+        score = ring.length;
+      }
+      if (score > bestScore) { bestScore = score; best = poly; }
+    }
+    if (best) f.geometry = { type: 'Polygon', coordinates: best };
+  }
+
+  // Fiji straddles the antimeridian: normalise all longitudes to the eastern side
+  // so D3 fitExtent sees a coherent bounding box
+  if (countryName === 'Fiji') {
+    const shiftRing = ring => ring.map(([lon, lat]) => [lon < 0 ? lon + 360 : lon, lat]);
+    if (f.geometry.type === 'MultiPolygon') {
+      f.geometry.coordinates = f.geometry.coordinates.map(poly => poly.map(shiftRing));
+    } else {
+      f.geometry.coordinates = f.geometry.coordinates.map(shiftRing);
+    }
+  }
+
+  return f;
+}
+
+async function preloadWorldAtlas() {
+  try {
+    const world = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => r.json());
+    worldFeatures = topojson.feature(world, world.objects.countries).features;
+  } catch(e) {
+    console.warn('World atlas unavailable — country shapes will fall back to flags.');
+  }
+}
+
+function getCountrySVGPath(countryName) {
+  if (svgPathCache[countryName] !== undefined) return svgPathCache[countryName];
+  if (!worldFeatures || typeof d3 === 'undefined') { svgPathCache[countryName] = null; return null; }
+
+  const code = ISO_NUMERIC[countryName];
+  if (!code) { svgPathCache[countryName] = null; return null; }
+
+  const feature = worldFeatures.find(f => +f.id === code);
+  if (!feature) { svgPathCache[countryName] = null; return null; }
+
+  try {
+    const preparedFeature = prepareFeature(countryName, feature);
+    const proj = d3.geoMercator().fitExtent([[3,3],[81,73]], preparedFeature);
+    const d = d3.geoPath().projection(proj)(preparedFeature);
+    svgPathCache[countryName] = d || null;
+    return svgPathCache[countryName];
+  } catch(e) {
+    svgPathCache[countryName] = null;
+    return null;
+  }
+}
+
+// ── QUESTION LIBRARY (expanded pools — 8 randomly selected per game) ─────────
+const QUESTION_CATEGORIES = [
+  {
+    id: "geography",
+    label: "🌍 Geography",
+    questions: [
+      { id: "q_northern",     text: "Is this country in the Northern Hemisphere?",               attr: "hemisphere_ns",        match: "north"        },
+      { id: "q_south",        text: "Is this country south of the equator?",                     attr: "hemisphere_ns",        match: "south"        },
+      { id: "q_eastern",      text: "Is this country in the Eastern Hemisphere?",                attr: "hemisphere_ew",        match: ["east","both"] },
+      { id: "q_western",      text: "Is this country in the Western Hemisphere?",                attr: "hemisphere_ew",        match: ["west","both"] },
+      { id: "q_landlocked",   text: "Is this country completely surrounded by land?",            attr: "landlocked",           match: true           },
+      { id: "q_island",       text: "Is this country an island nation?",                         attr: "island_nation",        match: true           },
+      { id: "q_longcoast",    text: "Does this country have a long coastline?",                  attr: "coastline",            match: "long"         },
+      { id: "q_shortcoast",   text: "Does this country have only a short coastline?",            attr: "coastline",            match: "short"        },
+      { id: "q_medcoast",     text: "Does this country have a medium-length coastline?",         attr: "coastline",            match: "medium"       },
+      { id: "q_desert",       text: "Is the dominant landscape desert?",                         attr: "dominant_biome",       match: "desert"       },
+      { id: "q_tropical",     text: "Is this country largely tropical?",                         attr: "dominant_biome",       match: "tropical"     },
+      { id: "q_forest",       text: "Is this country mostly covered by forest?",                 attr: "dominant_biome",       match: "forest"       },
+      { id: "q_grassland",    text: "Is this country's landscape mostly grassland or savanna?",  attr: "dominant_biome",       match: "grassland"    },
+      { id: "q_mediterranean",text: "Does this country have a Mediterranean landscape?",         attr: "dominant_biome",       match: "mediterranean"},
+      { id: "q_tundra",       text: "Does this country have tundra or arctic terrain?",          attr: "dominant_biome",       match: "tundra"       },
+      { id: "q_mountains",    text: "Does this country have a major mountain range?",            attr: "major_mountain_range", match: true           },
+      { id: "q_river",        text: "Does a major river flow through this country?",             attr: "major_river",          match: true           },
+    ]
+  },
+  {
+    id: "political",
+    label: "🏛️ Political",
+    questions: [
+      { id: "q_monarchy",     text: "Is this country a monarchy?",                               attr: "government_type",    match: ["constitutional_monarchy","absolute_monarchy"] },
+      { id: "q_constmonarch", text: "Is this a constitutional monarchy?",                        attr: "government_type",    match: "constitutional_monarchy" },
+      { id: "q_absmonarch",   text: "Is this country an absolute monarchy?",                     attr: "government_type",    match: "absolute_monarchy"       },
+      { id: "q_federal",      text: "Is this country a federal republic?",                       attr: "government_type",    match: "federal_republic"        },
+      { id: "q_unitary",      text: "Is this country a unitary republic?",                       attr: "government_type",    match: "unitary_republic"        },
+      { id: "q_other_govt",   text: "Is this country governed in a way that isn't a standard republic or monarchy?", attr: "government_type", match: "other" },
+      { id: "q_eu",           text: "Is this country a member of the European Union?",           attr: "eu_member",          match: true      },
+      { id: "q_nato",         text: "Is this country a member of NATO?",                         attr: "nato_member",        match: true      },
+      { id: "q_g20",          text: "Is this country a member of the G20?",                      attr: "g20_member",         match: true      },
+      { id: "q_nuclear",      text: "Does this country have nuclear power plants?",              attr: "nuclear_power",      match: true      },
+      { id: "q_manyborders",  text: "Does this country share borders with 4 or more countries?", attr: "borders_count_tier", match: ["several","many"] },
+      { id: "q_verymany",     text: "Does this country share borders with 7 or more countries?", attr: "borders_count_tier", match: "many"    },
+      { id: "q_fewborders",   text: "Does this country have only 1–3 land borders?",             attr: "borders_count_tier", match: "few"     },
+      { id: "q_noborders",    text: "Does this country share a border with no other countries?",  attr: "borders_count_tier", match: "none"    },
+      { id: "q_nobloc",       text: "Is this country not a member of the EU, NATO, or G20?",     fn: c => !c.eu_member && !c.nato_member && !c.g20_member },
+    ]
+  },
+  {
+    id: "people",
+    label: "👥 People & Culture",
+    questions: [
+      { id: "q_huge_pop",     text: "Does this country have more than 100 million people?",      attr: "population_tier",  match: "huge"          },
+      { id: "q_large_pop",    text: "Does this country have 50–100 million people?",             attr: "population_tier",  match: "large"         },
+      { id: "q_medium_pop",   text: "Does this country have 10–50 million people?",              attr: "population_tier",  match: "medium"        },
+      { id: "q_small_pop",    text: "Does this country have fewer than 10 million people?",      attr: "population_tier",  match: ["micro","small"]},
+      { id: "q_micro_pop",    text: "Does this country have fewer than 1 million people?",       attr: "population_tier",  match: "micro"         },
+      { id: "q_romance",      text: "Is a Romance language (Spanish, French, Portuguese…) widely spoken?", attr: "language_family", match: "Romance"      },
+      { id: "q_germanic",     text: "Is a Germanic language (English, German, Dutch…) widely spoken?",     attr: "language_family", match: "Germanic"     },
+      { id: "q_slavic",       text: "Is a Slavic language widely spoken there?",                 attr: "language_family",  match: "Slavic"        },
+      { id: "q_semitic",      text: "Is a Semitic language (Arabic, Hebrew…) widely spoken?",   attr: "language_family",  match: "Semitic"       },
+      { id: "q_austronesian", text: "Is an Austronesian language (Malay, Tagalog…) widely spoken?",        attr: "language_family", match: "Austronesian" },
+      { id: "q_sinotibetan",  text: "Is a Sino-Tibetan language (Mandarin, Burmese…) widely spoken?",      attr: "language_family", match: "Sino-Tibetan" },
+      { id: "q_nigercongo",   text: "Is a Niger-Congo language (Swahili, Yoruba, Zulu…) widely spoken?",   attr: "language_family", match: "Niger-Congo"  },
+      { id: "q_driveleft",    text: "Do people drive on the left side of the road there?",       attr: "drives_left",      match: true            },
+      { id: "q_highincome",   text: "Is this a high-income country?",                            attr: "income_tier",      match: "high"          },
+      { id: "q_lowermid",     text: "Is this a lower-middle income country?",                    attr: "income_tier",      match: "lower-middle"  },
+      { id: "q_lowincome",    text: "Is this a low or lower-middle income country?",             attr: "income_tier",      match: ["low","lower-middle"] },
+    ]
+  },
+  {
+    id: "economy",
+    label: "💰 Economy",
+    questions: [
+      { id: "q_energy_export",   text: "Is energy (oil, gas) a primary export?",                attr: "primary_export",  match: "energy"        },
+      { id: "q_manuf_export",    text: "Is manufacturing a primary export?",                     attr: "primary_export",  match: "manufacturing" },
+      { id: "q_agri_export",     text: "Is agriculture a primary export?",                       attr: "primary_export",  match: "agriculture"   },
+      { id: "q_services_export", text: "Are services (tourism, finance) a primary export?",      attr: "primary_export",  match: "services"      },
+      { id: "q_minerals_export", text: "Are minerals a primary export?",                         attr: "primary_export",  match: "minerals"      },
+      { id: "q_mixed_export",    text: "Does this country export a diverse mix of products?",    attr: "primary_export",  match: "mixed"         },
+      { id: "q_huge_area",       text: "Is this country larger than 2 million km²?",             attr: "area_tier",       match: "huge"          },
+      { id: "q_large_area",      text: "Is this country between 500k and 2 million km²?",        attr: "area_tier",       match: "large"         },
+      { id: "q_medium_area",     text: "Is this country between 100k and 500k km²?",             attr: "area_tier",       match: "medium"        },
+      { id: "q_small_area",      text: "Is this country smaller than 100,000 km²?",              attr: "area_tier",       match: ["micro","small"]},
+      { id: "q_micro_area",      text: "Is this country tiny — under 1,000 km²?",                attr: "area_tier",       match: "micro"         },
+      { id: "q_uppermid_income", text: "Is this an upper-middle income country?",                attr: "income_tier",     match: "upper-middle"  },
+      { id: "q_lowinc_ec",       text: "Is this a low-income economy?",                          attr: "income_tier",     match: "low"           },
+      { id: "q_highincec",       text: "Is this a high-income economy?",                         attr: "income_tier",     match: "high"          },
+      { id: "q_lowmidec",        text: "Is this a lower-middle income economy?",                 attr: "income_tier",     match: "lower-middle"  },
+    ]
+  },
+  {
+    id: "curious",
+    label: "✨ Curious Facts",
+    questions: [
+      { id: "q_subsaharan",  text: "Is this country found below the Sahara in Africa?",          fn: c => c.continent === "Africa" && c.region !== "North Africa" },
+      { id: "q_northafrica", text: "Does this country sit in the great North African desert belt?", fn: c => c.region === "North Africa" },
+      { id: "q_middleeast",  text: "Is this country part of the Middle East?",                   fn: c => c.region === "Middle East" },
+      { id: "q_seasia",      text: "Is this country in tropical Southeast Asia?",                fn: c => c.region === "Southeast Asia" },
+      { id: "q_centralasia", text: "Is this country in the vast interior of Central Asia?",      fn: c => c.region === "Central Asia" },
+      { id: "q_eastasia",    text: "Is this country in East Asia?",                              fn: c => c.region === "East Asia" },
+      { id: "q_southasia",   text: "Is this country in South Asia — the Indian Subcontinent region?", fn: c => c.region === "South Asia" },
+      { id: "q_oceania",     text: "Is this country one of the nations of Oceania?",             fn: c => c.continent === "Oceania" },
+      { id: "q_southam",     text: "Is this country in South America?",                          fn: c => c.continent === "South America" },
+      { id: "q_noreurope",   text: "Is this a Nordic or Northern European country?",             fn: c => c.region === "Northern Europe" },
+      { id: "q_easteurope",  text: "Is this country in Eastern Europe?",                         fn: c => c.region === "Eastern Europe" },
+      { id: "q_southeurope", text: "Is this a Mediterranean or Southern European country?",      fn: c => c.region === "Southern Europe" },
+      { id: "q_westeurope",  text: "Is this country in Western Europe?",                         fn: c => c.region === "Western Europe" },
+      { id: "q_caribbean",   text: "Is this a Caribbean island nation?",                         fn: c => c.region === "Central America & Caribbean" && c.island_nation },
+      { id: "q_centralam",   text: "Is this country in Central America (on the mainland)?",      fn: c => c.region === "Central America & Caribbean" && !c.island_nation },
+      { id: "q_westaf",      text: "Is this country on the West African coast?",                 fn: c => c.region === "West Africa" },
+      { id: "q_eastaf",      text: "Is this country in East Africa?",                            fn: c => c.region === "East Africa" },
+      { id: "q_southaf",     text: "Is this country in Southern Africa?",                        fn: c => c.region === "Southern Africa" },
+    ]
+  }
+];
+
+const QUESTIONS_PER_GAME = 8;
+
+// ── GAME STATE ──────────────────────────────────────────────────────────────
+let state = {
+  boardCountries: [],
+  mysteryCountry: null,
+  questionsLeft: 10,
+  questionsUsed: 0,
+  wildcardUsed: false,
+  askedQuestions: new Set(),
+  eliminated: new Set(),
+  borderline: new Set(),
+  guessedCountry: null,
+  sessionFirstGame: true,
+  gameOver: false,
+  selectedQuestions: {}
+};
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+function initGame() {
+  const shuffled = [...COUNTRIES].sort(() => Math.random() - 0.5);
+  state.boardCountries = shuffled.slice(0, 24);
+  state.mysteryCountry = state.boardCountries[Math.floor(Math.random() * 24)];
+  state.questionsLeft = 10;
+  state.questionsUsed = 0;
+  state.wildcardUsed = false;
+  state.askedQuestions = new Set();
+  state.eliminated = new Set();
+  state.borderline = new Set();
+  state.guessedCountry = null;
+  state.gameOver = false;
+
+  // Randomly select QUESTIONS_PER_GAME questions from each category pool
+  state.selectedQuestions = {};
+  QUESTION_CATEGORIES.forEach(cat => {
+    const pool = [...cat.questions].sort(() => Math.random() - 0.5);
+    state.selectedQuestions[cat.id] = pool.slice(0, Math.min(QUESTIONS_PER_GAME, pool.length));
+  });
+
+  renderAccordion();
+  renderGrid();
+  renderCounter();
+  renderWildcard();
+  updateRemainingCount();
+}
+
+function dismissIntro() {
+  document.getElementById('introModal').classList.remove('show');
+  state.sessionFirstGame = false;
+  initGame();
+}
+
+function resetGame() {
+  hideModal('winModal');
+  hideModal('loseModal');
+  hideTooltip(true);
+  initGame();
+}
+
+// ── COUNTER ──────────────────────────────────────────────────────────────────
+function renderCounter() {
+  const val = document.getElementById('counterValue');
+  val.textContent = state.questionsLeft;
+  val.classList.toggle('urgent', state.questionsLeft <= 3);
+  const pips = document.getElementById('counterPips');
+  pips.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'counter-pip' + (i >= state.questionsLeft ? ' used' : '');
+    pips.appendChild(pip);
+  }
+}
+
+// ── GRID ─────────────────────────────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('countryGrid');
+  grid.innerHTML = '';
+  state.boardCountries.forEach(country => {
+    const tile = document.createElement('div');
+    tile.className = 'country-tile';
+    tile.id = 'tile-' + country.name.replace(/\s/g,'_');
+
+    const pathData = getCountrySVGPath(country.name);
+    const svgContent = pathData
+      ? `<svg class="country-svg" viewBox="0 0 84 76" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path class="country-shape" d="${pathData}"/></svg>`
+      : `<div class="tile-flag-fallback">${flagIconHtml(country)}</div>`;
+    // Corner flag only shown when SVG shape is present (fallback tiles already show large flag)
+    const cornerFlag = pathData ? `<span class="tile-flag-corner">${flagIconHtml(country)}</span>` : '';
+
+    tile.innerHTML = `
+      <div class="tile-inner">
+        <div class="tile-front" onclick="tileClick('${country.name.replace(/'/g,"\\'")}')">
+          ${cornerFlag}
+          <div class="tile-svg-wrap">${svgContent}</div>
+          <div class="tile-name">${country.name}</div>
+        </div>
+        <div class="tile-back"></div>
+      </div>
+      <div class="tile-question-mark">?</div>
+    `;
+
+    // Tooltip via JS events (viewport-aware positioning)
+    tile.addEventListener('mouseenter', () => {
+      if (!state.eliminated.has(country.name)) showTooltip(tile, country);
+    });
+    tile.addEventListener('mouseleave', hideTooltip);
+
+    grid.appendChild(tile);
+  });
+}
+
+// ── TOOLTIP ──────────────────────────────────────────────────────────────────
+let tooltipHideTimer = null;
+let tooltipShowTimer = null;
+
+function showTooltip(tile, country) {
+  // Cancel any pending hide so switching between tiles doesn't flicker
+  if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
+  // Reset pending show (handles fast cursor movement — only fire for sustained hover)
+  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
+
+  tooltipShowTimer = setTimeout(() => {
+    tooltipShowTimer = null;
+    const el = document.getElementById('floatingTooltip');
+    el.classList.remove('visible');
+    el.innerHTML = buildTooltipHTML(country);
+    el.style.display = 'block';
+    // First rAF: position (uses scrollHeight, needs display:block first)
+    // Second rAF: add visible class so CSS transition actually runs
+    requestAnimationFrame(() => {
+      positionTooltip(tile, el);
+      requestAnimationFrame(() => el.classList.add('visible'));
+    });
+  }, 100);
+}
+
+function hideTooltip(immediate) {
+  // Always cancel a pending show — fast passes should never trigger the tooltip
+  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
+  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+
+  if (immediate) {
+    const el = document.getElementById('floatingTooltip');
+    el.classList.remove('visible');
+    el.style.display = 'none';
+    return;
+  }
+
+  // 150ms grace period: brief exits don't dismiss the tooltip
+  tooltipHideTimer = setTimeout(() => {
+    tooltipHideTimer = null;
+    const el = document.getElementById('floatingTooltip');
+    el.classList.remove('visible');
+    setTimeout(() => { if (!el.classList.contains('visible')) el.style.display = 'none'; }, 200);
+  }, 150);
+}
+
+function positionTooltip(tile, el) {
+  const tileRect = tile.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const ttW = Math.min(264, vw - 24);
+  const ttH = el.scrollHeight + 20;
+  const GAP = 10;
+
+  const spaceAbove = tileRect.top - GAP;
+  const spaceBelow = vh - tileRect.bottom - GAP;
+  const openDown = spaceAbove < ttH && spaceBelow >= ttH;
+
+  // Horizontal: centre on tile, clamp to viewport
+  let left = tileRect.left + tileRect.width / 2 - ttW / 2;
+  left = Math.max(8, Math.min(left, vw - ttW - 8));
+
+  el.style.width = ttW + 'px';
+  el.style.left = left + 'px';
+  el.style.bottom = 'auto';
+  el.style.top = 'auto';
+
+  if (openDown) {
+    el.style.top = (tileRect.bottom + GAP) + 'px';
+    el.style.transform = 'translateY(4px)';
+  } else {
+    el.style.bottom = (vh - tileRect.top + GAP) + 'px';
+    el.style.transform = 'translateY(-4px)';
+  }
+}
+
+function buildTooltipHTML(c) {
+  const badges = [];
+
+  // Water access
+  if (c.landlocked) {
+    badges.push({ icon: '🔒', text: 'Landlocked' });
+  } else if (c.island_nation) {
+    badges.push({ icon: '🏝️', text: 'Island nation' });
+  } else {
+    const coastLabels = { long: 'Long coastline', medium: 'Medium coast', short: 'Short coast' };
+    badges.push({ icon: '🌊', text: coastLabels[c.coastline] || 'Coastal' });
+  }
+
+  // Terrain
+  if (c.major_mountain_range) badges.push({ icon: '🏔️', text: 'Mountains' });
+  if (c.major_river)          badges.push({ icon: '🏞️', text: 'Major river' });
+
+  // Biome
+  const biomeIcons = { desert:'🏜️', forest:'🌲', grassland:'🌾', tundra:'🌨️', tropical:'🌴', mediterranean:'🫒', mixed:'🗺️' };
+  const biomeLabels = { desert:'Desert', forest:'Forest', grassland:'Grassland', tundra:'Tundra', tropical:'Tropical', mediterranean:'Mediterranean', mixed:'Mixed' };
+  badges.push({ icon: biomeIcons[c.dominant_biome] || '🌿', text: biomeLabels[c.dominant_biome] || cap(c.dominant_biome) });
+
+  // Population
+  const popLabels = { micro:'Under 1M', small:'1–10M', medium:'10–50M', large:'50–100M', huge:'Over 100M' };
+  badges.push({ icon: '👥', text: popLabels[c.population_tier] || c.population_tier });
+
+  // Language
+  badges.push({ icon: '🗣️', text: c.language_family });
+
+  // Income
+  const incLabels = { high:'High income', 'upper-middle':'Upper-middle', 'lower-middle':'Lower-middle', low:'Low income' };
+  badges.push({ icon: '💰', text: incLabels[c.income_tier] || c.income_tier });
+
+  // Government
+  const govLabels = {
+    constitutional_monarchy: 'Const. monarchy',
+    absolute_monarchy: 'Abs. monarchy',
+    federal_republic: 'Fed. republic',
+    unitary_republic: 'Unit. republic',
+    other: 'Other govt.'
+  };
+  badges.push({ icon: '🏛️', text: govLabels[c.government_type] || c.government_type });
+
+  const badgesHTML = badges.map(b => `<span class="badge">${b.icon} ${b.text}</span>`).join('');
+
+  const code = ISO2[c.name];
+  const tooltipFlag = code ? `<span class="fi fi-${code} atlas-tooltip-flag"></span>` : '';
+  const regionSubtitle = c.region === c.continent ? c.region : `${c.region} &middot; ${c.continent}`;
+
+  return `
+    <div class="atlas-name-row">${tooltipFlag}<span class="atlas-name">${c.name}</span></div>
+    <div class="atlas-region">${regionSubtitle}</div>
+    <div class="atlas-rule"></div>
+    <div class="atlas-badges">${badgesHTML}</div>
+    <div class="atlas-fact">${c.fact}</div>
+  `;
+}
+
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+// ── TILE CLICK ────────────────────────────────────────────────────────────────
+function tileClick(name) {
+  if (state.gameOver) return;
+  const country = state.boardCountries.find(c => c.name === name);
+  if (!country || state.eliminated.has(name)) return;
+  state.guessedCountry = country;
+  document.getElementById('confirmFlag').innerHTML = flagIconHtml(country);
+  document.getElementById('confirmText').textContent = `Is "${country.name}" the mystery country?`;
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+
+function cancelGuess() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  state.guessedCountry = null;
+}
+
+function confirmGuess() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  const guess = state.guessedCountry;
+  if (!guess) return;
+  state.gameOver = true;
+  if (guess.name === state.mysteryCountry.name) showWin(); else showLose();
+}
+
+function updateRemainingCount() {
+  const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name)).length;
+  document.getElementById('remainingCount').textContent = remaining;
+}
+
+// ── ACCORDION ─────────────────────────────────────────────────────────────────
+function renderAccordion() {
+  const acc = document.getElementById('accordion');
+  acc.innerHTML = '';
+  QUESTION_CATEGORIES.forEach(cat => {
+    const section = document.createElement('div');
+    section.className = 'accordion-section';
+    section.id = 'cat-' + cat.id;
+
+    const header = document.createElement('div');
+    header.className = 'accordion-header';
+    header.innerHTML = `<span class="accordion-title">${cat.label}</span><span class="accordion-arrow">▼</span>`;
+    header.onclick = () => toggleAccordion(cat.id);
+
+    const body = document.createElement('div');
+    body.className = 'accordion-body';
+    body.id = 'body-' + cat.id;
+
+    (state.selectedQuestions[cat.id] || []).forEach(q => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.id = 'chip-' + q.id;
+      chip.textContent = q.text;
+      chip.onclick = () => askQuestion(q);
+      body.appendChild(chip);
+    });
+
+    section.appendChild(header);
+    section.appendChild(body);
+    acc.appendChild(section);
+  });
+}
+
+function toggleAccordion(catId) {
+  document.getElementById('cat-' + catId).classList.toggle('open');
+}
+
+// ── QUESTION LOGIC ─────────────────────────────────────────────────────────────
+function matchesQuestion(country, q) {
+  if (q.fn) return q.fn(country);
+  const val = country[q.attr];
+  return Array.isArray(q.match) ? q.match.includes(val) : val === q.match;
+}
+
+function askQuestion(q) {
+  if (state.gameOver || state.askedQuestions.has(q.id) || state.questionsLeft <= 0) return;
+
+  state.askedQuestions.add(q.id);
+  state.questionsLeft--;
+  state.questionsUsed++;
+
+  const answer = matchesQuestion(state.mysteryCountry, q);
+
+  const chip = document.getElementById('chip-' + q.id);
+  if (chip) {
+    chip.classList.add('spent', answer ? 'yes' : 'no');
+    const indicator = answer
+      ? `<span class="chip-indicator-yes">✓</span> `
+      : `<span class="chip-indicator-no">✗</span> `;
+    chip.innerHTML = indicator + q.text;
+  }
+
+  playSound(answer ? 'yes' : 'no');
+
+  let eliminated = 0;
+  state.boardCountries.forEach(c => {
+    if (state.eliminated.has(c.name)) return;
+    if (matchesQuestion(c, q) !== answer) { eliminateTile(c.name); eliminated++; }
+  });
+
+  showElimToast(eliminated, answer);
+  renderCounter();
+  updateRemainingCount();
+
+  const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name));
+  if (remaining.length === 0) {
+    setTimeout(() => { alert("Something went wrong — starting a new game!"); resetGame(); }, 400);
+    return;
+  }
+
+  if (state.questionsLeft === 0 && !state.gameOver) {
+    setTimeout(showOutOfQuestions, 600);
+  }
+}
+
+function eliminateTile(name) {
+  state.eliminated.add(name);
+  const tile = document.getElementById('tile-' + name.replace(/\s/g,'_'));
+  if (tile) tile.classList.add('eliminated');
+}
+
+function showElimToast(count, answer) {
+  const toast = document.getElementById('elimToast');
+  toast.textContent = count === 0
+    ? (answer ? 'All remaining countries match — no eliminations.' : 'No countries matched — none eliminated.')
+    : `${count} countr${count === 1 ? 'y' : 'ies'} eliminated`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+function showOutOfQuestions() {
+  if (state.gameOver) return;
+  const toast = document.getElementById('elimToast');
+  toast.textContent = 'No questions left — click a tile to make your final guess!';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// ── WILDCARD ──────────────────────────────────────────────────────────────────
+function renderWildcard() {
+  const input = document.getElementById('wildcardInput');
+  const btn = document.getElementById('wildcardBtn');
+  document.getElementById('wildcardNote').textContent = state.wildcardUsed ? 'Used' : '1 remaining';
+  document.getElementById('wildcardUsedNotice').style.display = state.wildcardUsed ? 'block' : 'none';
+  document.getElementById('wildcardReasoning').style.display = 'none';
+  document.getElementById('wildcardError').style.display = 'none';
+  input.disabled = state.wildcardUsed;
+  btn.disabled = state.wildcardUsed;
+}
+
+async function submitWildcard() {
+  if (state.wildcardUsed || state.gameOver) return;
+  const input = document.getElementById('wildcardInput');
+  const question = input.value.trim();
+  if (!question) return;
+
+  const btn = document.getElementById('wildcardBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Asking…';
+  document.getElementById('wildcardError').style.display = 'none';
+
+  const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name)).map(c => c.name);
+
+  try {
+    const resp = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, countries: remaining })
+    });
+    if (!resp.ok) throw new Error('API error ' + resp.status);
+    const data = await resp.json();
+    if (!data.answer || !Array.isArray(data.countries_to_eliminate)) throw new Error('Unexpected response format');
+
+    state.wildcardUsed = true;
+    input.disabled = true;
+    document.getElementById('wildcardNote').textContent = 'Used';
+    document.getElementById('wildcardUsedNotice').style.display = 'block';
+
+    let eliminated = 0;
+    data.countries_to_eliminate.forEach(name => {
+      if (!state.eliminated.has(name)) { eliminateTile(name); eliminated++; }
+    });
+
+    if (Array.isArray(data.borderline)) {
+      data.borderline.forEach(name => {
+        state.borderline.add(name);
+        const tile = document.getElementById('tile-' + name.replace(/\s/g,'_'));
+        if (tile && !state.eliminated.has(name)) tile.classList.add('borderline');
+      });
+    }
+
+    if (data.reasoning) {
+      const r = document.getElementById('wildcardReasoning');
+      r.textContent = `AI: "${data.reasoning}"`;
+      r.style.display = 'block';
+    }
+
+    showElimToast(eliminated, data.answer === 'yes');
+    updateRemainingCount();
+    btn.innerHTML = 'Asked ✓';
+  } catch(err) {
+    state.wildcardUsed = false;
+    btn.disabled = false;
+    btn.innerHTML = 'Ask';
+    input.disabled = false;
+    const errEl = document.getElementById('wildcardError');
+    errEl.textContent = "Couldn't process that question — your wildcard has been returned, try again.";
+    errEl.style.display = 'block';
+  }
+}
+
+// ── WIN / LOSE ────────────────────────────────────────────────────────────────
+function showWin() {
+  const c = state.mysteryCountry;
+  document.getElementById('winFlag').innerHTML = flagIconHtml(c);
+  document.getElementById('winName').textContent = c.name;
+  document.getElementById('winQuestions').textContent = state.questionsUsed;
+  document.getElementById('winFact').textContent = c.fact;
+  playSound('win');
+  showModal('winModal');
+}
+
+function showLose() {
+  const c = state.mysteryCountry;
+  document.getElementById('loseFlag').innerHTML = flagIconHtml(c);
+  document.getElementById('loseName').textContent = c.name;
+  document.getElementById('loseSubtitle').textContent = `The mystery country was ${c.name}`;
+  document.getElementById('loseFact').textContent = c.fact;
+  playSound('lose');
+  showModal('loseModal');
+}
+
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ── ENTER KEY for wildcard ────────────────────────────────────────────────────
+document.getElementById('wildcardInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitWildcard(); }
+});
+
+// ── STARTUP ───────────────────────────────────────────────────────────────────
+preloadWorldAtlas();
+</script>
+</body>
+</html>
