@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guess Where? — Gaia Analytica</title>
-<link rel="icon" type="image/png" sizes="48x48" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -346,6 +345,7 @@
   .tile-front {
     background: white;
     border: 2px solid var(--cream-dark);
+    box-shadow: 0 0 8px rgba(212, 136, 42, 0.25);
     transition: border-color 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
@@ -359,6 +359,7 @@
   }
   .country-tile.eliminated .tile-front {
     border-color: var(--cream-dark);
+    box-shadow: none;
   }
 
   .tile-back {
@@ -996,7 +997,7 @@ const QUESTION_CATEGORIES = [
       { id: "q_g20",          text: "Is this country a member of the G20?",                      attr: "g20_member",         match: true      },
       { id: "q_nuclear",      text: "Does this country have nuclear power plants?",              attr: "nuclear_power",      match: true      },
       { id: "q_manyborders",  text: "Does this country share borders with 4 or more countries?", attr: "borders_count_tier", match: ["several","many"] },
-      { id: "q_verymany",     text: "Does this country share borders with 7 or more countries?", attr: "borders_count_tier", match: "many"    },
+      { id: "q_verymany",     text: "Does this country have 3 or fewer land borders?",          attr: "borders_count_tier", match: ["none","few"] },
       { id: "q_fewborders",   text: "Does this country have only 1–3 land borders?",             attr: "borders_count_tier", match: "few"     },
       { id: "q_noborders",    text: "Does this country share a border with no other countries?",  attr: "borders_count_tier", match: "none"    },
       { id: "q_nobloc",       text: "Is this country not a member of the EU, NATO, or G20?",     fn: c => !c.eu_member && !c.nato_member && !c.g20_member },
@@ -1030,12 +1031,12 @@ const QUESTION_CATEGORIES = [
       { id: "q_agri_export",     text: "Is agriculture a primary export?",                       attr: "primary_export",  match: "agriculture"   },
       { id: "q_services_export", text: "Are services (tourism, finance) a primary export?",      attr: "primary_export",  match: "services"      },
       { id: "q_minerals_export", text: "Are minerals a primary export?",                         attr: "primary_export",  match: "minerals"      },
-      { id: "q_mixed_export",    text: "Does this country export a diverse mix of products?",    attr: "primary_export",  match: "mixed"         },
+      { id: "q_mixed_export",    text: "Is this country's primary export a raw commodity — energy, minerals, or agriculture?", attr: "primary_export",  match: ["energy","minerals","agriculture"] },
       { id: "q_huge_area",       text: "Is this country larger than 2 million km²?",             attr: "area_tier",       match: "huge"          },
       { id: "q_large_area",      text: "Is this country between 500k and 2 million km²?",        attr: "area_tier",       match: "large"         },
       { id: "q_medium_area",     text: "Is this country between 100k and 500k km²?",             attr: "area_tier",       match: "medium"        },
       { id: "q_small_area",      text: "Is this country smaller than 100,000 km²?",              attr: "area_tier",       match: ["micro","small"]},
-      { id: "q_micro_area",      text: "Is this country tiny — under 1,000 km²?",                attr: "area_tier",       match: "micro"         },
+      { id: "q_micro_area",      text: "Is this country larger than 500,000 km²?",               attr: "area_tier",       match: ["large","huge"] },
       { id: "q_uppermid_income", text: "Is this an upper-middle income country?",                attr: "income_tier",     match: "upper-middle"  },
       { id: "q_lowinc_ec",       text: "Is this a low-income economy?",                          attr: "income_tier",     match: "low"           },
       { id: "q_highincec",       text: "Is this a high-income economy?",                         attr: "income_tier",     match: "high"          },
@@ -1109,24 +1110,42 @@ const QUESTION_CATEGORIES = [
     id: "curious",
     label: "✨ Curious Facts",
     questions: [
-      { id: "q_subsaharan",  text: "Is this country found below the Sahara in Africa?",          fn: c => c.continent === "Africa" && c.region !== "North Africa" },
-      { id: "q_northafrica", text: "Does this country sit in the great North African desert belt?", fn: c => c.region === "North Africa" },
-      { id: "q_middleeast",  text: "Is this country part of the Middle East?",                   fn: c => c.region === "Middle East" },
-      { id: "q_seasia",      text: "Is this country in tropical Southeast Asia?",                fn: c => c.region === "Southeast Asia" },
-      { id: "q_centralasia", text: "Is this country in the vast interior of Central Asia?",      fn: c => c.region === "Central Asia" },
-      { id: "q_eastasia",    text: "Is this country in East Asia?",                              fn: c => c.region === "East Asia" },
-      { id: "q_southasia",   text: "Is this country in South Asia — the Indian Subcontinent region?", fn: c => c.region === "South Asia" },
-      { id: "q_oceania",     text: "Is this country one of the nations of Oceania?",             fn: c => c.continent === "Oceania" },
-      { id: "q_southam",     text: "Is this country in South America?",                          fn: c => c.continent === "South America" },
-      { id: "q_noreurope",   text: "Is this a Nordic or Northern European country?",             fn: c => c.region === "Northern Europe" },
-      { id: "q_easteurope",  text: "Is this country in Eastern Europe?",                         fn: c => c.region === "Eastern Europe" },
-      { id: "q_southeurope", text: "Is this a Mediterranean or Southern European country?",      fn: c => c.region === "Southern Europe" },
-      { id: "q_westeurope",  text: "Is this country in Western Europe?",                         fn: c => c.region === "Western Europe" },
-      { id: "q_caribbean",   text: "Is this a Caribbean island nation?",                         fn: c => c.region === "Central America & Caribbean" && c.island_nation },
-      { id: "q_centralam",   text: "Is this country in Central America (on the mainland)?",      fn: c => c.region === "Central America & Caribbean" && !c.island_nation },
-      { id: "q_westaf",      text: "Is this country on the West African coast?",                 fn: c => c.region === "West Africa" },
-      { id: "q_eastaf",      text: "Is this country in East Africa?",                            fn: c => c.region === "East Africa" },
-      { id: "q_southaf",     text: "Is this country in Southern Africa?",                        fn: c => c.region === "Southern Africa" },
+      { id: "q_cf_equator",    text: "Does the equator pass directly through this country?",
+        fn: c => ["Brazil","Colombia","Ecuador","Kenya","Indonesia","Democratic Republic of Congo"].includes(c.name) },
+      { id: "q_cf_wc_winner", text: "Has this country ever won the FIFA World Cup?",
+        fn: c => ["Brazil","Argentina","France","Germany","Italy","Spain","Uruguay"].includes(c.name) },
+      { id: "q_cf_midnight",  text: "Does this country experience the midnight sun — weeks when the sun never fully sets?",
+        fn: c => ["Norway","Sweden","Finland","Iceland","Canada","Russia"].includes(c.name) },
+      { id: "q_cf_top10area", text: "Is this country one of the ten largest nations on Earth by land area?",
+        fn: c => ["Russia","Canada","United States","China","Brazil","Australia","India","Argentina","Kazakhstan","Algeria"].includes(c.name) },
+      { id: "q_cf_amazon",    text: "Does this country contain part of the Amazon rainforest?",
+        fn: c => ["Brazil","Colombia","Ecuador","Peru","Venezuela","Bolivia"].includes(c.name) },
+      { id: "q_cf_ringfire",  text: "Is this country located on the Pacific Ring of Fire — the great belt of volcanoes and earthquakes surrounding the Pacific?",
+        fn: c => ["Japan","Philippines","Indonesia","Papua New Guinea","New Zealand","Chile","Peru","Ecuador","Colombia","Mexico","United States","Canada","Russia"].includes(c.name) },
+      { id: "q_cf_wine",      text: "Is this country among the world's top 10 wine-producing nations?",
+        fn: c => ["Italy","Spain","France","United States","Argentina","Chile","Australia","Germany","South Africa","China"].includes(c.name) },
+      { id: "q_cf_spanish",   text: "Is Spanish an official language of this country?",
+        fn: c => ["Mexico","Colombia","Venezuela","Peru","Chile","Ecuador","Bolivia","Paraguay","Uruguay","Argentina","Cuba","Guatemala","Spain"].includes(c.name) },
+      { id: "q_cf_french",    text: "Is French an official language of this country?",
+        fn: c => ["France","Belgium","Switzerland","Canada","Ivory Coast","Senegal","Cameroon","Democratic Republic of Congo","Madagascar"].includes(c.name) },
+      { id: "q_cf_wc_host",   text: "Has this country hosted the FIFA World Cup?",
+        fn: c => ["Brazil","Mexico","Argentina","Uruguay","Chile","Italy","France","Germany","Spain","United States","Japan","South Korea","Russia","South Africa"].includes(c.name) },
+      { id: "q_cf_un1945",    text: "Was this country one of the original 51 founding members of the United Nations in 1945?",
+        fn: c => ["Argentina","Australia","Belgium","Bolivia","Brazil","Canada","Chile","Colombia","Cuba","Denmark","Ecuador","Egypt","Ethiopia","France","Greece","Guatemala","India","Iran","Iraq","Lebanon","Mexico","Netherlands","New Zealand","Norway","Paraguay","Peru","Philippines","Poland","Saudi Arabia","South Africa","Turkey","Ukraine","United Kingdom","United States","Uruguay","Venezuela"].includes(c.name) },
+      { id: "q_cf_femaleHoS", text: "Has this country ever had a female head of state or head of government?",
+        fn: c => ["United Kingdom","Germany","Australia","New Zealand","Canada","Norway","Denmark","Iceland","Finland","Sweden","Ireland","Israel","India","Pakistan","Bangladesh","Indonesia","Philippines","Sri Lanka","South Korea","Brazil","Argentina","Chile","Bolivia","Switzerland","Croatia","Serbia","Jamaica","Poland","Nicaragua"].includes(c.name) },
+      { id: "q_cf_megadiverse",text: "Is this country one of the 17 officially recognized 'megadiverse' nations — home to the greatest share of Earth's species?",
+        fn: c => ["Brazil","Colombia","Indonesia","China","India","Mexico","Peru","Ecuador","Venezuela","Papua New Guinea","United States","Australia","Philippines","Malaysia","Democratic Republic of Congo","Madagascar","South Africa"].includes(c.name) },
+      { id: "q_cf_tea",        text: "Is this country one of the world's top five tea-producing nations?",
+        fn: c => ["China","India","Kenya","Sri Lanka","Turkey"].includes(c.name) },
+      { id: "q_cf_silkroad",   text: "Did this country lie along the ancient Silk Road — the trade routes connecting China to the Mediterranean world?",
+        fn: c => ["China","Kazakhstan","Uzbekistan","Iran","Iraq","Turkey","Afghanistan","India","Pakistan","Egypt","Italy","Greece","Jordan","Lebanon"].includes(c.name) },
+      { id: "q_cf_newcapital", text: "Did this country build an entirely new capital city from scratch in the 20th or 21st century?",
+        fn: c => ["Brazil","Pakistan","Myanmar","Kazakhstan","Nigeria","Tanzania"].includes(c.name) },
+      { id: "q_cf_peak3k",     text: "Does this country have a mountain peak rising above 3,000 metres — higher than any summit in the British Isles?",
+        fn: c => ["Russia","China","India","Nepal","Pakistan","Kazakhstan","Uzbekistan","Afghanistan","Iran","Turkey","Japan","Myanmar","Argentina","Bolivia","Peru","Chile","Ecuador","Colombia","Venezuela","Mexico","Guatemala","Morocco","Algeria","Ethiopia","Tanzania","Kenya","Democratic Republic of Congo","South Africa","France","Italy","Spain","Switzerland","Austria"].includes(c.name) },
+      { id: "q_cf_tropical",   text: "Is this country located entirely within the tropical zone — between the Tropic of Cancer and the Tropic of Capricorn?",
+        fn: c => ["Colombia","Ecuador","Peru","Bolivia","Venezuela","Cuba","Jamaica","Guatemala","Ghana","Ivory Coast","Nigeria","Senegal","Cameroon","Democratic Republic of Congo","Angola","Tanzania","Kenya","Ethiopia","Sudan","Zimbabwe","Zambia","Thailand","Vietnam","Cambodia","Laos","Philippines","Malaysia","Indonesia","Sri Lanka","Papua New Guinea","Fiji"].includes(c.name) },
     ]
   }
 ];
@@ -1543,16 +1562,17 @@ async function submitWildcard() {
   document.getElementById('wildcardError').style.display = 'none';
 
   const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name)).map(c => c.name);
+  const mysteryCountry = state.mysteryCountry.name;
 
   try {
     const resp = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, countries: remaining })
+      body: JSON.stringify({ question, mysteryCountry, remainingCountries: remaining })
     });
     if (!resp.ok) throw new Error('API error ' + resp.status);
     const data = await resp.json();
-    if (!data.answer || !Array.isArray(data.countries_to_eliminate)) throw new Error('Unexpected response format');
+    if (!Array.isArray(data.countries_to_eliminate)) throw new Error('Unexpected response format');
 
     state.wildcardUsed = true;
     input.disabled = true;
@@ -1578,7 +1598,7 @@ async function submitWildcard() {
       r.style.display = 'block';
     }
 
-    showElimToast(eliminated, data.answer === 'yes');
+    showElimToast(eliminated, eliminated > 0);
     updateRemainingCount();
     btn.innerHTML = 'Asked ✓';
   } catch(err) {
