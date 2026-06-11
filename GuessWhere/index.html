@@ -308,6 +308,59 @@
   .remaining-count { font-size: 0.8rem; color: var(--brown-light); }
   .remaining-count span { font-weight: 600; color: var(--forest); }
 
+  /* ── RECORD SCOREBOARD ── */
+  .record-trigger {
+    position: relative;
+    font-size: 0.75rem;
+    color: var(--amber);
+    cursor: pointer;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .record-card {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 200px;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 16px rgba(92,61,46,0.15);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  .record-trigger:hover .record-card {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .record-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--brown);
+    margin-bottom: 8px;
+  }
+  .record-divider { border: none; border-top: 1px solid var(--cream-dark); margin-bottom: 10px; }
+  .record-stats { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; }
+  .record-row { display: flex; justify-content: space-between; }
+  .record-label { color: var(--brown-light); }
+  .record-value { font-family: 'Playfair Display', serif; font-weight: 600; color: var(--brown); }
+  .record-empty { font-size: 0.78rem; color: var(--brown-light); font-style: italic; margin-bottom: 8px; }
+  .record-reset {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--brown-light);
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.7;
+  }
+  .record-reset:hover { opacity: 1; }
+  .record-reset.disabled { pointer-events: none; opacity: 0.35; cursor: default; }
+
   /* ── COUNTRY GRID ── */
   .country-grid {
     display: grid;
@@ -784,7 +837,20 @@
 
   <div class="right-panel">
     <div class="board-header">
-      <div class="board-title">The Board</div>
+      <div class="record-trigger" id="recordTrigger">📊 My Record
+        <div class="record-card" id="recordCard">
+          <div class="record-card-title">🏆 My Record</div>
+          <hr class="record-divider">
+          <div id="recordStats" class="record-stats">
+            <div class="record-row"><span class="record-label">Played</span><span class="record-value" id="recPlayed">0</span></div>
+            <div class="record-row"><span class="record-label">Won</span><span class="record-value" id="recWon">0</span></div>
+            <div class="record-row"><span class="record-label">Lost</span><span class="record-value" id="recLost">0</span></div>
+            <div class="record-row"><span class="record-label">Win Rate</span><span class="record-value" id="recRate">0%</span></div>
+          </div>
+          <div id="recordEmpty" class="record-empty" style="display:none">No games yet — start playing!</div>
+          <div class="record-reset" id="recordReset">Reset</div>
+        </div>
+      </div>
       <div class="remaining-count"><span id="remainingCount">24</span> countries remaining</div>
     </div>
     <div class="country-grid" id="countryGrid"></div>
@@ -1165,6 +1231,7 @@ let state = {
   guessedCountry: null,
   sessionFirstGame: true,
   gameOver: false,
+  recordUpdated: false,
   selectedQuestions: {}
 };
 
@@ -1181,6 +1248,7 @@ function initGame() {
   state.borderline = new Set();
   state.guessedCountry = null;
   state.gameOver = false;
+  state.recordUpdated = false;
 
   // Randomly select QUESTIONS_PER_GAME questions from each category pool
   state.selectedQuestions = {};
@@ -1619,6 +1687,7 @@ function showWin() {
   document.getElementById('winName').textContent = c.name;
   document.getElementById('winQuestions').textContent = state.questionsUsed;
   document.getElementById('winFact').textContent = c.fact;
+  if (!state.recordUpdated) { updateRecord(true); state.recordUpdated = true; }
   playSound('win');
   showModal('winModal');
 }
@@ -1629,6 +1698,7 @@ function showLose() {
   document.getElementById('loseName').textContent = c.name;
   document.getElementById('loseSubtitle').textContent = `The mystery country was ${c.name}`;
   document.getElementById('loseFact').textContent = c.fact;
+  if (!state.recordUpdated) { updateRecord(false); state.recordUpdated = true; }
   playSound('lose');
   showModal('loseModal');
 }
@@ -1640,6 +1710,56 @@ function hideModal(id) { document.getElementById(id).classList.remove('show'); }
 document.getElementById('wildcardInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitWildcard(); }
 });
+
+// ── RECORD SCOREBOARD ────────────────────────────────────────────────────────
+const REC_KEY = 'gw_rec';
+
+function loadRecord() {
+  try {
+    const stored = localStorage.getItem(REC_KEY);
+    if (!stored) return null;
+    return JSON.parse(atob(stored));
+  } catch(e) { return null; }
+}
+
+function saveRecord(data) {
+  try { localStorage.setItem(REC_KEY, btoa(JSON.stringify(data))); } catch(e) {}
+}
+
+function renderRecord() {
+  const data = loadRecord();
+  const hasGames = data && data.played > 0;
+  document.getElementById('recordStats').style.display = hasGames ? 'flex' : 'none';
+  document.getElementById('recordEmpty').style.display = hasGames ? 'none' : 'block';
+  const resetEl = document.getElementById('recordReset');
+  if (hasGames) {
+    resetEl.classList.remove('disabled');
+    document.getElementById('recPlayed').textContent = data.played;
+    document.getElementById('recWon').textContent = data.won;
+    document.getElementById('recLost').textContent = data.lost;
+    document.getElementById('recRate').textContent = data.winRate + '%';
+  } else {
+    resetEl.classList.add('disabled');
+  }
+}
+
+function updateRecord(won) {
+  const data = loadRecord() || { played: 0, won: 0, lost: 0, winRate: 0 };
+  data.played++;
+  if (won) data.won++; else data.lost++;
+  data.winRate = Math.round(data.won / data.played * 100);
+  saveRecord(data);
+  renderRecord();
+}
+
+document.getElementById('recordReset').addEventListener('click', e => {
+  e.stopPropagation();
+  if (!confirm('Reset your record? This cannot be undone.')) return;
+  try { localStorage.removeItem(REC_KEY); } catch(e) {}
+  renderRecord();
+});
+
+renderRecord();
 
 // ── STARTUP ───────────────────────────────────────────────────────────────────
 preloadWorldAtlas();
