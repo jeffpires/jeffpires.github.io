@@ -33,7 +33,9 @@
     background-image:
       radial-gradient(ellipse at 20% 50%, rgba(27,79,114,0.04) 0%, transparent 60%),
       radial-gradient(ellipse at 80% 20%, rgba(29,106,74,0.04) 0%, transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cpath d='M0%2C180 C40%2C165 80%2C195 120%2C178 C160%2C161 200%2C190 240%2C174 C280%2C158 310%2C178 320%2C172' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C220 C50%2C200 90%2C235 130%2C215 C170%2C195 210%2C228 250%2C210 C290%2C192 310%2C215 320%2C208' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C260 C45%2C242 85%2C270 125%2C252 C165%2C234 205%2C265 245%2C248 C285%2C231 308%2C252 320%2C246' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C300 C55%2C278 95%2C308 135%2C289 C175%2C270 215%2C300 255%2C283 C295%2C266 310%2C288 320%2C282' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C140 C35%2C128 75%2C152 115%2C138 C155%2C124 195%2C148 235%2C134 C275%2C120 305%2C140 320%2C135' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.07'/%3E%3Cpath d='M0%2C100 C60%2C88 100%2C112 140%2C97 C180%2C82 220%2C106 260%2C92 C300%2C78 312%2C96 320%2C91' fill='none' stroke='%235C3D2E' stroke-width='0.6' opacity='0.06'/%3E%3Cpath d='M0%2C60 C50%2C50 90%2C68 130%2C55 C170%2C42 210%2C62 250%2C50 C290%2C38 308%2C55 320%2C50' fill='none' stroke='%235C3D2E' stroke-width='0.6' opacity='0.05'/%3E%3C/svg%3E");
+    background-size: auto, auto, 400px 400px, 320px 320px;
     font-family: 'Inter', sans-serif;
     color: var(--brown);
     min-height: 100vh;
@@ -52,7 +54,9 @@
     min-width: 340px;
     flex-shrink: 0;
     padding: 28px 24px;
-    border-right: 2px solid var(--cream-dark);
+    border-right: 2px solid #D6C5A8;
+    background-color: #EEE0C0;
+    box-shadow: inset -6px 0 18px rgba(92,61,46,0.07), inset 0 -8px 16px rgba(92,61,46,0.04);
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -1126,7 +1130,7 @@ const QUESTION_CATEGORIES = [
         fn: c => ["India","Pakistan","Bangladesh","Sri Lanka","Australia","New Zealand","Canada",
                   "South Africa","Kenya","Tanzania","Ghana","Nigeria","Zimbabwe","Zambia",
                   "Malaysia","Jamaica","Papua New Guinea","Sudan","Jordan","Iraq","Fiji",
-                  "Myanmar","Ireland","Egypt"].includes(c.name) },
+                  "Myanmar","Ireland","Egypt","United States"].includes(c.name) },
       { id: "q_spanish_empire",      text: "Was this country once a Spanish colony?",
         fn: c => ["Mexico","Colombia","Peru","Chile","Bolivia","Venezuela","Argentina","Ecuador",
                   "Paraguay","Uruguay","Guatemala","Cuba","Philippines"].includes(c.name) },
