@@ -192,6 +192,38 @@
   }
   .elim-toast.show { opacity: 1; transform: translateY(0); }
 
+  /* ── ANSWER LOG ── */
+  .answer-log {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .log-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--cream-dark);
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    color: var(--brown);
+  }
+  .log-icon {
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .log-yes { color: #2D6A4F; }
+  .log-no  { color: #C0392B; }
+  .log-text { flex: 1; }
+  .log-elim {
+    font-size: 0.72rem;
+    color: var(--brown-light);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   /* ── ACCORDION ── */
   .accordion { display: flex; flex-direction: column; gap: 8px; }
   .accordion-section { border: 1.5px solid var(--cream-dark); border-radius: 10px; overflow: hidden; }
@@ -857,6 +889,7 @@
       <div class="remaining-count"><span id="remainingCount">24</span> countries remaining</div>
     </div>
     <div class="country-grid" id="countryGrid"></div>
+    <div class="answer-log" id="answerLog"></div>
   </div>
 </div>
 
@@ -1255,7 +1288,8 @@ let state = {
   sessionFirstGame: true,
   gameOver: false,
   recordUpdated: false,
-  selectedQuestions: {}
+  selectedQuestions: {},
+  answerLog: []
 };
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
@@ -1272,6 +1306,7 @@ function initGame() {
   state.guessedCountry = null;
   state.gameOver = false;
   state.recordUpdated = false;
+  state.answerLog = [];
 
   // Randomly select QUESTIONS_PER_GAME questions from each category pool
   state.selectedQuestions = {};
@@ -1285,6 +1320,7 @@ function initGame() {
   renderCounter();
   renderWildcard();
   updateRemainingCount();
+  renderAnswerLog();
 }
 
 function dismissIntro() {
@@ -1585,10 +1621,14 @@ function askQuestion(q) {
     if (matchesQuestion(c, q) !== answer) { eliminateTile(c.name); eliminated++; }
   });
 
+  state.answerLog.push({ text: q.text, answer, eliminated });
+  if (chip) chip.style.display = 'none';
+
   playSound(eliminated === 0 ? 'icq' : (answer ? 'yes' : 'no'));
   showElimToast(eliminated, answer);
   renderCounter();
   updateRemainingCount();
+  renderAnswerLog();
 
   const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name));
   if (remaining.length === 0) {
@@ -1613,7 +1653,7 @@ function showElimToast(count, answer) {
     ? (answer ? 'All remaining countries match — no eliminations.' : 'No countries matched — none eliminated.')
     : `${count} countr${count === 1 ? 'y' : 'ies'} eliminated`;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2800);
+  setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 function showOutOfQuestions() {
@@ -1622,6 +1662,24 @@ function showOutOfQuestions() {
   toast.textContent = 'No questions left — click a tile to make your final guess!';
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+function renderAnswerLog() {
+  const log = document.getElementById('answerLog');
+  if (!log) return;
+  if (state.answerLog.length === 0) {
+    log.innerHTML = '';
+    return;
+  }
+  log.innerHTML = state.answerLog.map(entry => {
+    const icon = entry.answer
+      ? '<span class="log-icon log-yes">✓</span>'
+      : '<span class="log-icon log-no">✗</span>';
+    const elim = entry.eliminated === 0
+      ? '<span class="log-elim">0 eliminated</span>'
+      : `<span class="log-elim">${entry.eliminated} eliminated</span>`;
+    return `<div class="log-entry">${icon}<span class="log-text">${entry.text}</span>${elim}</div>`;
+  }).join('');
 }
 
 // ── WILDCARD ──────────────────────────────────────────────────────────────────
