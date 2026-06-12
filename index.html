@@ -3,1792 +3,240 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guess Where? — Gaia Analytica</title>
+<meta name="description" content="Practical geospatial solutions for informed action. GIS, data visualization and humanitarian mapping.">
+<meta property="og:title" content="Gaia Analytica">
+<meta property="og:description" content="Practical geospatial solutions for informed action.">
+<meta property="og:url" content="https://gaiaanalytica.ch">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gaiaanalytica.ch/og-image.jpg">
+<title>Gaia Analytica</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Raleway:wght@200;300&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --cream: #F5ECD7;
-    --cream-dark: #EDE0C4;
-    --ocean: #1B4F72;
-    --ocean-light: #2471A3;
-    --forest: #1D6A4A;
-    --amber: #D4882A;
-    --amber-light: #E8A040;
-    --brown: #5C3D2E;
-    --brown-light: #7A5240;
-    --yes-bg: #FFF3CD;
-    --yes-border: #D4882A;
-    --no-bg: #D6E4F0;
-    --no-border: #2471A3;
-    --spent-opacity: 0.45;
-  }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #090f0b; }
+canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+.vignette {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 30%,
+    rgba(9,15,11,0.5) 65%,
+    rgba(9,15,11,0.85) 100%);
+}
 
-  body {
-    background-color: var(--cream);
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(27,79,114,0.04) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 20%, rgba(29,106,74,0.04) 0%, transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cpath d='M0%2C180 C40%2C165 80%2C195 120%2C178 C160%2C161 200%2C190 240%2C174 C280%2C158 310%2C178 320%2C172' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C220 C50%2C200 90%2C235 130%2C215 C170%2C195 210%2C228 250%2C210 C290%2C192 310%2C215 320%2C208' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C260 C45%2C242 85%2C270 125%2C252 C165%2C234 205%2C265 245%2C248 C285%2C231 308%2C252 320%2C246' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C300 C55%2C278 95%2C308 135%2C289 C175%2C270 215%2C300 255%2C283 C295%2C266 310%2C288 320%2C282' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.09'/%3E%3Cpath d='M0%2C140 C35%2C128 75%2C152 115%2C138 C155%2C124 195%2C148 235%2C134 C275%2C120 305%2C140 320%2C135' fill='none' stroke='%235C3D2E' stroke-width='0.7' opacity='0.07'/%3E%3Cpath d='M0%2C100 C60%2C88 100%2C112 140%2C97 C180%2C82 220%2C106 260%2C92 C300%2C78 312%2C96 320%2C91' fill='none' stroke='%235C3D2E' stroke-width='0.6' opacity='0.06'/%3E%3Cpath d='M0%2C60 C50%2C50 90%2C68 130%2C55 C170%2C42 210%2C62 250%2C50 C290%2C38 308%2C55 320%2C50' fill='none' stroke='%235C3D2E' stroke-width='0.6' opacity='0.05'/%3E%3C/svg%3E");
-    background-size: auto, auto, 400px 400px, 320px 320px;
-    font-family: 'Inter', sans-serif;
-    color: var(--brown);
-    min-height: 100vh;
-  }
+.overlay {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
 
-  /* ── LAYOUT ── */
-  .game-wrapper {
-    display: flex;
-    min-height: 100vh;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+.site-name {
+  font-family: 'Cinzel', serif;
+  font-weight: 300;
+  font-size: clamp(2.2rem, 5.5vw, 5rem);
+  letter-spacing: 0.25em;
+  color: rgba(225, 215, 190, 0.95);
+  text-shadow: 0 2px 40px rgba(90, 130, 70, 0.4);
+  text-transform: uppercase;
+  text-align: center;
+}
 
-  .left-panel {
-    width: 380px;
-    min-width: 340px;
-    flex-shrink: 0;
-    padding: 28px 24px;
-    border-right: 2px solid #D6C5A8;
-    background-color: #EEE0C0;
-    box-shadow: inset -6px 0 18px rgba(92,61,46,0.07), inset 0 -8px 16px rgba(92,61,46,0.04);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
-    max-height: 100vh;
-    position: sticky;
-    top: 0;
-  }
+.rule {
+  display: flex; align-items: center; gap: 1.2rem;
+  margin: 1.8rem 0;
+}
+.rule-line {
+  width: 60px; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(130,165,90,0.55));
+}
+.rule-line.r { transform: scaleX(-1); }
+.rule-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(130, 165, 90, 0.7);
+  transition: transform 0.6s ease-out, opacity 0.6s ease-out, box-shadow 0.3s ease-out;
+}
 
-  .right-panel {
-    flex: 1;
-    padding: 28px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
-    max-height: 100vh;
-  }
+.tagline {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.85rem, 1.6vw, 1.2rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(210, 200, 170, 0.85);
+  text-align: center;
+  text-shadow: 0 0 80px rgba(180, 160, 100, 0.15);
+  /* max-width: 38ch;  
+  margin-inline: auto;
+  line-height: 1.9; */
+}
 
-  /* ── HEADER ── */
-  .game-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--ocean);
-    line-height: 1.1;
-    letter-spacing: -0.5px;
-  }
-  .game-subtitle {
-    font-size: 0.78rem;
-    color: var(--brown-light);
-    margin-top: 2px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    display: block;
-    min-height: 28px;
-  }
+.coming-soon {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: clamp(0.5rem, 0.8vw, 0.65rem);
+  letter-spacing: 0.75em;
+  text-transform: uppercase;
+  color: rgba(95, 125, 70, 0.65);
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(100, 140, 75, 0.2);
+}
 
-  .subtitle-static {
-    /* warm cartographic — inherits parent styling, never changes */
-  }
-
-  .subtitle-portal {
-    cursor: pointer;
-    display: inline;
-    position: relative;
-    padding: 2px 5px;
-    border-radius: 4px;
-    overflow: hidden;
-    transition: color 700ms ease-in-out, background-color 700ms ease-in-out,
-                box-shadow 700ms ease-in-out, letter-spacing 700ms ease-in-out;
-  }
-
-  .subtitle-portal::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0,8 Q40,4 80,8 T160,8' stroke='%232D6A4F' stroke-width='0.55' fill='none' opacity='0.75'/%3E%3Cpath d='M-10,18 Q30,14 70,18 T150,18' stroke='%231D6A4A' stroke-width='0.5' fill='none' opacity='0.6'/%3E%3Cpath d='M0,28 Q40,25 80,28 T160,28' stroke='%232D6A4F' stroke-width='0.65' fill='none' opacity='0.8'/%3E%3Cpath d='M-10,38 Q30,35 70,38 T150,38' stroke='%231D6A4A' stroke-width='0.45' fill='none' opacity='0.55'/%3E%3Cpath d='M0,48 Q40,45 80,48 T160,48' stroke='%232D6A4F' stroke-width='0.55' fill='none' opacity='0.7'/%3E%3Cpath d='M-10,58 Q30,55 70,58 T150,58' stroke='%231D6A4A' stroke-width='0.4' fill='none' opacity='0.5'/%3E%3C/svg%3E");
-    background-size: 120px 60px;
-    background-repeat: repeat;
-    opacity: 0;
-    transition: opacity 700ms ease-in-out;
-    animation: topoScroll 14s linear infinite;
-    pointer-events: none;
-  }
-
-  @keyframes topoScroll {
-    from { background-position: 0 0; }
-    to   { background-position: 120px 60px; }
-  }
-
-  .subtitle-portal:hover {
-    color: #F0E8D0;
-    background-color: rgba(4, 16, 9, 0.93);
-    box-shadow: 0 0 20px rgba(29,106,74,0.55), inset 0 0 8px rgba(29,106,74,0.25);
-    letter-spacing: 0.09em;
-    font-family: 'Cinzel', 'Playfair Display', serif;
-  }
-
-  .subtitle-portal:hover::before {
-    opacity: 1;
-  }
-
-  .title-question {
-    color: var(--amber);
-    display: inline-block;
-    transition: transform 400ms ease-in-out;
-  }
-
-  .game-title:hover .title-question {
-    transform: rotate(8deg);
-  }
-
-  /* ── QUESTIONS COUNTER ── */
-  .questions-counter {
-    background: var(--ocean);
-    color: white;
-    border-radius: 12px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .counter-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; }
-  .counter-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.9rem;
-    font-weight: 700;
-    transition: color 0.4s;
-  }
-  .counter-pips { display: flex; gap: 5px; align-items: center; }
-  .counter-pip {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    transition: background 0.3s;
-  }
-  .counter-pip.used { background: var(--amber); }
-  .counter-value.urgent { color: #FF8C69; }
-
-  /* ── ELIMINATION TOAST ── */
-  .elim-toast {
-    background: var(--forest);
-    color: white;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(-6px);
-    transition: opacity 0.3s, transform 0.3s;
-    pointer-events: none;
-  }
-  .elim-toast.show { opacity: 1; transform: translateY(0); }
-
-  /* ── ACCORDION ── */
-  .accordion { display: flex; flex-direction: column; gap: 8px; }
-  .accordion-section { border: 1.5px solid var(--cream-dark); border-radius: 10px; overflow: hidden; }
-  .accordion-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 11px 14px;
-    cursor: pointer;
-    background: var(--cream-dark);
-    user-select: none;
-    transition: background 0.15s;
-  }
-  .accordion-header:hover { background: #E5D6BC; }
-  .accordion-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--ocean);
-  }
-  .accordion-arrow {
-    font-size: 0.75rem;
-    color: var(--brown-light);
-    transition: transform 0.25s;
-  }
-  .accordion-section.open .accordion-arrow { transform: rotate(180deg); }
-  .accordion-body {
-    display: none;
-    padding: 12px;
-    background: white;
-    flex-wrap: wrap;
-    gap: 7px;
-  }
-  .accordion-section.open .accordion-body { display: flex; }
-
-  /* ── QUESTION CHIPS ── */
-  .chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 6px 11px;
-    border-radius: 20px;
-    font-size: 0.78rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1.5px solid var(--cream-dark);
-    background: var(--cream);
-    color: var(--brown);
-    transition: all 0.15s;
-    user-select: none;
-    line-height: 1.3;
-  }
-  .chip:hover:not(.spent) { border-color: var(--amber); background: #FFF8EE; transform: translateY(-1px); box-shadow: 0 2px 6px rgba(92,61,46,0.1); }
-  .chip.yes { background: var(--yes-bg); border-color: var(--yes-border); color: var(--brown); }
-  .chip.no  { background: var(--no-bg);  border-color: var(--no-border);  color: var(--ocean); }
-  .chip.spent { opacity: var(--spent-opacity); cursor: default; pointer-events: none; }
-
-  /* ── WILDCARD SECTION ── */
-  .wildcard-section {
-    border: 2px solid var(--amber);
-    border-radius: 12px;
-    padding: 16px;
-    background: linear-gradient(135deg, #FFF8EE, #FFF3DC);
-  }
-  .wildcard-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .wildcard-star { font-size: 1.2rem; }
-  .wildcard-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--amber);
-  }
-  .wildcard-note { font-size: 0.7rem; color: var(--brown-light); margin-left: auto; }
-  .wildcard-input-row { display: flex; gap: 8px; }
-  .wildcard-input {
-    flex: 1;
-    padding: 9px 12px;
-    border: 1.5px solid var(--amber);
-    border-radius: 8px;
-    background: white;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.83rem;
-    color: var(--brown);
-    outline: none;
-    transition: border-color 0.15s;
-    resize: none;
-    height: 58px;
-    line-height: 1.5;
-    overflow-y: hidden;
-    vertical-align: top;
-  }
-  .wildcard-input-row { align-items: flex-start; }
-  .wildcard-input:focus { border-color: var(--amber-light); }
-  .wildcard-input:disabled { opacity: 0.5; cursor: not-allowed; }
-  .wildcard-btn {
-    padding: 9px 14px;
-    background: var(--amber);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.83rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    transition: background 0.15s, transform 0.1s;
-  }
-  .wildcard-btn:hover:not(:disabled) { background: var(--amber-light); transform: translateY(-1px); }
-  .wildcard-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .wildcard-reasoning {
-    margin-top: 8px;
-    font-size: 0.78rem;
-    color: var(--forest);
-    font-style: italic;
-    display: none;
-  }
-  .wildcard-used-notice { font-size: 0.78rem; color: var(--brown-light); text-align: center; display: none; }
-  .wildcard-ai-notice { font-size: 0.68rem; color: var(--brown-light); margin-top: 6px; text-align: right; }
-
-  /* ── RIGHT PANEL HEADER ── */
-  .board-header { display: flex; align-items: center; justify-content: space-between; }
-  .board-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--brown); }
-  .remaining-count { font-size: 0.8rem; color: var(--brown-light); }
-  .remaining-count span { font-weight: 600; color: var(--forest); }
-
-  /* ── RECORD SCOREBOARD ── */
-  .record-trigger {
-    position: relative;
-    font-size: 0.75rem;
-    color: var(--amber);
-    cursor: pointer;
-    user-select: none;
-    flex-shrink: 0;
-  }
-  .record-card {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    width: 200px;
-    background: var(--cream);
-    border: 1px solid var(--cream-dark);
-    border-radius: 8px;
-    padding: 14px 16px;
-    box-shadow: 0 4px 16px rgba(92,61,46,0.15);
-    z-index: 200;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 200ms ease;
-  }
-  .record-card.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .record-card-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--brown);
-    margin-bottom: 8px;
-  }
-  .record-divider { border: none; border-top: 1px solid var(--cream-dark); margin-bottom: 10px; }
-  .record-stats { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; }
-  .record-row { display: flex; justify-content: space-between; }
-  .record-label { color: var(--brown-light); }
-  .record-value { font-family: 'Playfair Display', serif; font-weight: 600; color: var(--brown); }
-  .record-empty { font-size: 0.78rem; color: var(--brown-light); font-style: italic; margin-bottom: 8px; }
-  .record-reset {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 0.72rem;
-    color: var(--brown-light);
-    cursor: pointer;
-    text-decoration: underline;
-    opacity: 0.7;
-  }
-  .record-reset:hover { opacity: 1; }
-  .record-reset.disabled { pointer-events: none; opacity: 0.35; cursor: default; }
-
-  /* ── COUNTRY GRID ── */
-  .country-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-  }
-
-  .country-tile {
-    position: relative;
-    height: 130px;
-    cursor: pointer;
-    perspective: 800px;
-  }
-
-  .tile-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .country-tile.eliminated .tile-inner {
-    transform: rotateY(180deg);
-  }
-
-  .tile-front, .tile-back {
-    position: absolute;
-    inset: 0;
-    border-radius: 10px;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-
-  .tile-front {
-    background: white;
-    border: 2px solid var(--cream-dark);
-    box-shadow: 0 0 8px rgba(212, 136, 42, 0.25);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    overflow: hidden;
-  }
-  .tile-front:hover {
-    border-color: var(--amber);
-    box-shadow: 0 3px 10px rgba(212,136,42,0.2);
-    z-index: 1;
-  }
-  .country-tile.eliminated .tile-front {
-    border-color: var(--cream-dark);
-    box-shadow: none;
-  }
-
-  .tile-back {
-    background: var(--cream-dark);
-    border: 2px solid #D9CCBA;
-    transform: rotateY(180deg);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 5 L55 30 L30 55 L5 30Z' fill='none' stroke='%23C8B99A' stroke-width='1.5'/%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23C8B99A' stroke-width='1.5'/%3E%3C/svg%3E");
-    background-size: 40px;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  /* ── TILE CONTENT ── */
-  .tile-flag-corner {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    font-size: 1.28rem;
-    line-height: 1;
-    z-index: 1;
-    pointer-events: none;
-  }
-  .tile-flag-corner .fi {
-    display: inline-block;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-    border-radius: 2px;
-  }
-
-  .tile-svg-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 6px 2px;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .country-svg {
-    width: 100%;
-    height: 100%;
-    max-height: 92px;
-    overflow: visible;
-  }
-
-  .country-shape {
-    fill: url(#countryGrad);
-    stroke: #8E6340;
-    stroke-width: 0.9;
-    stroke-linejoin: round;
-    transition: fill 0.15s, stroke 0.15s;
-  }
-
-  .country-tile.eliminated .country-shape {
-    fill: url(#countryGradElim);
-    stroke: #A89888;
-  }
-
-  .tile-flag-fallback {
-    font-size: 2.2rem;
-    line-height: 1;
-    opacity: 0.85;
-  }
-
-  .tile-name {
-    font-size: 0.6rem;
-    font-weight: 600;
-    color: var(--brown);
-    text-align: center;
-    padding: 2px 4px 5px;
-    line-height: 1.2;
-    transition: color 0.15s;
-  }
-
-  .country-tile.eliminated .tile-name {
-    color: #A09585;
-  }
-
-  .tile-question-mark {
-    position: absolute;
-    top: 4px; right: 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--amber);
-    background: white;
-    border-radius: 50%;
-    width: 18px; height: 18px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    z-index: 2;
-  }
-  .country-tile.borderline .tile-question-mark { display: flex; }
-
-  /* ── FLOATING ATLAS TOOLTIP ── */
-  .floating-tooltip {
-    position: fixed;
-    z-index: 500;
-    width: 264px;
-    max-width: calc(100vw - 24px);
-    background: #FEFAF4;
-    border-radius: 14px;
-    padding: 14px 16px;
-    box-shadow: 0 8px 32px rgba(27,79,114,0.18), 0 2px 8px rgba(27,79,114,0.08);
-    border: 1px solid var(--cream-dark);
-    pointer-events: none;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.18s ease, transform 0.18s ease;
-  }
-  .floating-tooltip.visible {
-    opacity: 1;
-    transform: translateY(0) !important;
-  }
-
-  .atlas-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--ocean);
-    line-height: 1.2;
-  }
-  .atlas-region {
-    font-size: 0.67rem;
-    color: var(--brown-light);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 2px;
-    margin-bottom: 8px;
-  }
-  .atlas-rule {
-    height: 2px;
-    background: linear-gradient(to right, var(--amber), rgba(212,136,42,0.08));
-    border-radius: 1px;
-    margin-bottom: 10px;
-  }
-  .atlas-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 10px;
-  }
-  .badge {
-    background: rgba(245,236,215,0.85);
-    border: 1px solid var(--cream-dark);
-    border-radius: 10px;
-    padding: 2px 7px;
-    font-size: 0.67rem;
-    font-weight: 500;
-    color: var(--brown);
-    line-height: 1.4;
-    white-space: nowrap;
-  }
-  .atlas-fact {
-    font-style: italic;
-    font-size: 0.7rem;
-    line-height: 1.55;
-    color: var(--brown-light);
-    border-top: 1px solid var(--cream-dark);
-    padding-top: 8px;
-    margin-top: 2px;
-  }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(27,79,114,0.5);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-  }
-  .modal-overlay.show { opacity: 1; pointer-events: all; }
-  .modal-box {
-    background: var(--cream);
-    border-radius: 18px;
-    padding: 36px 40px;
-    max-width: 480px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(27,79,114,0.25);
-    transform: translateY(16px);
-    transition: transform 0.3s;
-    text-align: center;
-  }
-  .modal-overlay.show .modal-box { transform: translateY(0); }
-  .modal-flag { font-size: 4rem; margin-bottom: 12px; }
-  .modal-title { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ocean); margin-bottom: 12px; }
-  .modal-subtitle { font-size: 0.9rem; color: var(--brown-light); margin-bottom: 20px; }
-  .modal-fact {
-    background: white;
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: var(--brown);
-    margin-bottom: 24px;
-    border-left: 3px solid var(--amber);
-    text-align: left;
-  }
-  .modal-stat { font-size: 0.82rem; color: var(--brown-light); margin-bottom: 20px; }
-  .modal-stat strong { color: var(--forest); }
-
-  .btn-primary {
-    display: inline-block;
-    padding: 12px 28px;
-    background: var(--ocean);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-  }
-  .btn-primary:hover { background: var(--ocean-light); transform: translateY(-1px); }
-
-  .btn-secondary {
-    display: inline-block;
-    padding: 10px 22px;
-    background: transparent;
-    color: var(--ocean);
-    border: 2px solid var(--ocean);
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-secondary:hover { background: var(--ocean); color: white; }
-
-  /* ── CONFIRM DIALOG ── */
-  .confirm-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(27,79,114,0.4);
-    backdrop-filter: blur(2px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
-  }
-  .confirm-overlay.show { opacity: 1; pointer-events: all; }
-  .confirm-box {
-    background: white;
-    border-radius: 14px;
-    padding: 28px 32px;
-    max-width: 360px;
-    width: 90%;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(27,79,114,0.2);
-    transform: scale(0.95);
-    transition: transform 0.2s;
-  }
-  .confirm-overlay.show .confirm-box { transform: scale(1); }
-  .confirm-flag { font-size: 2.5rem; margin-bottom: 10px; }
-  .confirm-text { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ocean); margin-bottom: 8px; }
-  .confirm-sub { font-size: 0.8rem; color: var(--brown-light); margin-bottom: 20px; }
-  .confirm-buttons { display: flex; gap: 10px; justify-content: center; }
-
-  /* WIN/LOSE */
-  .modal-win .modal-title { color: var(--forest); }
-  .modal-win-banner { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest); margin-bottom: 8px; }
-  .modal-lose-banner { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px; }
-
-  /* INTRO */
-  .intro-list { list-style: none; text-align: left; margin: 16px 0 24px; display: flex; flex-direction: column; gap: 10px; }
-  .intro-list li { display: flex; gap: 10px; font-size: 0.88rem; line-height: 1.5; color: var(--brown); }
-  .intro-list li span:first-child { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
-
-  /* SPINNER */
-  .spinner {
-    display: inline-block;
-    width: 14px; height: 14px;
-    border: 2px solid rgba(255,255,255,0.4);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 4px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .error-msg { font-size: 0.78rem; color: #C0392B; margin-top: 6px; display: none; }
-
-  .left-panel::-webkit-scrollbar { width: 4px; }
-  .left-panel::-webkit-scrollbar-track { background: transparent; }
-  .left-panel::-webkit-scrollbar-thumb { background: var(--cream-dark); border-radius: 4px; }
-
-  @media (max-width: 900px) {
-    .game-wrapper { flex-direction: column; }
-    .left-panel { width: 100%; max-height: none; position: static; border-right: none; border-bottom: 2px solid var(--cream-dark); }
-    .right-panel { max-height: none; overflow-y: visible; }
-    .country-grid { grid-template-columns: repeat(4, 1fr); }
-  }
-
-  /* ── CHIP ANSWER INDICATORS ── */
-  .chip-indicator-yes { color: #2D6A4F; font-weight: 700; }
-  .chip-indicator-no  { color: #C0392B; font-weight: 700; }
-
-  /* ── TOOLTIP FLAG ROW ── */
-  .atlas-name-row { display: flex; align-items: center; gap: 7px; margin-bottom: 2px; }
-  .atlas-tooltip-flag { display: inline-block; font-size: 1.35rem; line-height: 1; box-shadow: 0 1px 4px rgba(0,0,0,0.15); border-radius: 2px; }
+/* Subtle fade-in on load */
+.overlay { animation: fadeIn 2.5s ease forwards; opacity: 0; }
+@keyframes fadeIn { to { opacity: 1; } }
 </style>
 </head>
 <body>
 
-<!-- SVG gradient defs for country shape fills -->
-<svg aria-hidden="true" focusable="false" style="position:absolute;overflow:hidden;width:0;height:0">
-  <defs>
-    <linearGradient id="countryGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#D4B888"/>
-      <stop offset="100%" stop-color="#B89460"/>
-    </linearGradient>
-    <linearGradient id="countryGradElim" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#CECDCA"/>
-      <stop offset="100%" stop-color="#B5ADA5"/>
-    </linearGradient>
-  </defs>
-</svg>
+<canvas id="terrain"></canvas>
+<div class="vignette"></div>
 
-<!-- FLOATING ATLAS TOOLTIP -->
-<div class="floating-tooltip" id="floatingTooltip"></div>
+<div class="overlay">
+  <!-- ✏️ -->
+  <div class="site-name">Gaia Analytica</div>
 
-<!-- INTRO MODAL -->
-<div class="modal-overlay show" id="introModal">
-  <div class="modal-box">
-    <div class="modal-flag">🗺️</div>
-    <div class="modal-title">Guess Where<span class="title-question">?</span></div>
-    <div class="modal-subtitle">A geography deduction game by Gaia Analytica</div>
-    <ul class="intro-list">
-      <li><span>🌍</span><span>24 countries appear on the board. Try to identify which one is the mystery country.</span></li>
-      <li><span>❓</span><span>Select up to 10 yes/no questions from the various categories to eliminate possibilities. Choose wisely!</span></li>
-      <li><span>⭐</span><span>You have one wildcard: ask anything in your own words and our Gaia Analytica intern will try to answer.</span></li>
-      <li><span>🎯</span><span>When you're ready, click any country tile to make your final guess.</span></li>
-    </ul>
-    <button class="btn-primary" onclick="dismissIntro()">Let's Play</button>
+  <div class="rule">
+    <div class="rule-line"></div>
+    <div class="rule-dot"></div>
+    <div class="rule-line r"></div>
   </div>
+
+  <!-- ✏️ -->
+  <div class="tagline">Practical Geospatial Solutions<br>for Informed Action</div>
+
+  <!--
+  <div class="coming-soon">Coming Soon</div>
+  -->
+  
 </div>
 
-<!-- CONFIRM GUESS DIALOG -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <div class="confirm-flag" id="confirmFlag">🏳️</div>
-    <div class="confirm-text" id="confirmText">Is this your final answer?</div>
-    <div class="confirm-sub">This uses your final guess — you cannot change it.</div>
-    <div class="confirm-buttons">
-      <button class="btn-secondary" onclick="cancelGuess()">Not sure yet</button>
-      <button class="btn-primary" onclick="confirmGuess()">Yes, that's it!</button>
-    </div>
-  </div>
-</div>
-
-<!-- WIN MODAL -->
-<div class="modal-overlay" id="winModal">
-  <div class="modal-box modal-win">
-    <div class="modal-win-banner">Correct!</div>
-    <div class="modal-flag" id="winFlag">🏆</div>
-    <div class="modal-title" id="winName">Country Name</div>
-    <div class="modal-stat">You found it using <strong id="winQuestions">0</strong> questions</div>
-    <div class="modal-fact" id="winFact">Interesting fact here.</div>
-    <button class="btn-primary" onclick="resetGame()">Play Again</button>
-  </div>
-</div>
-
-<!-- LOSE MODAL -->
-<div class="modal-overlay" id="loseModal">
-  <div class="modal-box modal-lose">
-    <div class="modal-lose-banner">So close!</div>
-    <div class="modal-flag" id="loseFlag">🌐</div>
-    <div class="modal-title" id="loseName">Country Name</div>
-    <div class="modal-subtitle" id="loseSubtitle">The mystery country was…</div>
-    <div class="modal-fact" id="loseFact">Interesting fact here.</div>
-    <button class="btn-primary" onclick="resetGame()">Play Again</button>
-  </div>
-</div>
-
-<!-- MAIN LAYOUT -->
-<div class="game-wrapper">
-  <div class="left-panel">
-    <div>
-      <div class="game-title">Guess Where<span class="title-question">?</span></div>
-      <div class="game-subtitle">
-        <span class="subtitle-static">Geography Deduction · </span><span class="subtitle-portal" onclick="window.open('https://gaiaanalytica.ch','_blank','noopener,noreferrer')">Gaia Analytica</span>
-      </div>
-    </div>
-    <div class="questions-counter">
-      <div>
-        <div class="counter-label">Questions Left</div>
-        <div class="counter-value" id="counterValue">10</div>
-      </div>
-      <div class="counter-pips" id="counterPips"></div>
-    </div>
-    <div class="elim-toast" id="elimToast"></div>
-    <div class="wildcard-section">
-      <div class="wildcard-header">
-        <span class="wildcard-star">⭐</span>
-        <span class="wildcard-title">✨ Ask Anything</span>
-        <span class="wildcard-note" id="wildcardNote">1 remaining</span>
-      </div>
-      <div class="wildcard-input-row">
-        <textarea class="wildcard-input" id="wildcardInput" placeholder="Your one chance to ask anything about the mystery country..." maxlength="200"></textarea>
-        <button class="wildcard-btn" id="wildcardBtn" onclick="submitWildcard()">Ask</button>
-      </div>
-      <div class="error-msg" id="wildcardError"></div>
-      <div class="wildcard-reasoning" id="wildcardReasoning"></div>
-      <div class="wildcard-used-notice" id="wildcardUsedNotice">Wildcard used ✓</div>
-      <div class="wildcard-ai-notice">Your question is processed by AI</div>
-    </div>
-    <div class="accordion" id="accordion"></div>
-  </div>
-
-  <div class="right-panel">
-    <div class="board-header">
-      <div class="record-trigger" id="recordTrigger">📊 My Record
-        <div class="record-card" id="recordCard">
-          <div class="record-card-title">🏆 My Record</div>
-          <hr class="record-divider">
-          <div id="recordStats" class="record-stats">
-            <div class="record-row"><span class="record-label">Played</span><span class="record-value" id="recPlayed">0</span></div>
-            <div class="record-row"><span class="record-label">Won</span><span class="record-value" id="recWon">0</span></div>
-            <div class="record-row"><span class="record-label">Lost</span><span class="record-value" id="recLost">0</span></div>
-            <div class="record-row"><span class="record-label">Win Rate</span><span class="record-value" id="recRate">0%</span></div>
-          </div>
-          <div id="recordEmpty" class="record-empty" style="display:none">No games yet — start playing!</div>
-          <div class="record-reset" id="recordReset">Reset</div>
-        </div>
-      </div>
-      <div class="remaining-count"><span id="remainingCount">24</span> countries remaining</div>
-    </div>
-    <div class="country-grid" id="countryGrid"></div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-<script src="countries.js"></script>
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
-const WORKER_URL = "https://flat-firefly-5df7.jeff-pires.workers.dev";
+const canvas = document.getElementById('terrain');
+const ctx = canvas.getContext('2d');
+let W, H, t = 0;
 
-// ── SOUNDS ───────────────────────────────────────────────────────────────────
-const SOUNDS = {
-  yes:  new Audio('ding_correct.wav'),
-  no:   new Audio('buzzer_incorrect.wav'),
-  win:  new Audio('cheer_win.wav'),
-  lose: new Audio('womp_lose.wav'),
-};
-Object.values(SOUNDS).forEach(s => { s.preload = 'auto'; s.volume = 0.7; });
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-function playSound(key) {
-  try {
-    const s = SOUNDS[key];
-    s.currentTime = 0;
-    s.play().catch(() => {});
-  } catch(e) {}
+// Multi-octave terrain field (sum of sines as cheap noise)
+function field(x, y, t) {
+  const s = 0.0028;
+  return (
+    Math.sin(x * s * 1.1 + t * 0.18 + Math.cos(y * s * 0.9 - t * 0.05)) * 1.1 +
+    Math.sin(y * s * 1.3 - t * 0.13 + Math.cos(x * s * 1.15 + t * 0.07)) * 0.85 +
+    Math.sin((x - y) * s * 0.85 + t * 0.09) * 0.65 +
+    Math.cos(x * s * 2.2 + y * s * 1.7 - t * 0.22) * 0.4 +
+    Math.sin((x * 0.7 + y * 1.3) * s * 1.6 + t * 0.12) * 0.3
+  );
 }
 
-// ── FLAG ICONS (ISO 3166-1 alpha-2, lowercase) ───────────────────────────────
-const ISO2 = {
-  "Brazil":"br","Argentina":"ar","Colombia":"co","Peru":"pe","Chile":"cl",
-  "Bolivia":"bo","Venezuela":"ve","Mexico":"mx","Canada":"ca","United States":"us",
-  "Cuba":"cu","Jamaica":"jm","United Kingdom":"gb","France":"fr","Germany":"de",
-  "Spain":"es","Italy":"it","Portugal":"pt","Netherlands":"nl","Belgium":"be",
-  "Sweden":"se","Norway":"no","Denmark":"dk","Finland":"fi","Poland":"pl",
-  "Ukraine":"ua","Romania":"ro","Greece":"gr","Switzerland":"ch","Austria":"at",
-  "Russia":"ru","Turkey":"tr","Egypt":"eg","Nigeria":"ng","South Africa":"za",
-  "Ethiopia":"et","Kenya":"ke","Morocco":"ma","Tanzania":"tz","Ghana":"gh",
-  "Democratic Republic of Congo":"cd","China":"cn","India":"in","Japan":"jp",
-  "South Korea":"kr","Indonesia":"id","Pakistan":"pk","Bangladesh":"bd",
-  "Thailand":"th","Vietnam":"vn","Philippines":"ph","Malaysia":"my",
-  "Saudi Arabia":"sa","Iran":"ir","Iraq":"iq","Israel":"il",
-  "United Arab Emirates":"ae","Kazakhstan":"kz","Mongolia":"mn",
-  "Australia":"au","New Zealand":"nz","Papua New Guinea":"pg","Fiji":"fj",
-  "Nepal":"np","Sri Lanka":"lk","Myanmar":"mm","Cambodia":"kh",
-  "Afghanistan":"af","Uzbekistan":"uz","Angola":"ao","Sudan":"sd",
-  "Algeria":"dz","Mozambique":"mz","Cameroon":"cm","Senegal":"sn",
-  "Ivory Coast":"ci","Madagascar":"mg","Zimbabwe":"zw","Iceland":"is",
-  "Ireland":"ie","Czech Republic":"cz","Hungary":"hu","Serbia":"rs",
-  "Croatia":"hr","Jordan":"jo","Lebanon":"lb","Zambia":"zm","Ecuador":"ec",
-  "Paraguay":"py","Uruguay":"uy","Guatemala":"gt","Laos":"la","North Korea":"kp"
-};
-
-function flagIconHtml(country) {
-  const code = ISO2[country.name];
-  // Fall back to the stored emoji if code is missing (future-proof)
-  return code ? `<span class="fi fi-${code}"></span>` : country.flag;
-}
-
-// ── ISO NUMERIC CODES for world-atlas GeoJSON matching ──────────────────────
-const ISO_NUMERIC = {
-  "Brazil":76,"Argentina":32,"Colombia":170,"Peru":604,"Chile":152,
-  "Bolivia":68,"Venezuela":862,"Mexico":484,"Canada":124,"United States":840,
-  "Cuba":192,"Jamaica":388,"United Kingdom":826,"France":250,"Germany":276,
-  "Spain":724,"Italy":380,"Portugal":620,"Netherlands":528,"Belgium":56,
-  "Sweden":752,"Norway":578,"Denmark":208,"Finland":246,"Poland":616,
-  "Ukraine":804,"Romania":642,"Greece":300,"Switzerland":756,"Austria":40,
-  "Russia":643,"Turkey":792,"Egypt":818,"Nigeria":566,"South Africa":710,
-  "Ethiopia":231,"Kenya":404,"Morocco":504,"Tanzania":834,"Ghana":288,
-  "Democratic Republic of Congo":180,"China":156,"India":356,"Japan":392,
-  "South Korea":410,"Indonesia":360,"Pakistan":586,"Bangladesh":50,
-  "Thailand":764,"Vietnam":704,"Philippines":608,"Malaysia":458,
-  "Saudi Arabia":682,"Iran":364,"Iraq":368,"Israel":376,
-  "United Arab Emirates":784,"Kazakhstan":398,"Mongolia":496,
-  "Australia":36,"New Zealand":554,"Papua New Guinea":598,"Fiji":242,
-  "Nepal":524,"Sri Lanka":144,"Myanmar":104,"Cambodia":116,
-  "Afghanistan":4,"Uzbekistan":860,"Angola":24,"Sudan":729,"Algeria":12,
-  "Mozambique":508,"Cameroon":120,"Senegal":686,"Ivory Coast":384,
-  "Madagascar":450,"Zimbabwe":716,"Iceland":352,"Ireland":372,
-  "Czech Republic":203,"Hungary":348,"Serbia":688,"Croatia":191,
-  "Jordan":400,"Lebanon":422,"Zambia":894,"Ecuador":218,"Paraguay":600,
-  "Uruguay":858,"Guatemala":320,"Laos":418,"North Korea":408
-};
-
-// ── WORLD ATLAS STATE ────────────────────────────────────────────────────────
-let worldFeatures = null;
-const svgPathCache = {};
-
-// Countries whose world-atlas feature includes overseas territories — show mainland only
-const MAINLAND_ONLY = new Set([
-  "France","Norway","Portugal","Netherlands","Denmark",
-  "Spain","United States","New Zealand","Ecuador","Chile","Russia"
-]);
-
-// Denmark's mainland is smaller than Greenland, so coordinate-count heuristic fails.
-// Provide a centroid hint so we pick the polygon closest to metropolitan Denmark.
-const MAINLAND_CENTROID_HINT = {
-  "Denmark": { lon: 10, lat: 56 }
-};
-
-// Prepare a feature for rendering: extract mainland polygon and fix antimeridian issues.
-function prepareFeature(countryName, feature) {
-  // Deep clone geometry to avoid mutating cached atlas data
-  let f = { ...feature, geometry: JSON.parse(JSON.stringify(feature.geometry)) };
-
-  if (MAINLAND_ONLY.has(countryName) && f.geometry.type === 'MultiPolygon') {
-    const hint = MAINLAND_CENTROID_HINT[countryName];
-    let best = null, bestScore = -Infinity;
-    for (const poly of f.geometry.coordinates) {
-      const ring = poly[0];
-      let score;
-      if (hint) {
-        // Pick polygon whose centroid is closest to the hint coordinate
-        const centLon = ring.reduce((s, c) => s + c[0], 0) / ring.length;
-        const centLat = ring.reduce((s, c) => s + c[1], 0) / ring.length;
-        score = -(Math.hypot(centLon - hint.lon, centLat - hint.lat));
-      } else if (countryName === 'Russia') {
-        // Use bounding-box area to avoid antimeridian fragments skewing coordinate counts.
-        // Clamp longitudes to [-180,180] before computing span so Chukotka fragments
-        // (which have large negative longitudes in the atlas) score far below the main body.
-        const lons = ring.map(c => Math.max(-180, Math.min(180, c[0])));
-        const lats = ring.map(c => c[1]);
-        const lonSpan = Math.max(...lons) - Math.min(...lons);
-        const latSpan = Math.max(...lats) - Math.min(...lats);
-        score = lonSpan * latSpan;
-      } else {
-        // Largest outer ring (coordinate count ≈ area for same resolution)
-        score = ring.length;
-      }
-      if (score > bestScore) { bestScore = score; best = poly; }
-    }
-    if (best) f.geometry = { type: 'Polygon', coordinates: best };
-  }
-
-  // Fiji straddles the antimeridian: normalise all longitudes to the eastern side
-  // so D3 fitExtent sees a coherent bounding box
-  if (countryName === 'Fiji') {
-    const shiftRing = ring => ring.map(([lon, lat]) => [lon < 0 ? lon + 360 : lon, lat]);
-    if (f.geometry.type === 'MultiPolygon') {
-      f.geometry.coordinates = f.geometry.coordinates.map(poly => poly.map(shiftRing));
-    } else {
-      f.geometry.coordinates = f.geometry.coordinates.map(shiftRing);
-    }
-  }
-
-  return f;
-}
-
-async function preloadWorldAtlas() {
-  try {
-    const world = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => r.json());
-    worldFeatures = topojson.feature(world, world.objects.countries).features;
-  } catch(e) {
-    console.warn('World atlas unavailable — country shapes will fall back to flags.');
-  }
-}
-
-function getCountrySVGPath(countryName) {
-  if (svgPathCache[countryName] !== undefined) return svgPathCache[countryName];
-  if (!worldFeatures || typeof d3 === 'undefined') { svgPathCache[countryName] = null; return null; }
-
-  const code = ISO_NUMERIC[countryName];
-  if (!code) { svgPathCache[countryName] = null; return null; }
-
-  const feature = worldFeatures.find(f => +f.id === code);
-  if (!feature) { svgPathCache[countryName] = null; return null; }
-
-  try {
-    const preparedFeature = prepareFeature(countryName, feature);
-    const proj = d3.geoMercator().fitExtent([[3,3],[81,73]], preparedFeature);
-    const d = d3.geoPath().projection(proj)(preparedFeature);
-    svgPathCache[countryName] = d || null;
-    return svgPathCache[countryName];
-  } catch(e) {
-    svgPathCache[countryName] = null;
-    return null;
-  }
-}
-
-// ── QUESTION LIBRARY (expanded pools — 8 randomly selected per game) ─────────
-const QUESTION_CATEGORIES = [
-  {
-    id: "geography",
-    label: "🌍 Geography",
-    questions: [
-      { id: "q_northern",     text: "Is this country in the Northern Hemisphere?",               attr: "hemisphere_ns",        match: "north"        },
-      { id: "q_south",        text: "Is this country south of the equator?",                     attr: "hemisphere_ns",        match: "south"        },
-      { id: "q_eastern",      text: "Is this country in the Eastern Hemisphere?",                attr: "hemisphere_ew",        match: ["east","both"] },
-      { id: "q_western",      text: "Is this country in the Western Hemisphere?",                attr: "hemisphere_ew",        match: ["west","both"] },
-      { id: "q_landlocked",   text: "Is this country completely surrounded by land?",            attr: "landlocked",           match: true           },
-      { id: "q_island",       text: "Is this country an island nation?",                         attr: "island_nation",        match: true           },
-      { id: "q_longcoast",    text: "Does this country have a long coastline?",                  attr: "coastline",            match: "long"         },
-      { id: "q_shortcoast",   text: "Does this country have only a short coastline?",            attr: "coastline",            match: "short"        },
-      { id: "q_medcoast",     text: "Does this country have a medium-length coastline?",         attr: "coastline",            match: "medium"       },
-      { id: "q_desert",       text: "Is the dominant landscape desert?",                         attr: "dominant_biome",       match: "desert"       },
-      { id: "q_tropical",     text: "Is this country largely tropical?",                         attr: "dominant_biome",       match: "tropical"     },
-      { id: "q_forest",       text: "Is this country mostly covered by forest?",                 attr: "dominant_biome",       match: "forest"       },
-      { id: "q_grassland",    text: "Is this country's landscape mostly grassland or savanna?",  attr: "dominant_biome",       match: "grassland"    },
-      { id: "q_mediterranean",text: "Does this country have a Mediterranean landscape?",         attr: "dominant_biome",       match: "mediterranean"},
-      { id: "q_tundra",       text: "Does this country have tundra or arctic terrain?",          attr: "dominant_biome",       match: "tundra"       },
-      { id: "q_mountains",    text: "Does this country have a major mountain range?",            attr: "major_mountain_range", match: true           },
-      { id: "q_river",        text: "Does a major river flow through this country?",             attr: "major_river",          match: true           },
-    ]
-  },
-  {
-    id: "political",
-    label: "🏛️ Political",
-    questions: [
-      { id: "q_monarchy",     text: "Is this country a monarchy?",                               attr: "government_type",    match: ["constitutional_monarchy","absolute_monarchy"] },
-      { id: "q_constmonarch", text: "Is this a constitutional monarchy?",                        attr: "government_type",    match: "constitutional_monarchy" },
-      { id: "q_absmonarch",   text: "Is this country an absolute monarchy?",                     attr: "government_type",    match: "absolute_monarchy"       },
-      { id: "q_federal",      text: "Is this country a federal republic?",                       attr: "government_type",    match: "federal_republic"        },
-      { id: "q_unitary",      text: "Is this country a unitary republic?",                       attr: "government_type",    match: "unitary_republic"        },
-      { id: "q_other_govt",   text: "Is this country governed in a way that isn't a standard republic or monarchy?", attr: "government_type", match: "other" },
-      { id: "q_eu",           text: "Is this country a member of the European Union?",           attr: "eu_member",          match: true      },
-      { id: "q_nato",         text: "Is this country a member of NATO?",                         attr: "nato_member",        match: true      },
-      { id: "q_g20",          text: "Is this country a member of the G20?",                      attr: "g20_member",         match: true      },
-      { id: "q_nuclear",      text: "Does this country have nuclear power plants?",              attr: "nuclear_power",      match: true      },
-      { id: "q_manyborders",  text: "Does this country share borders with 4 or more countries?", attr: "borders_count_tier", match: ["several","many"] },
-      { id: "q_verymany",     text: "Does this country have 3 or fewer land borders?",          attr: "borders_count_tier", match: ["none","few"] },
-      { id: "q_fewborders",   text: "Does this country have only 1–3 land borders?",             attr: "borders_count_tier", match: "few"     },
-      { id: "q_noborders",    text: "Does this country share a border with no other countries?",  attr: "borders_count_tier", match: "none"    },
-      { id: "q_nobloc",       text: "Is this country not a member of the EU, NATO, or G20?",     fn: c => !c.eu_member && !c.nato_member && !c.g20_member },
-    ]
-  },
-  {
-    id: "people",
-    label: "👥 People & Culture",
-    questions: [
-      { id: "q_huge_pop",     text: "Does this country have more than 100 million people?",      attr: "population_tier",  match: "huge"          },
-      { id: "q_large_pop",    text: "Does this country have 50–100 million people?",             attr: "population_tier",  match: "large"         },
-      { id: "q_medium_pop",   text: "Does this country have 10–50 million people?",              attr: "population_tier",  match: "medium"        },
-      { id: "q_small_pop",    text: "Does this country have fewer than 10 million people?",      attr: "population_tier",  match: ["micro","small"]},
-      { id: "q_micro_pop",    text: "Does this country have fewer than 1 million people?",       attr: "population_tier",  match: "micro"         },
-      { id: "q_romance",      text: "Is a Romance language (Spanish, French, Portuguese…) widely spoken?", attr: "language_family", match: "Romance"      },
-      { id: "q_germanic",     text: "Is a Germanic language (English, German, Dutch…) widely spoken?",     attr: "language_family", match: "Germanic"     },
-      { id: "q_slavic",       text: "Is a Slavic language widely spoken there?",                 attr: "language_family",  match: "Slavic"        },
-      { id: "q_semitic",      text: "Is a Semitic language (Arabic, Hebrew…) widely spoken?",   attr: "language_family",  match: "Semitic"       },
-      { id: "q_austronesian", text: "Is an Austronesian language (Malay, Tagalog…) widely spoken?",        attr: "language_family", match: "Austronesian" },
-      { id: "q_sinotibetan",  text: "Is a Sino-Tibetan language (Mandarin, Burmese…) widely spoken?",      attr: "language_family", match: "Sino-Tibetan" },
-      { id: "q_nigercongo",   text: "Is a Niger-Congo language (Swahili, Yoruba, Zulu…) widely spoken?",   attr: "language_family", match: "Niger-Congo"  },
-      { id: "q_driveleft",    text: "Do people drive on the left side of the road there?",       attr: "drives_left",      match: true            },
-    ]
-  },
-  {
-    id: "economy",
-    label: "💰 Economy",
-    questions: [
-      { id: "q_energy_export",   text: "Is energy (oil, gas) a primary export?",                attr: "primary_export",  match: "energy"        },
-      { id: "q_manuf_export",    text: "Is manufacturing a primary export?",                     attr: "primary_export",  match: "manufacturing" },
-      { id: "q_agri_export",     text: "Is agriculture a primary export?",                       attr: "primary_export",  match: "agriculture"   },
-      { id: "q_services_export", text: "Are services (tourism, finance) a primary export?",      attr: "primary_export",  match: "services"      },
-      { id: "q_minerals_export", text: "Are minerals a primary export?",                         attr: "primary_export",  match: "minerals"      },
-      { id: "q_mixed_export",    text: "Is this country's primary export a raw commodity — energy, minerals, or agriculture?", attr: "primary_export",  match: ["energy","minerals","agriculture"] },
-      { id: "q_huge_area",       text: "Is this country larger than 2 million km²?",             attr: "area_tier",       match: "huge"          },
-      { id: "q_large_area",      text: "Is this country between 500k and 2 million km²?",        attr: "area_tier",       match: "large"         },
-      { id: "q_medium_area",     text: "Is this country between 100k and 500k km²?",             attr: "area_tier",       match: "medium"        },
-      { id: "q_small_area",      text: "Is this country smaller than 100,000 km²?",              attr: "area_tier",       match: ["micro","small"]},
-      { id: "q_micro_area",      text: "Is this country larger than 500,000 km²?",               attr: "area_tier",       match: ["large","huge"] },
-      { id: "q_uppermid_income", text: "Is this an upper-middle income country?",                attr: "income_tier",     match: "upper-middle"  },
-      { id: "q_lowinc_ec",       text: "Is this a low-income economy?",                          attr: "income_tier",     match: "low"           },
-      { id: "q_highincec",       text: "Is this a high-income economy?",                         attr: "income_tier",     match: "high"          },
-      { id: "q_lowmidec",        text: "Is this a lower-middle income economy?",                 attr: "income_tier",     match: "lower-middle"  },
-    ]
-  },
-  {
-    id: "history",
-    label: "📜 History & Geopolitics",
-    questions: [
-      { id: "q_british_empire",      text: "Was this country once part of the British Empire?",
-        fn: c => ["India","Pakistan","Bangladesh","Sri Lanka","Australia","New Zealand","Canada",
-                  "South Africa","Kenya","Tanzania","Ghana","Nigeria","Zimbabwe","Zambia",
-                  "Malaysia","Jamaica","Papua New Guinea","Sudan","Jordan","Iraq","Fiji",
-                  "Myanmar","Ireland","Egypt","United States"].includes(c.name) },
-      { id: "q_spanish_empire",      text: "Was this country once a Spanish colony?",
-        fn: c => ["Mexico","Colombia","Peru","Chile","Bolivia","Venezuela","Argentina","Ecuador",
-                  "Paraguay","Uruguay","Guatemala","Cuba","Philippines"].includes(c.name) },
-      { id: "q_french_empire",       text: "Was this country once part of the French colonial empire?",
-        fn: c => ["Senegal","Ivory Coast","Cameroon","Madagascar","Morocco","Algeria",
-                  "Vietnam","Cambodia","Laos","Lebanon"].includes(c.name) },
-      { id: "q_unsc_p5",             text: "Is this country a permanent member of the UN Security Council?",
-        fn: c => ["United States","Russia","China","United Kingdom","France"].includes(c.name) },
-      { id: "q_nuclear_weapons",     text: "Does this country possess nuclear weapons?",
-        fn: c => ["United States","Russia","China","United Kingdom","France",
-                  "India","Pakistan","North Korea"].includes(c.name) },
-      { id: "q_commonwealth",        text: "Is this country a member of the Commonwealth of Nations?",
-        fn: c => ["United Kingdom","Canada","Australia","New Zealand","India","Pakistan",
-                  "Sri Lanka","Bangladesh","Nigeria","Ghana","Kenya","Tanzania","Zambia",
-                  "Zimbabwe","Mozambique","Cameroon","Malaysia","Papua New Guinea","Fiji",
-                  "Jamaica","South Africa"].includes(c.name) },
-      { id: "q_soviet_republic",     text: "Was this country once a republic of the Soviet Union?",
-        fn: c => ["Russia","Ukraine","Kazakhstan","Uzbekistan"].includes(c.name) },
-      { id: "q_ottoman_empire",      text: "Was this country once part of the Ottoman Empire?",
-        fn: c => ["Turkey","Greece","Romania","Serbia","Hungary","Jordan","Iraq",
-                  "Lebanon","Egypt","Algeria"].includes(c.name) },
-      { id: "q_opec",                text: "Is this country an OPEC member?",
-        fn: c => ["Algeria","Iran","Iraq","Nigeria","Saudi Arabia",
-                  "United Arab Emirates","Venezuela"].includes(c.name) },
-      { id: "q_asean",               text: "Is this country a member of ASEAN?",
-        fn: c => ["Indonesia","Malaysia","Philippines","Thailand","Vietnam",
-                  "Myanmar","Cambodia","Laos"].includes(c.name) },
-      { id: "q_nato_founder",        text: "Was this country a founding member of NATO in 1949?",
-        fn: c => ["United States","Canada","United Kingdom","France","Belgium","Netherlands",
-                  "Norway","Denmark","Iceland","Italy","Portugal"].includes(c.name) },
-      { id: "q_brics",               text: "Is this country a member of the original BRICS group?",
-        fn: c => ["Brazil","Russia","India","China","South Africa"].includes(c.name) },
-      { id: "q_pre1900_state",       text: "Was this country already an independent state before 1900?",
-        fn: c => ["United States","Mexico","Canada","Brazil","Argentina","Colombia","Peru","Chile",
-                  "Bolivia","Venezuela","Ecuador","Paraguay","Uruguay","Guatemala",
-                  "United Kingdom","France","Germany","Spain","Italy","Portugal","Netherlands",
-                  "Belgium","Sweden","Denmark","Romania","Greece","Switzerland","Austria",
-                  "Russia","Serbia","China","Japan","Thailand","Iran","Ethiopia"].includes(c.name) },
-      { id: "q_post1960_independence",text: "Did this country achieve independence in 1960 or later?",
-        fn: c => ["Nigeria","Senegal","Ivory Coast","Cameroon","Madagascar","Tanzania","Kenya",
-                  "Zambia","Zimbabwe","Mozambique","Angola","Democratic Republic of Congo",
-                  "Bangladesh","Papua New Guinea","Fiji","Kazakhstan","Uzbekistan","Ukraine",
-                  "Algeria"].includes(c.name) },
-      { id: "q_olympics_host",       text: "Has this country hosted the Summer or Winter Olympic Games?",
-        fn: c => ["United States","United Kingdom","France","Germany","Japan","Australia","Canada",
-                  "China","Russia","South Korea","Italy","Spain","Brazil","Mexico","Finland",
-                  "Norway","Sweden","Netherlands","Greece","Belgium","Switzerland"].includes(c.name) },
-      { id: "q_g7",                  text: "Is this country a member of the G7?",
-        fn: c => ["United States","Canada","United Kingdom","France","Germany","Italy","Japan"].includes(c.name) },
-      { id: "q_arab_league",         text: "Is this country a member of the Arab League?",
-        fn: c => ["Egypt","Saudi Arabia","Iraq","Jordan","Algeria","Morocco","Sudan",
-                  "Lebanon","United Arab Emirates"].includes(c.name) },
-    ]
-  },
-  {
-    id: "curious",
-    label: "✨ Curious Facts",
-    questions: [
-      { id: "q_cf_equator",    text: "Does the equator pass directly through this country?",
-        fn: c => ["Brazil","Colombia","Ecuador","Kenya","Indonesia","Democratic Republic of Congo"].includes(c.name) },
-      { id: "q_cf_wc_winner", text: "Has this country ever won the FIFA World Cup?",
-        fn: c => ["Brazil","Argentina","France","Germany","Italy","Spain","Uruguay"].includes(c.name) },
-      { id: "q_cf_midnight",  text: "Does this country experience the midnight sun — weeks when the sun never fully sets?",
-        fn: c => ["Norway","Sweden","Finland","Iceland","Canada","Russia"].includes(c.name) },
-      { id: "q_cf_top10area", text: "Is this country one of the ten largest nations on Earth by land area?",
-        fn: c => ["Russia","Canada","United States","China","Brazil","Australia","India","Argentina","Kazakhstan","Algeria"].includes(c.name) },
-      { id: "q_cf_amazon",    text: "Does this country contain part of the Amazon rainforest?",
-        fn: c => ["Brazil","Colombia","Ecuador","Peru","Venezuela","Bolivia"].includes(c.name) },
-      { id: "q_cf_ringfire",  text: "Is this country located on the Pacific Ring of Fire — the great belt of volcanoes and earthquakes surrounding the Pacific?",
-        fn: c => ["Japan","Philippines","Indonesia","Papua New Guinea","New Zealand","Chile","Peru","Ecuador","Colombia","Mexico","United States","Canada","Russia"].includes(c.name) },
-      { id: "q_cf_wine",      text: "Is this country among the world's top 10 wine-producing nations?",
-        fn: c => ["Italy","Spain","France","United States","Argentina","Chile","Australia","Germany","South Africa","China"].includes(c.name) },
-      { id: "q_cf_spanish",   text: "Is Spanish an official language of this country?",
-        fn: c => ["Mexico","Colombia","Venezuela","Peru","Chile","Ecuador","Bolivia","Paraguay","Uruguay","Argentina","Cuba","Guatemala","Spain"].includes(c.name) },
-      { id: "q_cf_french",    text: "Is French an official language of this country?",
-        fn: c => ["France","Belgium","Switzerland","Canada","Ivory Coast","Senegal","Cameroon","Democratic Republic of Congo","Madagascar"].includes(c.name) },
-      { id: "q_cf_wc_host",   text: "Has this country hosted the FIFA World Cup?",
-        fn: c => ["Brazil","Mexico","Argentina","Uruguay","Chile","Italy","France","Germany","Spain","United States","Japan","South Korea","Russia","South Africa"].includes(c.name) },
-      { id: "q_cf_un1945",    text: "Was this country one of the original 51 founding members of the United Nations in 1945?",
-        fn: c => ["Argentina","Australia","Belgium","Bolivia","Brazil","Canada","Chile","Colombia","Cuba","Denmark","Ecuador","Egypt","Ethiopia","France","Greece","Guatemala","India","Iran","Iraq","Lebanon","Mexico","Netherlands","New Zealand","Norway","Paraguay","Peru","Philippines","Poland","Saudi Arabia","South Africa","Turkey","Ukraine","United Kingdom","United States","Uruguay","Venezuela"].includes(c.name) },
-      { id: "q_cf_femaleHoS", text: "Has this country ever had a female head of state or head of government?",
-        fn: c => ["United Kingdom","Germany","Australia","New Zealand","Canada","Norway","Denmark","Iceland","Finland","Sweden","Ireland","Israel","India","Pakistan","Bangladesh","Indonesia","Philippines","Sri Lanka","South Korea","Brazil","Argentina","Chile","Bolivia","Switzerland","Croatia","Serbia","Jamaica","Poland","Nicaragua"].includes(c.name) },
-      { id: "q_cf_megadiverse",text: "Is this country one of the 17 officially recognized 'megadiverse' nations — home to the greatest share of Earth's species?",
-        fn: c => ["Brazil","Colombia","Indonesia","China","India","Mexico","Peru","Ecuador","Venezuela","Papua New Guinea","United States","Australia","Philippines","Malaysia","Democratic Republic of Congo","Madagascar","South Africa"].includes(c.name) },
-      { id: "q_cf_tea",        text: "Is this country one of the world's top five tea-producing nations?",
-        fn: c => ["China","India","Kenya","Sri Lanka","Turkey"].includes(c.name) },
-      { id: "q_cf_silkroad",   text: "Did this country lie along the ancient Silk Road — the trade routes connecting China to the Mediterranean world?",
-        fn: c => ["China","Kazakhstan","Uzbekistan","Iran","Iraq","Turkey","Afghanistan","India","Pakistan","Egypt","Italy","Greece","Jordan","Lebanon"].includes(c.name) },
-      { id: "q_cf_newcapital", text: "Did this country build an entirely new capital city from scratch in the 20th or 21st century?",
-        fn: c => ["Brazil","Pakistan","Myanmar","Kazakhstan","Nigeria","Tanzania"].includes(c.name) },
-      { id: "q_cf_peak3k",     text: "Does this country have a mountain peak rising above 3,000 metres — higher than any summit in the British Isles?",
-        fn: c => ["Russia","China","India","Nepal","Pakistan","Kazakhstan","Uzbekistan","Afghanistan","Iran","Turkey","Japan","Myanmar","Argentina","Bolivia","Peru","Chile","Ecuador","Colombia","Venezuela","Mexico","Guatemala","Morocco","Algeria","Ethiopia","Tanzania","Kenya","Democratic Republic of Congo","South Africa","France","Italy","Spain","Switzerland","Austria"].includes(c.name) },
-      { id: "q_cf_tropical",   text: "Is this country located entirely within the tropical zone — between the Tropic of Cancer and the Tropic of Capricorn?",
-        fn: c => ["Colombia","Ecuador","Peru","Bolivia","Venezuela","Cuba","Jamaica","Guatemala","Ghana","Ivory Coast","Nigeria","Senegal","Cameroon","Democratic Republic of Congo","Angola","Tanzania","Kenya","Ethiopia","Sudan","Zimbabwe","Zambia","Thailand","Vietnam","Cambodia","Laos","Philippines","Malaysia","Indonesia","Sri Lanka","Papua New Guinea","Fiji"].includes(c.name) },
-    ]
-  }
+// Earthy contour palette: deep forest → sage → ochre ridge
+const contours = [
+  { v: -2.4, rgba: [16, 34, 18, 0.85] },
+  { v: -1.8, rgba: [22, 44, 25, 0.8]  },
+  { v: -1.2, rgba: [30, 56, 33, 0.75] },
+  { v: -0.6, rgba: [42, 70, 44, 0.7]  },
+  { v:  0.0, rgba: [58, 88, 52, 0.65] },
+  { v:  0.5, rgba: [76, 105, 60, 0.6] },
+  { v:  1.0, rgba: [100, 125, 68, 0.55] },
+  { v:  1.4, rgba: [128, 148, 82, 0.5] },
+  { v:  1.8, rgba: [155, 155, 92, 0.42] },
+  { v:  2.2, rgba: [170, 148, 95, 0.35] },
 ];
 
-const QUESTIONS_PER_GAME = 8;
-
-// ── GAME STATE ──────────────────────────────────────────────────────────────
-let state = {
-  boardCountries: [],
-  mysteryCountry: null,
-  questionsLeft: 10,
-  questionsUsed: 0,
-  wildcardUsed: false,
-  askedQuestions: new Set(),
-  eliminated: new Set(),
-  borderline: new Set(),
-  guessedCountry: null,
-  sessionFirstGame: true,
-  gameOver: false,
-  recordUpdated: false,
-  selectedQuestions: {}
-};
-
-// ── INIT ─────────────────────────────────────────────────────────────────────
-function initGame() {
-  const shuffled = [...COUNTRIES].sort(() => Math.random() - 0.5);
-  state.boardCountries = shuffled.slice(0, 24);
-  state.mysteryCountry = state.boardCountries[Math.floor(Math.random() * 24)];
-  state.questionsLeft = 10;
-  state.questionsUsed = 0;
-  state.wildcardUsed = false;
-  state.askedQuestions = new Set();
-  state.eliminated = new Set();
-  state.borderline = new Set();
-  state.guessedCountry = null;
-  state.gameOver = false;
-  state.recordUpdated = false;
-
-  // Randomly select QUESTIONS_PER_GAME questions from each category pool
-  state.selectedQuestions = {};
-  QUESTION_CATEGORIES.forEach(cat => {
-    const pool = [...cat.questions].sort(() => Math.random() - 0.5);
-    state.selectedQuestions[cat.id] = pool.slice(0, Math.min(QUESTIONS_PER_GAME, pool.length));
-  });
-
-  renderAccordion();
-  renderGrid();
-  renderCounter();
-  renderWildcard();
-  updateRemainingCount();
-}
-
-function dismissIntro() {
-  document.getElementById('introModal').classList.remove('show');
-  state.sessionFirstGame = false;
-  initGame();
-}
-
-function resetGame() {
-  hideModal('winModal');
-  hideModal('loseModal');
-  hideTooltip(true);
-  initGame();
-}
-
-// ── COUNTER ──────────────────────────────────────────────────────────────────
-function renderCounter() {
-  const val = document.getElementById('counterValue');
-  val.textContent = state.questionsLeft;
-  val.classList.toggle('urgent', state.questionsLeft <= 3);
-  const pips = document.getElementById('counterPips');
-  pips.innerHTML = '';
-  for (let i = 0; i < 10; i++) {
-    const pip = document.createElement('div');
-    pip.className = 'counter-pip' + (i >= state.questionsLeft ? ' used' : '');
-    pips.appendChild(pip);
-  }
-}
-
-// ── GRID ─────────────────────────────────────────────────────────────────────
-function renderGrid() {
-  const grid = document.getElementById('countryGrid');
-  grid.innerHTML = '';
-  state.boardCountries.forEach(country => {
-    const tile = document.createElement('div');
-    tile.className = 'country-tile';
-    tile.id = 'tile-' + country.name.replace(/\s/g,'_');
-
-    const pathData = getCountrySVGPath(country.name);
-    const svgContent = pathData
-      ? `<svg class="country-svg" viewBox="0 0 84 76" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path class="country-shape" d="${pathData}"/></svg>`
-      : `<div class="tile-flag-fallback">${flagIconHtml(country)}</div>`;
-    // Corner flag only shown when SVG shape is present (fallback tiles already show large flag)
-    const cornerFlag = pathData ? `<span class="tile-flag-corner">${flagIconHtml(country)}</span>` : '';
-
-    tile.innerHTML = `
-      <div class="tile-inner">
-        <div class="tile-front" onclick="tileClick('${country.name.replace(/'/g,"\\'")}')">
-          ${cornerFlag}
-          <div class="tile-svg-wrap">${svgContent}</div>
-          <div class="tile-name">${country.name}</div>
-        </div>
-        <div class="tile-back"></div>
-      </div>
-      <div class="tile-question-mark">?</div>
-    `;
-
-    // Tooltip via JS events (viewport-aware positioning)
-    tile.addEventListener('mouseenter', () => {
-      if (!state.eliminated.has(country.name)) showTooltip(tile, country);
-    });
-    tile.addEventListener('mouseleave', hideTooltip);
-
-    grid.appendChild(tile);
-  });
-}
-
-// ── TOOLTIP ──────────────────────────────────────────────────────────────────
-let tooltipHideTimer = null;
-let tooltipShowTimer = null;
-
-function showTooltip(tile, country) {
-  // Cancel any pending hide so switching between tiles doesn't flicker
-  if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
-  // Reset pending show (handles fast cursor movement — only fire for sustained hover)
-  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
-
-  tooltipShowTimer = setTimeout(() => {
-    tooltipShowTimer = null;
-    const el = document.getElementById('floatingTooltip');
-    el.classList.remove('visible');
-    el.innerHTML = buildTooltipHTML(country);
-    el.style.display = 'block';
-    // First rAF: position (uses scrollHeight, needs display:block first)
-    // Second rAF: add visible class so CSS transition actually runs
-    requestAnimationFrame(() => {
-      positionTooltip(tile, el);
-      requestAnimationFrame(() => el.classList.add('visible'));
-    });
-  }, 100);
-}
-
-function hideTooltip(immediate) {
-  // Always cancel a pending show — fast passes should never trigger the tooltip
-  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
-  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
-
-  if (immediate) {
-    const el = document.getElementById('floatingTooltip');
-    el.classList.remove('visible');
-    el.style.display = 'none';
-    return;
-  }
-
-  // 150ms grace period: brief exits don't dismiss the tooltip
-  tooltipHideTimer = setTimeout(() => {
-    tooltipHideTimer = null;
-    const el = document.getElementById('floatingTooltip');
-    el.classList.remove('visible');
-    setTimeout(() => { if (!el.classList.contains('visible')) el.style.display = 'none'; }, 200);
-  }, 150);
-}
-
-function positionTooltip(tile, el) {
-  const tileRect = tile.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const ttW = Math.min(264, vw - 24);
-  const ttH = el.scrollHeight + 20;
-  const GAP = 10;
-
-  const spaceAbove = tileRect.top - GAP;
-  const spaceBelow = vh - tileRect.bottom - GAP;
-  const openDown = spaceAbove < ttH && spaceBelow >= ttH;
-
-  // Horizontal: centre on tile, clamp to viewport
-  let left = tileRect.left + tileRect.width / 2 - ttW / 2;
-  left = Math.max(8, Math.min(left, vw - ttW - 8));
-
-  el.style.width = ttW + 'px';
-  el.style.left = left + 'px';
-  el.style.bottom = 'auto';
-  el.style.top = 'auto';
-
-  if (openDown) {
-    el.style.top = (tileRect.bottom + GAP) + 'px';
-    el.style.transform = 'translateY(4px)';
-  } else {
-    el.style.bottom = (vh - tileRect.top + GAP) + 'px';
-    el.style.transform = 'translateY(-4px)';
-  }
-}
-
-function buildTooltipHTML(c) {
-  const badges = [];
-
-  // Water access
-  if (c.landlocked) {
-    badges.push({ icon: '🔒', text: 'Landlocked' });
-  } else if (c.island_nation) {
-    badges.push({ icon: '🏝️', text: 'Island nation' });
-  } else {
-    const coastLabels = { long: 'Long coastline', medium: 'Medium coast', short: 'Short coast' };
-    badges.push({ icon: '🌊', text: coastLabels[c.coastline] || 'Coastal' });
-  }
-
-  // Terrain
-  if (c.major_mountain_range) badges.push({ icon: '🏔️', text: 'Mountains' });
-  if (c.major_river)          badges.push({ icon: '🏞️', text: 'Major river' });
-
-  // Biome
-  const biomeIcons = { desert:'🏜️', forest:'🌲', grassland:'🌾', tundra:'🌨️', tropical:'🌴', mediterranean:'🫒', mixed:'🗺️' };
-  const biomeLabels = { desert:'Desert', forest:'Forest', grassland:'Grassland', tundra:'Tundra', tropical:'Tropical', mediterranean:'Mediterranean', mixed:'Mixed' };
-  badges.push({ icon: biomeIcons[c.dominant_biome] || '🌿', text: biomeLabels[c.dominant_biome] || cap(c.dominant_biome) });
-
-  // Population
-  const popLabels = { micro:'Under 1M', small:'1–10M', medium:'10–50M', large:'50–100M', huge:'Over 100M' };
-  badges.push({ icon: '👥', text: popLabels[c.population_tier] || c.population_tier });
-
-  // Language
-  badges.push({ icon: '🗣️', text: c.language_family });
-
-  // Income
-  const incLabels = { high:'High income', 'upper-middle':'Upper-middle', 'lower-middle':'Lower-middle', low:'Low income' };
-  badges.push({ icon: '💰', text: incLabels[c.income_tier] || c.income_tier });
-
-  // Government
-  const govLabels = {
-    constitutional_monarchy: 'Const. monarchy',
-    absolute_monarchy: 'Abs. monarchy',
-    federal_republic: 'Fed. republic',
-    unitary_republic: 'Unit. republic',
-    other: 'Other govt.'
-  };
-  badges.push({ icon: '🏛️', text: govLabels[c.government_type] || c.government_type });
-
-  const badgesHTML = badges.map(b => `<span class="badge">${b.icon} ${b.text}</span>`).join('');
-
-  const code = ISO2[c.name];
-  const tooltipFlag = code ? `<span class="fi fi-${code} atlas-tooltip-flag"></span>` : '';
-  const regionSubtitle = c.region === c.continent ? c.region : `${c.region} &middot; ${c.continent}`;
-
-  return `
-    <div class="atlas-name-row">${tooltipFlag}<span class="atlas-name">${c.name}</span></div>
-    <div class="atlas-region">${regionSubtitle}</div>
-    <div class="atlas-rule"></div>
-    <div class="atlas-badges">${badgesHTML}</div>
-    <div class="atlas-fact">${c.fact}</div>
-  `;
-}
-
-function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
-
-// ── TILE CLICK ────────────────────────────────────────────────────────────────
-function tileClick(name) {
-  if (state.gameOver) return;
-  const country = state.boardCountries.find(c => c.name === name);
-  if (!country || state.eliminated.has(name)) return;
-  state.guessedCountry = country;
-  document.getElementById('confirmFlag').innerHTML = flagIconHtml(country);
-  document.getElementById('confirmText').textContent = `Is "${country.name}" the mystery country?`;
-  document.getElementById('confirmOverlay').classList.add('show');
-}
-
-function cancelGuess() {
-  document.getElementById('confirmOverlay').classList.remove('show');
-  state.guessedCountry = null;
-}
-
-function confirmGuess() {
-  document.getElementById('confirmOverlay').classList.remove('show');
-  const guess = state.guessedCountry;
-  if (!guess) return;
-  state.gameOver = true;
-  if (guess.name === state.mysteryCountry.name) showWin(); else showLose();
-}
-
-function updateRemainingCount() {
-  const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name)).length;
-  document.getElementById('remainingCount').textContent = remaining;
-}
-
-// ── ACCORDION ─────────────────────────────────────────────────────────────────
-function renderAccordion() {
-  const acc = document.getElementById('accordion');
-  acc.innerHTML = '';
-  QUESTION_CATEGORIES.forEach(cat => {
-    const section = document.createElement('div');
-    section.className = 'accordion-section';
-    section.id = 'cat-' + cat.id;
-
-    const header = document.createElement('div');
-    header.className = 'accordion-header';
-    header.innerHTML = `<span class="accordion-title">${cat.label}</span><span class="accordion-arrow">▼</span>`;
-    header.onclick = () => toggleAccordion(cat.id);
-
-    const body = document.createElement('div');
-    body.className = 'accordion-body';
-    body.id = 'body-' + cat.id;
-
-    (state.selectedQuestions[cat.id] || []).forEach(q => {
-      const chip = document.createElement('div');
-      chip.className = 'chip';
-      chip.id = 'chip-' + q.id;
-      chip.textContent = q.text;
-      chip.onclick = () => askQuestion(q);
-      body.appendChild(chip);
-    });
-
-    section.appendChild(header);
-    section.appendChild(body);
-    acc.appendChild(section);
-  });
-}
-
-function toggleAccordion(catId) {
-  document.getElementById('cat-' + catId).classList.toggle('open');
-}
-
-// ── QUESTION LOGIC ─────────────────────────────────────────────────────────────
-function matchesQuestion(country, q) {
-  if (q.fn) return q.fn(country);
-  const val = country[q.attr];
-  return Array.isArray(q.match) ? q.match.includes(val) : val === q.match;
-}
-
-function askQuestion(q) {
-  if (state.gameOver || state.askedQuestions.has(q.id) || state.questionsLeft <= 0) return;
-
-  state.askedQuestions.add(q.id);
-  state.questionsLeft--;
-  state.questionsUsed++;
-
-  const answer = matchesQuestion(state.mysteryCountry, q);
-
-  const chip = document.getElementById('chip-' + q.id);
-  if (chip) {
-    chip.classList.add('spent', answer ? 'yes' : 'no');
-    const indicator = answer
-      ? `<span class="chip-indicator-yes">✓</span> `
-      : `<span class="chip-indicator-no">✗</span> `;
-    chip.innerHTML = indicator + q.text;
-  }
-
-  playSound(answer ? 'yes' : 'no');
-
-  let eliminated = 0;
-  state.boardCountries.forEach(c => {
-    if (state.eliminated.has(c.name)) return;
-    if (matchesQuestion(c, q) !== answer) { eliminateTile(c.name); eliminated++; }
-  });
-
-  showElimToast(eliminated, answer);
-  renderCounter();
-  updateRemainingCount();
-
-  const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name));
-  if (remaining.length === 0) {
-    setTimeout(() => { alert("Something went wrong — starting a new game!"); resetGame(); }, 400);
-    return;
-  }
-
-  if (state.questionsLeft === 0 && !state.gameOver) {
-    setTimeout(showOutOfQuestions, 600);
-  }
-}
-
-function eliminateTile(name) {
-  state.eliminated.add(name);
-  const tile = document.getElementById('tile-' + name.replace(/\s/g,'_'));
-  if (tile) tile.classList.add('eliminated');
-}
-
-function showElimToast(count, answer) {
-  const toast = document.getElementById('elimToast');
-  toast.textContent = count === 0
-    ? (answer ? 'All remaining countries match — no eliminations.' : 'No countries matched — none eliminated.')
-    : `${count} countr${count === 1 ? 'y' : 'ies'} eliminated`;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2800);
-}
-
-function showOutOfQuestions() {
-  if (state.gameOver) return;
-  const toast = document.getElementById('elimToast');
-  toast.textContent = 'No questions left — click a tile to make your final guess!';
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 4000);
-}
-
-// ── WILDCARD ──────────────────────────────────────────────────────────────────
-function renderWildcard() {
-  const input = document.getElementById('wildcardInput');
-  const btn = document.getElementById('wildcardBtn');
-  const reasoning = document.getElementById('wildcardReasoning');
-  document.getElementById('wildcardNote').textContent = state.wildcardUsed ? 'Used' : '1 remaining';
-  document.getElementById('wildcardUsedNotice').style.display = state.wildcardUsed ? 'block' : 'none';
-  reasoning.style.display = 'none';
-  reasoning.textContent = '';
-  document.getElementById('wildcardError').style.display = 'none';
-  input.disabled = state.wildcardUsed;
-  input.value = '';
-  btn.disabled = state.wildcardUsed;
-  btn.innerHTML = 'Ask';
-}
-
-async function submitWildcard() {
-  if (state.wildcardUsed || state.gameOver) return;
-  const input = document.getElementById('wildcardInput');
-  const question = input.value.trim();
-  if (!question) return;
-
-  const btn = document.getElementById('wildcardBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Asking…';
-  document.getElementById('wildcardError').style.display = 'none';
-
-  const remaining = state.boardCountries.filter(c => !state.eliminated.has(c.name)).map(c => c.name);
-  const mysteryCountry = state.mysteryCountry.name;
-
-  try {
-    const resp = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, mysteryCountry, remainingCountries: remaining })
-    });
-    if (!resp.ok) throw new Error('API error ' + resp.status);
-    const data = await resp.json();
-    if (!Array.isArray(data.countries_to_eliminate)) throw new Error('Unexpected response format');
-
-    state.wildcardUsed = true;
-    input.disabled = true;
-    document.getElementById('wildcardNote').textContent = 'Used';
-    document.getElementById('wildcardUsedNotice').style.display = 'block';
-
-    let eliminated = 0;
-    data.countries_to_eliminate.forEach(name => {
-      if (!state.eliminated.has(name)) { eliminateTile(name); eliminated++; }
-    });
-
-    if (Array.isArray(data.borderline)) {
-      data.borderline.forEach(name => {
-        state.borderline.add(name);
-        const tile = document.getElementById('tile-' + name.replace(/\s/g,'_'));
-        if (tile && !state.eliminated.has(name)) tile.classList.add('borderline');
-      });
+function draw() {
+  ctx.fillStyle = '#090f0b';
+  ctx.fillRect(0, 0, W, H);
+
+  const res = 8;
+  const cols = Math.ceil(W / res) + 2;
+  const rows = Math.ceil(H / res) + 2;
+
+  // Precompute field grid
+  const g = [];
+  for (let j = 0; j < rows; j++) {
+    g[j] = new Float32Array(cols);
+    for (let i = 0; i < cols; i++) {
+      g[j][i] = field(i * res, j * res, t);
     }
+  }
 
-    if (data.reasoning) {
-      const r = document.getElementById('wildcardReasoning');
-      r.textContent = `AI: "${data.reasoning}"`;
-      r.style.display = 'block';
+  // Marching squares: draw contour lines at each threshold
+  for (const { v: thr, rgba: [r, gv, b, a] } of contours) {
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(${r},${gv},${b},${a})`;
+    ctx.lineWidth = 0.75;
+    ctx.lineCap = 'round';
+
+    for (let j = 0; j < rows - 1; j++) {
+      for (let i = 0; i < cols - 1; i++) {
+        const x0 = i * res, y0 = j * res;
+        const tl = g[j][i], tr = g[j][i+1];
+        const bl = g[j+1][i], br = g[j+1][i+1];
+
+        const pts = [];
+
+        // Top edge
+        if ((tl - thr) * (tr - thr) < 0)
+          pts.push([x0 + res * (thr - tl) / (tr - tl), y0]);
+        // Right edge
+        if ((tr - thr) * (br - thr) < 0)
+          pts.push([x0 + res, y0 + res * (thr - tr) / (br - tr)]);
+        // Bottom edge
+        if ((bl - thr) * (br - thr) < 0)
+          pts.push([x0 + res * (thr - bl) / (br - bl), y0 + res]);
+        // Left edge
+        if ((tl - thr) * (bl - thr) < 0)
+          pts.push([x0, y0 + res * (thr - tl) / (bl - tl)]);
+
+        if (pts.length === 2) {
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          ctx.lineTo(pts[1][0], pts[1][1]);
+        } else if (pts.length === 4) {
+          // Saddle: connect in two pairs
+          ctx.moveTo(pts[0][0], pts[0][1]);
+          ctx.lineTo(pts[1][0], pts[1][1]);
+          ctx.moveTo(pts[2][0], pts[2][1]);
+          ctx.lineTo(pts[3][0], pts[3][1]);
+        }
+      }
     }
-
-    showElimToast(eliminated, eliminated > 0);
-    updateRemainingCount();
-    btn.innerHTML = 'Asked ✓';
-  } catch(err) {
-    state.wildcardUsed = false;
-    btn.disabled = false;
-    btn.innerHTML = 'Ask';
-    input.disabled = false;
-    const errEl = document.getElementById('wildcardError');
-    errEl.textContent = "Couldn't process that question — your wildcard has been returned, try again.";
-    errEl.style.display = 'block';
+    ctx.stroke();
   }
 }
 
-// ── WIN / LOSE ────────────────────────────────────────────────────────────────
-function showWin() {
-  const c = state.mysteryCountry;
-  document.getElementById('winFlag').innerHTML = flagIconHtml(c);
-  document.getElementById('winName').textContent = c.name;
-  document.getElementById('winQuestions').textContent = state.questionsUsed;
-  document.getElementById('winFact').textContent = c.fact;
-  if (!state.recordUpdated) { updateRecord(true); state.recordUpdated = true; }
-  playSound('win');
-  showModal('winModal');
-}
-
-function showLose() {
-  const c = state.mysteryCountry;
-  document.getElementById('loseFlag').innerHTML = flagIconHtml(c);
-  document.getElementById('loseName').textContent = c.name;
-  document.getElementById('loseSubtitle').textContent = `The mystery country was ${c.name}`;
-  document.getElementById('loseFact').textContent = c.fact;
-  if (!state.recordUpdated) { updateRecord(false); state.recordUpdated = true; }
-  playSound('lose');
-  showModal('loseModal');
-}
-
-function showModal(id) { document.getElementById(id).classList.add('show'); }
-function hideModal(id) { document.getElementById(id).classList.remove('show'); }
-
-// ── ENTER KEY for wildcard ────────────────────────────────────────────────────
-document.getElementById('wildcardInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitWildcard(); }
-});
-
-// ── RECORD SCOREBOARD ────────────────────────────────────────────────────────
-const REC_KEY = 'gw_rec';
-
-function loadRecord() {
-  try {
-    const stored = localStorage.getItem(REC_KEY);
-    if (!stored) return null;
-    return JSON.parse(atob(stored));
-  } catch(e) { return null; }
-}
-
-function saveRecord(data) {
-  try { localStorage.setItem(REC_KEY, btoa(JSON.stringify(data))); } catch(e) {}
-}
-
-function renderRecord() {
-  const data = loadRecord();
-  const hasGames = data && data.played > 0;
-  document.getElementById('recordStats').style.display = hasGames ? 'flex' : 'none';
-  document.getElementById('recordEmpty').style.display = hasGames ? 'none' : 'block';
-  const resetEl = document.getElementById('recordReset');
-  if (hasGames) {
-    resetEl.classList.remove('disabled');
-    document.getElementById('recPlayed').textContent = data.played;
-    document.getElementById('recWon').textContent = data.won;
-    document.getElementById('recLost').textContent = data.lost;
-    document.getElementById('recRate').textContent = data.winRate + '%';
-  } else {
-    resetEl.classList.add('disabled');
-  }
-}
-
-function updateRecord(won) {
-  const data = loadRecord() || { played: 0, won: 0, lost: 0, winRate: 0 };
-  data.played++;
-  if (won) data.won++; else data.lost++;
-  data.winRate = Math.round(data.won / data.played * 100);
-  saveRecord(data);
-  renderRecord();
-}
-
-document.getElementById('recordReset').addEventListener('click', e => {
-  e.stopPropagation();
-  if (!confirm('Reset your record? This cannot be undone.')) return;
-  try { localStorage.removeItem(REC_KEY); } catch(e) {}
-  renderRecord();
-});
-
-renderRecord();
-
-// ── RECORD CARD HOVER ─────────────────────────────────────────────────────────
-(function() {
-  const trigger = document.getElementById('recordTrigger');
-  const card = document.getElementById('recordCard');
-  let hideTimer = null;
-  function showCard() { clearTimeout(hideTimer); card.classList.add('visible'); }
-  function scheduleHide() { hideTimer = setTimeout(() => card.classList.remove('visible'), 300); }
-  trigger.addEventListener('mouseover', showCard);
-  trigger.addEventListener('mouseleave', scheduleHide);
-  card.addEventListener('mouseover', showCard);
-  card.addEventListener('mouseleave', scheduleHide);
+(function animate() {
+  t += 0.0035;
+  draw();
+  requestAnimationFrame(animate);
+  /* setTimeout(() => requestAnimationFrame(animate), 1000 / 30); */
 })();
 
-// ── STARTUP ───────────────────────────────────────────────────────────────────
-preloadWorldAtlas();
+  // Sticky dot movement
+  const dot = document.querySelector('.rule-dot');
+  document.addEventListener('mousemove', (e) => {
+  const pct = e.clientX / window.innerWidth;
+  const offset = Math.pow(pct - 0.5, 3) * 120;
+  const opacity = Math.pow(1 - Math.abs(pct - 0.5) * 2, 3);
+  dot.style.transform = `translateX(${offset}px)`;
+  dot.style.opacity = opacity;
+
+  // Glow when near center
+const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 25, 1);
+const glowSize = proximity * 18;
+const glowOpacity = proximity * 0.9;
+dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.5}px rgba(180, 210, 120, ${glowOpacity})`;
+});
+  
 </script>
 </body>
 </html>
