@@ -497,7 +497,7 @@
 
   .tile-question-mark {
     position: absolute;
-    top: 4px; right: 6px;
+    top: 4px; left: 6px;
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--amber);
@@ -834,6 +834,7 @@
       <div class="error-msg" id="wildcardError"></div>
       <div class="wildcard-reasoning" id="wildcardReasoning"></div>
       <div class="wildcard-used-notice" id="wildcardUsedNotice">Wildcard used ✓</div>
+      <div class="wildcard-ai-notice">Your question is processed by AI</div>
     </div>
     <div class="accordion" id="accordion"></div>
   </div>
@@ -871,6 +872,7 @@ const WORKER_URL = "https://flat-firefly-5df7.jeff-pires.workers.dev";
 const SOUNDS = {
   yes:  new Audio('ding_correct.wav'),
   no:   new Audio('buzzer_incorrect.wav'),
+  icq:  new Audio('icq-message.wav'),
   win:  new Audio('cheer_win.wav'),
   lose: new Audio('womp_lose.wav'),
 };
@@ -987,7 +989,17 @@ function prepareFeature(countryName, feature) {
       }
       if (score > bestScore) { bestScore = score; best = poly; }
     }
-    if (best) f.geometry = { type: 'Polygon', coordinates: best };
+    if (best) {
+      f.geometry = { type: 'Polygon', coordinates: best };
+      if (countryName === 'Russia') {
+        // Strip any ring coords west of 15°E — removes antimeridian-wrapped Chukotka
+        // points (stored as negative lons in the atlas) and far-western outliers so
+        // D3 fitExtent sees a coherent Eurasian bounding box.
+        f.geometry.coordinates = f.geometry.coordinates.map(
+          ring => ring.filter(([lon]) => lon >= 15)
+        );
+      }
+    }
   }
 
   // Fiji straddles the antimeridian: normalise all longitudes to the eastern side
@@ -1568,14 +1580,13 @@ function askQuestion(q) {
     chip.innerHTML = indicator + q.text;
   }
 
-  playSound(answer ? 'yes' : 'no');
-
   let eliminated = 0;
   state.boardCountries.forEach(c => {
     if (state.eliminated.has(c.name)) return;
     if (matchesQuestion(c, q) !== answer) { eliminateTile(c.name); eliminated++; }
   });
 
+  playSound(eliminated === 0 ? 'icq' : (answer ? 'yes' : 'no'));
   showElimToast(eliminated, answer);
   renderCounter();
   updateRemainingCount();
@@ -1674,7 +1685,7 @@ async function submitWildcard() {
 
     if (data.reasoning) {
       const r = document.getElementById('wildcardReasoning');
-      r.textContent = `Our Gaia Analytica intern says: "${data.reasoning}"`;
+      r.textContent = `AI: "${data.reasoning}"`;
       r.style.display = 'block';
     }
 
