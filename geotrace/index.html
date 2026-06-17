@@ -13,7 +13,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: #090f0b; }
 
-canvas#terrain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: brightness(0.3);}
+canvas#terrain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: brightness(0.6);}
 
 .vignette {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
@@ -40,28 +40,30 @@ header {
 
 .brand-name {
   font-family: 'Cinzel', serif; font-weight: 300;
-  font-size: 1.5rem; letter-spacing: 0.3em;
+  font-size: 1.46rem; letter-spacing: 0.3em;
   color: rgba(225,215,190,0.98); text-transform: uppercase;
 }
 
 .brand-rule { color: rgba(130,165,90,0.45); font-size: 0.9rem; }
 
 .brand-parent {
-  font-weight: 200; font-size: 0.68rem; letter-spacing: 0.38em;
-  text-transform: uppercase; color: rgba(130,165,90,0.7);
+  font-weight: 200; font-size: 0.78rem; letter-spacing: 0.38em;
+  text-transform: uppercase; color: rgba(150,185,105,0.82);
+  text-decoration: none; transition: color 0.3s;
 }
+.brand-parent:hover { color: rgba(190,218,130,0.92); }
 
 .header-actions { display: flex; align-items: center; gap: 1.5rem; }
 
 .session-pill {
-  font-size: 0.64rem; letter-spacing: 0.14em; font-weight: 200;
-  color: rgba(100,130,70,0.45);
+  font-size: 0.68rem; letter-spacing: 0.14em; font-weight: 200;
+  color: rgba(165,185,125,0.75);
 }
 
 .btn-ghost {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
-  color: rgba(180,210,120,0.65); background: transparent;
+  font-size: 0.99rem; letter-spacing: 0.35em; text-transform: uppercase;
+  color: rgba(220,235,160,1); background: transparent;
   border: 1px solid rgba(100,140,75,0.25); padding: 0.42rem 1rem;
   cursor: pointer; transition: all 0.3s;
 }
@@ -78,7 +80,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
 /* ── Map panel ── */
 .map-panel {
-  width: 0; flex-shrink: 0; overflow: hidden;
+  width: 0; flex-shrink: 0; overflow: hidden; position: relative;
   display: flex; flex-direction: column;
   border-left: 1px solid rgba(100,140,75,0.15);
   transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
@@ -86,6 +88,23 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .map-panel.open { width: 42%; }
 
 #map { flex: 1; min-height: 0; }
+
+.basemap-toggle {
+  display: none; position: absolute; top: 0.9rem; right: 0.9rem; z-index: 500;
+  background: rgba(7,12,8,0.88); border: 1px solid rgba(100,140,75,0.25);
+}
+.map-panel.open .basemap-toggle { display: flex; }
+.basemap-toggle button {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(195,225,140,1); background: transparent; border: none;
+  padding: 0.42rem 0.75rem; cursor: pointer; transition: all 0.25s;
+}
+.basemap-toggle button + button { border-left: 1px solid rgba(100,140,75,0.2); }
+.basemap-toggle button:hover { color: rgba(215,240,160,1); }
+.basemap-toggle button.active {
+  color: rgba(225,215,190,0.95); background: rgba(58,88,52,0.32);
+}
 
 .map-bar {
   padding: 0.7rem 1.2rem;
@@ -98,8 +117,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .map-coord-group { display: flex; flex-direction: column; gap: 0.12rem; }
 
 .map-coord-label {
-  font-size: 0.54rem; letter-spacing: 0.28em; text-transform: uppercase;
-  color: rgba(100,130,70,0.42); font-weight: 200;
+  font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(170,190,130,0.78); font-weight: 200;
 }
 
 .map-coord-val {
@@ -112,20 +131,20 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .map-place-name {
   flex: 1; text-align: right;
   font-family: 'Cinzel', serif; font-weight: 300;
-  font-size: 0.82rem; letter-spacing: 0.2em;
-  color: rgba(210,200,170,0.78);
+  font-size: 0.85rem; letter-spacing: 0.2em;
+  color: rgba(225,215,188,0.93);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 .map-precision-badge {
-  font-size: 0.56rem; letter-spacing: 0.22em; text-transform: uppercase;
+  font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
   padding: 0.2rem 0.5rem; font-weight: 200;
-  border: 1px solid rgba(100,140,75,0.25); color: rgba(130,165,90,0.6);
+  border: 1px solid rgba(100,140,75,0.25); color: rgba(165,195,115,0.85);
 }
 
 .copy-btn {
-  font-size: 0.54rem; letter-spacing: 0.18em; text-transform: uppercase;
-  font-weight: 200; color: rgba(130,165,90,0.42); cursor: pointer;
+  font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  font-weight: 200; color: rgba(165,195,115,0.72); cursor: pointer;
   background: none; border: none; font-family: 'Raleway', sans-serif;
   padding: 0.15rem 0.4rem; border: 1px solid rgba(100,140,75,0.18);
   transition: all 0.25s; white-space: nowrap;
@@ -147,7 +166,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 /* Welcome */
 .welcome {
   margin: auto; text-align: center;
-  padding: 2.5rem 1.5rem; max-width: 40ch;
+  padding: 2.5rem 1.5rem; max-width: 54ch;
 }
 .welcome-glyph {
   font-family: 'Cinzel', serif; font-size: 2.2rem; font-weight: 300;
@@ -156,12 +175,12 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 }
 .welcome h2 {
   font-family: 'Cinzel', serif; font-weight: 300;
-  font-size: 0.95rem; letter-spacing: 0.32em; text-transform: uppercase;
-  color: rgba(210,200,170,0.72); margin-bottom: 1rem;
+  font-size: 2rem; letter-spacing: 0.32em; text-transform: uppercase;
+  color: rgba(222,212,185,0.92); margin-bottom: 1rem;
 }
 .welcome p {
-  font-size: 0.85rem; font-weight: 200; letter-spacing: 0.06em;
-  color: rgba(180,168,130,0.75); line-height: 1.9;
+  font-size: 0.94rem; font-weight: 300; letter-spacing: 0.06em;
+  color: rgba(210,199,162,0.93); line-height: 1.9;
 }
 .welcome-rule {
   width: 40px; height: 1px; margin: 1.2rem auto;
@@ -197,8 +216,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   max-width: 86%; margin-top: 0.5rem;
   padding: 0.48rem 0.85rem;
   border-left: 2px solid rgba(100,140,75,0.25);
-  font-size: 0.72rem; font-weight: 200; letter-spacing: 0.05em;
-  color: rgba(130,165,90,0.55); line-height: 1.6;
+  font-size: 0.78rem; font-weight: 200; letter-spacing: 0.05em;
+  color: rgba(170,200,120,0.82); line-height: 1.6;
 }
 
 /* Meta row */
@@ -225,8 +244,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .confidence-pip.low    { color: rgba(195,128,80,0.72);  } .confidence-pip.low    .pip { background: rgba(195,128,80,0.82); }
 
 .turn-mark {
-  font-size: 0.54rem; letter-spacing: 0.14em;
-  color: rgba(100,130,70,0.32); font-weight: 200; margin-left: auto;
+  font-size: 0.6rem; letter-spacing: 0.14em;
+  color: rgba(160,180,125,0.62); font-weight: 200; margin-left: auto;
 }
 
 /* Sources row */
@@ -235,8 +254,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   margin-top: 0.48rem; max-width: 86%;
 }
 .src-chip {
-  font-size: 0.56rem; letter-spacing: 0.2em; text-transform: uppercase;
-  font-weight: 200; color: rgba(110,142,78,0.55);
+  font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+  font-weight: 200; color: rgba(165,195,115,0.82);
   border: 1px solid rgba(80,110,55,0.22);
   padding: 0.14rem 0.42rem;
 }
@@ -245,8 +264,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .data-toggle {
   display: inline-flex; align-items: center; gap: 0.4rem;
   margin-top: 0.8rem; font-family: 'Raleway', sans-serif;
-  font-size: 0.62rem; letter-spacing: 0.26em; text-transform: uppercase;
-  font-weight: 200; color: rgba(130,165,90,0.52); cursor: pointer;
+  font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase;
+  font-weight: 200; color: rgba(170,200,120,0.8); cursor: pointer;
   background: none; border: none;
 }
 .data-toggle:hover { color: rgba(180,210,120,0.8); }
@@ -256,17 +275,17 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
 .data-table {
   margin-top: 0.6rem; width: 100%;
-  border-collapse: collapse; font-size: 0.75rem;
+  border-collapse: collapse; font-size: 0.8rem;
 }
 .data-table tr { border-bottom: 1px solid rgba(80,110,55,0.12); }
 .data-table td { padding: 0.32rem 0.45rem; vertical-align: middle; }
 .data-table td:first-child {
-  color: rgba(130,165,90,0.58); font-weight: 300;
+  color: rgba(170,200,120,0.85); font-weight: 300;
   letter-spacing: 0.06em; white-space: nowrap; width: 10rem;
-  font-size: 0.7rem;
+  font-size: 0.76rem;
 }
 .data-table td:last-child {
-  color: rgba(220,210,182,0.8); font-weight: 200;
+  color: rgba(228,218,190,0.9); font-weight: 200;
 }
 
 /* Copyable values */
@@ -274,12 +293,12 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   display: inline-flex; align-items: center; gap: 0.5rem;
 }
 .copyable-val {
-  font-family: 'Courier New', monospace; font-size: 0.72rem;
+  font-family: 'Courier New', monospace; font-size: 0.76rem;
   letter-spacing: 0.04em;
 }
 .copy-inline {
-  font-size: 0.5rem; letter-spacing: 0.16em; text-transform: uppercase;
-  font-weight: 200; color: rgba(100,130,70,0.38); cursor: pointer;
+  font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase;
+  font-weight: 200; color: rgba(160,185,115,0.68); cursor: pointer;
   background: none; border: 1px solid rgba(80,110,55,0.2);
   padding: 0.1rem 0.32rem; font-family: 'Raleway', sans-serif;
   transition: all 0.25s; flex-shrink: 0;
@@ -318,47 +337,47 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 #inp {
   flex: 1;
   background: rgba(14,24,16,0.75);
-  border: 1px solid rgba(100,140,75,0.2);
-  color: rgba(225,215,190,0.95);
+  border: 1px solid rgba(100,140,75,0.4);
+  color: rgba(255,255,255,1);
   font-family: 'Raleway', sans-serif; font-weight: 300;
   font-size: 0.9rem; letter-spacing: 0.04em;
   padding: 0.85rem 1.1rem; resize: none;
   min-height: 88px; max-height: 200px; line-height: 1.7;
   outline: none; transition: border-color 0.3s;
 }
-#inp::placeholder { color: rgba(130,165,90,0.3); font-size: 0.85rem; }
-#inp:focus { border-color: rgba(130,165,90,0.42); }
+#inp::placeholder { color: rgba(150,180,105,0.83); font-size: 0.88rem; }
+#inp:focus { border-color: rgba(130,165,90,0.84); }
 
-.input-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; }
+.input-right { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
 
 #go {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.65rem; letter-spacing: 0.38em; text-transform: uppercase;
-  color: rgba(180,210,120,0.78); background: rgba(38,65,26,0.42);
+  font-size: 0.85rem; letter-spacing: 0.38em; text-transform: uppercase;
+  color: rgba(200,228,140,0.95); background: rgba(38,65,26,0.42);
   border: 1px solid rgba(100,140,75,0.32);
-  padding: 0 1.4rem; height: 46px; cursor: pointer; transition: all 0.3s;
+  padding: 0 1.4rem; height: 65px; cursor: pointer; transition: all 0.3s;
   white-space: nowrap;
 }
 #go:hover { background: rgba(55,88,38,0.52); border-color: rgba(130,165,90,0.55); color: rgba(225,215,190,0.95); }
 #go:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .hint {
-  font-size: 0.56rem; letter-spacing: 0.12em; font-weight: 200;
-  color: rgba(100,130,70,0.32); white-space: nowrap;
+  font-size: 0.78rem; letter-spacing: 0.12em; font-weight: 200;
+  color: rgba(195,212,150,0.85); white-space: nowrap;
 }
 
 /* ── Leaflet overrides ── */
 .leaflet-container { background: #070d08; font-family: 'Raleway', sans-serif; }
 .leaflet-control-zoom a {
   background: rgba(10,18,11,0.92) !important;
-  color: rgba(180,210,120,0.7) !important;
+  color: rgba(195,220,135,0.85) !important;
   border-color: rgba(100,140,75,0.3) !important;
 }
 .leaflet-control-attribution {
   background: rgba(7,12,8,0.75) !important;
-  color: rgba(100,130,70,0.38) !important; font-size: 8px !important;
+  color: rgba(150,170,115,0.55) !important; font-size: 9px !important;
 }
-.leaflet-control-attribution a { color: rgba(130,165,90,0.45) !important; }
+.leaflet-control-attribution a { color: rgba(165,195,115,0.65) !important; }
 .leaflet-popup-content-wrapper {
   background: rgba(10,18,11,0.96) !important;
   border: 1px solid rgba(100,140,75,0.3) !important;
@@ -390,7 +409,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
     <div class="brand">
       <span class="brand-name">GeoTrace</span>
       <span class="brand-rule">·</span>
-      <span class="brand-parent">Gaia Analytica</span>
+      <a class="brand-parent" href="https://gaiaanalytica.ch" target="_blank" rel="noopener">Gaia Analytica</a>
     </div>
     <div class="header-actions">
       <span class="session-pill" id="sess-label"></span>
@@ -407,7 +426,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
           <h2>Location Research</h2>
           <div class="welcome-rule"></div>
           <p>Describe any location.<br>Provide as much context as you have such as:<br>
-<span style="display: block; text-align: left;margin: 6px 0; padding-left: 15px; line-height: 1.6;">
+<span style="display: block; text-align: left;margin: 6px 0; padding-left: calc(15px + 7ch); line-height: 1.6;">
     • Country<br>
     • Administrative zone<br>
     • Local name<br>
@@ -427,6 +446,10 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
     </div>
 
     <div class="map-panel" id="map-panel">
+      <div class="basemap-toggle" id="basemap-toggle">
+        <button class="bt-btn active" data-mode="terrain" onclick="setBasemap('terrain')">Terrain</button>
+        <button class="bt-btn" data-mode="imagery" onclick="setBasemap('imagery')">Imagery</button>
+      </div>
       <div id="map"></div>
       <div class="map-bar" id="map-bar"></div>
     </div>
@@ -434,6 +457,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet-vector@4.2.4/dist/esri-leaflet-vector.js"></script>
 <script>
 // ── Topographic canvas (Randomized & Optimized) ──────────────────────────────
     const cv = document.getElementById('terrain'), cx = cv.getContext('2d');
@@ -527,6 +552,7 @@ async function copyText(text, btn) {
 
 // ── GeoTrace ──────────────────────────────────────────────────────────────
 const WORKER = 'https://geotrace.jeff-pires.workers.dev/query';
+const ARCGIS_API_KEY = 'AAPTaoRdxxyZ17Ck7E5JD5yls3g..jedxP8ptn3_ash4vARp4CArSjzydX6xf5_W7Q_0yJp_U7AMkyIopRI6HJxSTeINln7038N4NzmjH-3qO1efv8fFj4U7nQtL2IJg6gxiqYgr1ecWP7X3GXG0wnfJJp1lhtRbCSRjUxQPMrIZcYo1Wa4uiot-IYUGNiS1SF6JbYO8wG7b1TbwFf49q_R01YAyR5EIFWSMCWFet9F-CcaO9ypyvhkeyotSP39E8AhapIjaZkCvSSitxfIAQGUrctA..AT1_Bq2K7MnA';
 let leafMap = null, markers = [];
 
 function sid() {
@@ -555,13 +581,31 @@ function closeMap() {
   document.getElementById('map-bar').innerHTML = '';
 }
 
+let terrainLayer = null, imageryLayer = null, labelsLayer = null, currentBasemap = 'terrain';
+
 function initLeaflet() {
   if (leafMap) return;
   leafMap = L.map('map', { zoomControl: true });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  terrainLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap contributors © CARTO',
     subdomains: 'abcd', maxZoom: 19
-  }).addTo(leafMap);
+  });
+  imageryLayer = L.esri.Vector.vectorBasemapLayer('ArcGIS:Imagery:Standard', { apikey: ARCGIS_API_KEY });
+  labelsLayer = L.esri.Vector.vectorBasemapLayer('ArcGIS:Imagery:Labels', { apikey: ARCGIS_API_KEY });
+  terrainLayer.addTo(leafMap);
+}
+
+function setBasemap(mode) {
+  if (!leafMap || mode === currentBasemap) return;
+  if (mode === 'imagery') {
+    leafMap.removeLayer(terrainLayer);
+    imageryLayer.addTo(leafMap); labelsLayer.addTo(leafMap);
+  } else {
+    leafMap.removeLayer(imageryLayer); leafMap.removeLayer(labelsLayer);
+    terrainLayer.addTo(leafMap);
+  }
+  currentBasemap = mode;
+  document.querySelectorAll('#basemap-toggle .bt-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
 }
 
 const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 34" width="22" height="34">
