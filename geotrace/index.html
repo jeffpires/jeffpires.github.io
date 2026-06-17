@@ -707,14 +707,14 @@ function pushMsg(role, payload) {
   if (role === 'user') {
     row.innerHTML = `<div class="bubble">${esc(payload)}</div>`;
   } else {
-    const { type, narrative, data, sources_queried=[], turn, variants_tried } = payload;
+    const { type, narrative, data, sources_with_results=[], turn, variants_tried } = payload;
     const label = { answer:'Answer', question:'Clarification needed', null_result:'Not located' }[type] || type;
     const conf = data?.confidence;
     const confHtml = conf ? `<span class="confidence-pip ${conf}"><span class="pip"></span>${conf}</span>` : '';
     const varHtml = variants_tried?.length
       ? `<div class="variants-note">Alternate spellings tried: ${variants_tried.map(esc).join(', ')}</div>` : '';
-    const srcHtml = sources_queried.length
-      ? `<div class="sources-row">${sources_queried.map(s=>`<span class="src-chip">${esc(s)}</span>`).join('')}</div>` : '';
+    const srcHtml = sources_with_results.length
+      ? `<div class="sources-row">${sources_with_results.map(s=>`<span class="src-chip">${esc(s)}</span>`).join('')}</div>` : '';
 
     row.innerHTML = `
       <div class="bubble">
