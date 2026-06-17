@@ -313,17 +313,14 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   background: rgba(10,18,11,0.8);
   border: 1px solid rgba(80,110,58,0.2);
 }
-.geo-loader svg {
+.geo-loader > svg {
   display: block; width: 100%; max-width: 192px; height: auto;
 }
 .geo-frame {
   fill: none; stroke: rgba(130,165,90,0.3); stroke-width: 0.6;
 }
 .geo-grid line { stroke: rgba(130,165,90,0.16); stroke-width: 0.4; }
-.geo-land {
-  fill: rgba(130,165,90,0.09);
-  stroke: rgba(140,180,95,0.6); stroke-width: 0.7; stroke-linejoin: round;
-}
+.geo-land-img { opacity: 0.3; }
 .geo-scanline { fill: rgba(180,210,120,0.07); }
 @keyframes geo-scan {
   0%   { transform: translateY(-18px); }
@@ -746,15 +743,6 @@ function pushMsg(role, payload) {
   row.scrollIntoView({ behavior:'smooth', block:'end' });
 }
 
-// Low-poly continent silhouettes, viewBox 0 0 170 90 (x = lon, y = lat).
-const GEO_LAND = [
-  '11,18 32,11 46,14 49,25 41,36 28,39 16,33 7,25',           // North America
-  '39,46 49,44 55,53 52,68 45,77 40,70 35,57',                 // South America
-  '80,13 96,10 99,18 92,23 82,21 77,17',                       // Europe
-  '79,25 96,23 101,36 98,53 90,67 81,64 76,46 74,33',          // Africa
-  '99,9 142,7 156,18 152,32 138,39 120,35 106,28 100,17',      // Asia
-  '135,64 153,62 157,70 149,77 138,75 132,69',                 // Australia
-];
 // Candidate search points the magnifying glass sweeps between.
 const GEO_WAYPOINTS = [
   [20,24],[38,20],[28,30],[44,58],[40,68],
@@ -767,7 +755,9 @@ function geoLoaderSvg() {
   const gridLines = [];
   for (let x = 17; x < 170; x += 17) gridLines.push(`<line x1="${x}" y1="0" x2="${x}" y2="90"/>`);
   for (let y = 15; y < 90; y += 15) gridLines.push(`<line x1="0" y1="${y}" x2="170" y2="${y}"/>`);
-  const land = GEO_LAND.map(pts => `<polygon class="geo-land" points="${pts}"/>`).join('');
+  const land = `<svg x="0" y="0" width="170" height="90" viewBox="0 0 2000 857" preserveAspectRatio="xMidYMid slice">
+      <image class="geo-land-img" href="world.svg" x="0" y="0" width="2000" height="857"/>
+    </svg>`;
   return `
     <svg viewBox="0 0 170 90" preserveAspectRatio="xMidYMid meet">
       <g class="geo-grid">${gridLines.join('')}</g>
