@@ -306,25 +306,38 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .copy-inline:hover { color: rgba(180,210,120,0.75); border-color: rgba(130,165,90,0.4); }
 .copy-inline.copied { color: rgba(120,195,80,0.85); }
 
-/* Typing indicator */
+/* Geo-search loader (replaces typing indicator) */
 .typing-row { align-items: flex-start; }
-.typing-bubble {
-  display: flex; gap: 0.35rem; align-items: center;
-  padding: 0.85rem 1.1rem;
+.geo-loader {
+  display: inline-block; padding: 0.55rem;
   background: rgba(10,18,11,0.8);
   border: 1px solid rgba(80,110,58,0.2);
 }
-.t-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: rgba(130,165,90,0.48);
-  animation: tpulse 1.35s ease-in-out infinite;
+.geo-loader svg {
+  display: block; width: 100%; max-width: 192px; height: auto;
 }
-.t-dot:nth-child(2) { animation-delay: 0.18s; }
-.t-dot:nth-child(3) { animation-delay: 0.36s; }
-@keyframes tpulse {
-  0%,80%,100% { opacity: 0.28; transform: scale(0.8); }
-  40%         { opacity: 1;    transform: scale(1);   }
+.geo-frame {
+  fill: none; stroke: rgba(130,165,90,0.3); stroke-width: 0.6;
 }
+.geo-grid line { stroke: rgba(130,165,90,0.16); stroke-width: 0.4; }
+.geo-land {
+  fill: rgba(130,165,90,0.09);
+  stroke: rgba(140,180,95,0.6); stroke-width: 0.7; stroke-linejoin: round;
+}
+.geo-scanline { fill: rgba(180,210,120,0.07); }
+@keyframes geo-scan {
+  0%   { transform: translateY(-18px); }
+  100% { transform: translateY(108px); }
+}
+.geo-scanline { animation: geo-scan 3.4s linear infinite; }
+.geo-glass circle { fill: none; stroke: rgba(190,218,130,0.9); stroke-width: 1.7; }
+.geo-glass line { stroke: rgba(190,218,130,0.9); stroke-width: 1.7; stroke-linecap: round; }
+.geo-ping circle { fill: none; stroke: rgba(190,218,130,0.6); stroke-width: 0.9; }
+@keyframes geo-ping {
+  0%   { r: 1px; opacity: 0.85; }
+  100% { r: 10px; opacity: 0; }
+}
+.geo-ping circle { animation: geo-ping 1s ease-out; opacity: 0; }
 
 /* ── Input area ── */
 .input-wrap {
@@ -733,15 +746,99 @@ function pushMsg(role, payload) {
   row.scrollIntoView({ behavior:'smooth', block:'end' });
 }
 
+// Low-poly continent silhouettes, viewBox 0 0 170 90 (x = lon, y = lat).
+const GEO_LAND = [
+  '11,18 32,11 46,14 49,25 41,36 28,39 16,33 7,25',           // North America
+  '39,46 49,44 55,53 52,68 45,77 40,70 35,57',                 // South America
+  '80,13 96,10 99,18 92,23 82,21 77,17',                       // Europe
+  '79,25 96,23 101,36 98,53 90,67 81,64 76,46 74,33',          // Africa
+  '99,9 142,7 156,18 152,32 138,39 120,35 106,28 100,17',      // Asia
+  '135,64 153,62 157,70 149,77 138,75 132,69',                 // Australia
+];
+// Candidate search points the magnifying glass sweeps between.
+const GEO_WAYPOINTS = [
+  [20,24],[38,20],[28,30],[44,58],[40,68],
+  [86,16],[88,33],[83,50],[90,60],
+  [117,15],[132,25],[112,32],[145,69],[148,62],
+  [60,40],[110,50],
+];
+
+function geoLoaderSvg() {
+  const gridLines = [];
+  for (let x = 17; x < 170; x += 17) gridLines.push(`<line x1="${x}" y1="0" x2="${x}" y2="90"/>`);
+  for (let y = 15; y < 90; y += 15) gridLines.push(`<line x1="0" y1="${y}" x2="170" y2="${y}"/>`);
+  const land = GEO_LAND.map(pts => `<polygon class="geo-land" points="${pts}"/>`).join('');
+  return `
+    <svg viewBox="0 0 170 90" preserveAspectRatio="xMidYMid meet">
+      <g class="geo-grid">${gridLines.join('')}</g>
+      ${land}
+      <rect class="geo-frame" x="0.5" y="0.5" width="169" height="89"/>
+      <rect class="geo-scanline" x="0" y="0" width="170" height="18"/>
+      <g class="geo-ping" transform="translate(20,24)"><circle r="1"/></g>
+      <g class="geo-glass" transform="translate(20,24)">
+        <circle cx="0" cy="0" r="5"/>
+        <line x1="3.6" y1="3.6" x2="8.5" y2="8.5"/>
+      </g>
+    </svg>`;
+}
+
+let geoAnimToken = 0;
+
 function pushTyping() {
   const msgs = document.getElementById('msgs');
   const el = document.createElement('div');
   el.className = 'msg-row assistant typing-row'; el.id = 'typing';
-  el.innerHTML = `<div class="typing-bubble"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>`;
+  el.innerHTML = `<div class="geo-loader">${geoLoaderSvg()}</div>`;
   msgs.appendChild(el);
   el.scrollIntoView({ behavior:'smooth', block:'end' });
+  runGeoLoaderAnim(++geoAnimToken);
 }
-function clearTyping() { document.getElementById('typing')?.remove(); }
+function clearTyping() { geoAnimToken++; document.getElementById('typing')?.remove(); }
+
+function runGeoLoaderAnim(token) {
+  const glass = document.querySelector('#typing .geo-glass');
+  const ping = document.querySelector('#typing .geo-ping circle');
+  if (!glass) return;
+  let [cx, cy] = [20, 24];
+
+  function pickNext() {
+    return GEO_WAYPOINTS[Math.floor(Math.random() * GEO_WAYPOINTS.length)];
+  }
+
+  function animateTo(tx, ty, duration, cb) {
+    const sx = cx, sy = cy, start = performance.now();
+    function frame(now) {
+      if (token !== geoAnimToken) return;
+      const t = Math.min(1, (now - start) / duration);
+      const e = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // ease-in-out quad
+      const nx = sx + (tx - sx) * e, ny = sy + (ty - sy) * e;
+      glass.setAttribute('transform', `translate(${nx},${ny})`);
+      if (t < 1) requestAnimationFrame(frame);
+      else { cx = tx; cy = ty; cb(); }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function pulsePing() {
+    if (!ping) return;
+    ping.parentElement.setAttribute('transform', `translate(${cx},${cy})`);
+    ping.style.animation = 'none';
+    requestAnimationFrame(() => { ping.style.animation = ''; });
+  }
+
+  function step() {
+    if (token !== geoAnimToken) return;
+    const [tx, ty] = pickNext();
+    const dist = Math.hypot(tx - cx, ty - cy);
+    const duration = Math.min(2200, Math.max(900, dist * 55));
+    animateTo(tx, ty, duration, () => {
+      if (token !== geoAnimToken) return;
+      pulsePing();
+      setTimeout(() => { if (token === geoAnimToken) step(); }, 450 + Math.random() * 900);
+    });
+  }
+  step();
+}
 
 // ── Send ──────────────────────────────────────────────────────────────────
 async function send() {
