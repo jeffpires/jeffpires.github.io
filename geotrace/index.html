@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Newsreader:ital,wght@1,300;1,400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -178,9 +178,21 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   font-size: 2rem; letter-spacing: 0.32em; text-transform: uppercase;
   color: rgba(222,212,185,0.92); margin-bottom: 1rem;
 }
+.welcome-sub {
+  font-family: 'Newsreader', serif; font-weight: 300; font-style: italic;
+  font-size: 1.13rem; letter-spacing: 0.01em; line-height: 1.65;
+  color: rgba(180,210,120,0.75); margin-bottom: 1.4rem;
+}
 .welcome p {
   font-size: 0.94rem; font-weight: 300; letter-spacing: 0.06em;
   color: rgba(210,199,162,0.93); line-height: 1.9;
+}
+.welcome-list {
+  display: block; text-align: left; margin: 0.6rem 0 0;
+  padding-left: calc(15px + 7ch); line-height: 1.9;
+}
+.welcome-list b {
+  font-weight: 400; color: rgba(225,215,190,0.95);
 }
 .welcome-rule {
   width: 40px; height: 1px; margin: 1.2rem auto;
@@ -435,14 +447,13 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
           <div class="welcome-rule"></div>
           <h2>Location Research</h2>
           <div class="welcome-rule"></div>
-          <p>Describe any location.<br>Provide as much context as you have such as:<br>
-<span style="display: block; text-align: left;margin: 6px 0; padding-left: calc(15px + 7ch); line-height: 1.6;">
-    • Country<br>
-    • Administrative zone<br>
-    • Local name<br>
-    • Local institutions or infrastructure<br>
-    • Proximity to known places<br>
-    • Distance and direction references
+          <p class="welcome-sub">Standard geocoders rely on formal place names and clean administrative data. Humanitarian work rarely has either.</p>
+          <p>Describe the location as you know it. The more context you provide, the better:<br>
+<span class="welcome-list">
+    → <b>Local or informal name</b><br>
+    → <b>Country</b> and administrative zone<br>
+    → <b>Nearby landmarks</b>, institutions, or infrastructure<br>
+    → <b>Distance</b> and direction from a known point
   </span></p>
         </div>
       </div>
@@ -581,7 +592,14 @@ function newSession() {
       <div class="welcome-rule"></div>
       <h2>Location Research</h2>
       <div class="welcome-rule"></div>
-      <p>Describe any location — provide as much context as you have. Country, administrative zone, local name, proximity to known places, distance and direction references.</p>
+      <p class="welcome-sub">Standard geocoders rely on formal place names and clean administrative data. Humanitarian work rarely has either.</p>
+      <p>Describe the location as you know it. The more context you provide, the better:<br>
+<span class="welcome-list">
+    → <b>Local or informal name</b><br>
+    → <b>Country</b> and administrative zone<br>
+    → <b>Nearby landmarks</b>, institutions, or infrastructure<br>
+    → <b>Distance</b> and direction from a known point
+  </span></p>
     </div>`;
   document.getElementById('inp').value = '';
   closeMap(); refreshLabel();
