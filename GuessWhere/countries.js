@@ -13,7 +13,7 @@ const COUNTRIES = [
   {
     name: "Argentina", flag: "🇦🇷", iso2: "ar", isoNumeric: 32, continent: "South America", region: "South America",
     hemisphere_ns: "south", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 4989, biomes: ["grassland","desert"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Parana River",
+    coastline_km: 4989, biomes: ["grassland","desert","tundra"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Parana River",
     population_tier: "large", area_tier: "huge", language_family: "Romance",
     government_type: "federal_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: true,
     free_press: false, press_freedom_score: 56.14, compulsory_voting: true, uses_own_currency: true, capital_is_largest_city: true, head_of_state_is_head_of_government: true, multiple_official_languages: false, literacy_rate: 99, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: false, internet_censored: false, primary_education_free_compulsory: true,
@@ -24,7 +24,7 @@ const COUNTRIES = [
   {
     name: "Colombia", flag: "🇨🇴", iso2: "co", isoNumeric: 170, continent: "South America", region: "South America",
     hemisphere_ns: "north", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 3208, biomes: ["tropical"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Magdalena River",
+    coastline_km: 3208, biomes: ["tropical","tundra"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Magdalena River",
     population_tier: "large", area_tier: "large", language_family: "Romance",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 49.8, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: true, head_of_state_is_head_of_government: true, multiple_official_languages: false, literacy_rate: 95.6, literacy_rate_above_90: true, suffrage_pre_1950: false, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -35,7 +35,7 @@ const COUNTRIES = [
   {
     name: "Peru", flag: "🇵🇪", iso2: "pe", isoNumeric: 604, continent: "South America", region: "South America",
     hemisphere_ns: "south", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 2414, biomes: ["tropical","desert"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Amazon River",
+    coastline_km: 2414, biomes: ["tropical","desert","tundra"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Amazon River",
     population_tier: "medium", area_tier: "large", language_family: "other",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 42.88, compulsory_voting: true, uses_own_currency: true, capital_is_largest_city: true, head_of_state_is_head_of_government: true, multiple_official_languages: true, literacy_rate: 94.5, literacy_rate_above_90: true, suffrage_pre_1950: false, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -46,7 +46,7 @@ const COUNTRIES = [
   {
     name: "Chile", flag: "🇨🇱", iso2: "cl", isoNumeric: 152, continent: "South America", region: "South America",
     hemisphere_ns: "south", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 6435, biomes: ["forest","desert","mediterranean"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Andes", major_river: false, major_river_name: null,
+    coastline_km: 6435, biomes: ["forest","desert","mediterranean","tundra"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Andes", major_river: false, major_river_name: null,
     population_tier: "medium", area_tier: "large", language_family: "Romance",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 62.25, compulsory_voting: true, uses_own_currency: true, capital_is_largest_city: true, head_of_state_is_head_of_government: true, multiple_official_languages: false, literacy_rate: 96.3, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -57,7 +57,7 @@ const COUNTRIES = [
   {
     name: "Bolivia", flag: "🇧🇴", iso2: "bo", isoNumeric: 68, continent: "South America", region: "South America",
     hemisphere_ns: "south", hemisphere_ew: "west", landlocked: true, island_nation: false,
-    coastline_km: 0, biomes: ["tropical","grassland"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: false, major_river_name: null,
+    coastline_km: 0, biomes: ["tropical","grassland","tundra"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: false, major_river_name: null,
     population_tier: "small", area_tier: "large", language_family: "other",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 54.09, compulsory_voting: true, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: true, multiple_official_languages: true, literacy_rate: 92.5, literacy_rate_above_90: true, suffrage_pre_1950: false, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -101,7 +101,7 @@ const COUNTRIES = [
   {
     name: "United States", flag: "🇺🇸", iso2: "us", isoNumeric: 840, continent: "North America", region: "North America",
     hemisphere_ns: "north", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 19924, biomes: ["grassland","forest","desert"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Rocky Mountains", major_river: true, major_river_name: "Mississippi River",
+    coastline_km: 19924, biomes: ["grassland","forest","desert","tundra"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Rocky Mountains", major_river: true, major_river_name: "Mississippi River",
     population_tier: "huge", area_tier: "huge", language_family: "Germanic",
     government_type: "federal_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: true, g20_member: true,
     free_press: false, press_freedom_score: 65.49, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: true, multiple_official_languages: false, literacy_rate: 99, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: false, internet_censored: false, primary_education_free_compulsory: true,
@@ -145,7 +145,7 @@ const COUNTRIES = [
   {
     name: "France", flag: "🇫🇷", iso2: "fr", isoNumeric: 250, continent: "Europe", region: "Western Europe",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 3427, biomes: ["forest","mediterranean"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Alps", major_river: true, major_river_name: "Loire River",
+    coastline_km: 3427, biomes: ["forest","mediterranean","tundra"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Alps", major_river: true, major_river_name: "Loire River",
     population_tier: "large", area_tier: "medium", language_family: "Romance",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: true, nato_member: true, g20_member: true,
     free_press: true, press_freedom_score: 76.62, compulsory_voting: false, uses_own_currency: false, capital_is_largest_city: true, head_of_state_is_head_of_government: false, multiple_official_languages: false, literacy_rate: 99, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -167,7 +167,7 @@ const COUNTRIES = [
   {
     name: "Spain", flag: "🇪🇸", iso2: "es", isoNumeric: 724, continent: "Europe", region: "Southern Europe",
     hemisphere_ns: "north", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 4964, biomes: ["mediterranean","desert"], dominant_biome: "mediterranean", major_mountain_range: true, mountain_range_name: "Pyrenees", major_river: true, major_river_name: "Ebro River",
+    coastline_km: 4964, biomes: ["mediterranean","desert","tundra"], dominant_biome: "mediterranean", major_mountain_range: true, mountain_range_name: "Pyrenees", major_river: true, major_river_name: "Ebro River",
     population_tier: "medium", area_tier: "medium", language_family: "Romance",
     government_type: "constitutional_monarchy", is_monarchy: true, is_republic: false, eu_member: true, nato_member: true, g20_member: false,
     free_press: true, press_freedom_score: 77.35, compulsory_voting: false, uses_own_currency: false, capital_is_largest_city: true, head_of_state_is_head_of_government: false, multiple_official_languages: false, literacy_rate: 98.3, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -178,7 +178,7 @@ const COUNTRIES = [
   {
     name: "Italy", flag: "🇮🇹", iso2: "it", isoNumeric: 380, continent: "Europe", region: "Southern Europe",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 7600, biomes: ["mediterranean"], dominant_biome: "mediterranean", major_mountain_range: true, mountain_range_name: "Alps", major_river: false, major_river_name: null,
+    coastline_km: 7600, biomes: ["mediterranean","tundra"], dominant_biome: "mediterranean", major_mountain_range: true, mountain_range_name: "Alps", major_river: false, major_river_name: null,
     population_tier: "large", area_tier: "medium", language_family: "Romance",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: true, nato_member: true, g20_member: true,
     free_press: false, press_freedom_score: 68.01, compulsory_voting: false, uses_own_currency: false, capital_is_largest_city: true, head_of_state_is_head_of_government: false, multiple_official_languages: false, literacy_rate: 99.2, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: false, internet_censored: false, primary_education_free_compulsory: true,
@@ -222,7 +222,7 @@ const COUNTRIES = [
   {
     name: "Sweden", flag: "🇸🇪", iso2: "se", isoNumeric: 752, continent: "Europe", region: "Northern Europe",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 3218, biomes: ["forest"], dominant_biome: "forest", major_mountain_range: false, mountain_range_name: null, major_river: false, major_river_name: null,
+    coastline_km: 3218, biomes: ["forest","tundra"], dominant_biome: "forest", major_mountain_range: false, mountain_range_name: null, major_river: false, major_river_name: null,
     population_tier: "small", area_tier: "medium", language_family: "Germanic",
     government_type: "constitutional_monarchy", is_monarchy: true, is_republic: false, eu_member: true, nato_member: true, g20_member: false,
     free_press: true, press_freedom_score: 88.13, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: true, head_of_state_is_head_of_government: false, multiple_official_languages: false, literacy_rate: 99, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -255,7 +255,7 @@ const COUNTRIES = [
   {
     name: "Finland", flag: "🇫🇮", iso2: "fi", isoNumeric: 246, continent: "Europe", region: "Northern Europe",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 1250, biomes: ["forest"], dominant_biome: "forest", major_mountain_range: false, mountain_range_name: null, major_river: false, major_river_name: null,
+    coastline_km: 1250, biomes: ["forest","tundra"], dominant_biome: "forest", major_mountain_range: false, mountain_range_name: null, major_river: false, major_river_name: null,
     population_tier: "small", area_tier: "medium", language_family: "other",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: true, nato_member: true, g20_member: false,
     free_press: true, press_freedom_score: 87.18, compulsory_voting: false, uses_own_currency: false, capital_is_largest_city: true, head_of_state_is_head_of_government: false, multiple_official_languages: true, literacy_rate: 100, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -310,7 +310,7 @@ const COUNTRIES = [
   {
     name: "Switzerland", flag: "🇨🇭", iso2: "ch", isoNumeric: 756, continent: "Europe", region: "Western Europe",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: true, island_nation: false,
-    coastline_km: 0, biomes: ["forest"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Alps", major_river: true, major_river_name: "Rhine River",
+    coastline_km: 0, biomes: ["forest","tundra"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Alps", major_river: true, major_river_name: "Rhine River",
     population_tier: "small", area_tier: "small", language_family: "Germanic",
     government_type: "federal_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: true, press_freedom_score: 83.98, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: true, multiple_official_languages: true, literacy_rate: 99, literacy_rate_above_90: true, suffrage_pre_1950: false, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -321,7 +321,7 @@ const COUNTRIES = [
   {
     name: "Austria", flag: "🇦🇹", iso2: "at", isoNumeric: 40, continent: "Europe", region: "Western Europe",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: true, island_nation: false,
-    coastline_km: 0, biomes: ["forest"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Alps", major_river: true, major_river_name: "Danube River",
+    coastline_km: 0, biomes: ["forest","tundra"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Alps", major_river: true, major_river_name: "Danube River",
     population_tier: "small", area_tier: "small", language_family: "Germanic",
     government_type: "federal_republic", is_monarchy: false, is_republic: true, eu_member: true, nato_member: false, g20_member: false,
     free_press: true, press_freedom_score: 78.12, compulsory_voting: false, uses_own_currency: false, capital_is_largest_city: true, head_of_state_is_head_of_government: false, multiple_official_languages: false, literacy_rate: 98, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -398,7 +398,7 @@ const COUNTRIES = [
   {
     name: "Kenya", flag: "🇰🇪", iso2: "ke", isoNumeric: 404, continent: "Africa", region: "East Africa",
     hemisphere_ns: "south", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 536, biomes: ["grassland"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Aberdare Range", major_river: false, major_river_name: null,
+    coastline_km: 536, biomes: ["grassland","tundra"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Aberdare Range", major_river: false, major_river_name: null,
     population_tier: "large", area_tier: "medium", language_family: "Niger-Congo",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 49.41, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: true, head_of_state_is_head_of_government: true, multiple_official_languages: true, literacy_rate: 81.5, literacy_rate_above_90: false, suffrage_pre_1950: false, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -420,7 +420,7 @@ const COUNTRIES = [
   {
     name: "Tanzania", flag: "🇹🇿", iso2: "tz", isoNumeric: 834, continent: "Africa", region: "East Africa",
     hemisphere_ns: "south", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 1424, biomes: ["grassland"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Eastern Arc Mountains", major_river: false, major_river_name: null,
+    coastline_km: 1424, biomes: ["grassland","tundra"], dominant_biome: "grassland", major_mountain_range: true, mountain_range_name: "Eastern Arc Mountains", major_river: false, major_river_name: null,
     population_tier: "large", area_tier: "large", language_family: "Niger-Congo",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 53.68, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: true, multiple_official_languages: true, literacy_rate: 77.9, literacy_rate_above_90: false, suffrage_pre_1950: false, strict_marriage_age_18: false, internet_censored: true, primary_education_free_compulsory: true,
@@ -453,7 +453,7 @@ const COUNTRIES = [
   {
     name: "China", flag: "🇨🇳", iso2: "cn", isoNumeric: 156, continent: "Asia", region: "East Asia",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 14500, biomes: ["desert","grassland","forest"], dominant_biome: "desert", major_mountain_range: true, mountain_range_name: "Himalayas", major_river: true, major_river_name: "Yangtze River",
+    coastline_km: 14500, biomes: ["desert","grassland","forest","tundra"], dominant_biome: "desert", major_mountain_range: true, mountain_range_name: "Himalayas", major_river: true, major_river_name: "Yangtze River",
     population_tier: "huge", area_tier: "huge", language_family: "Sino-Tibetan",
     government_type: "other", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: true,
     free_press: false, press_freedom_score: 14.8, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: false, multiple_official_languages: false, literacy_rate: 96.8, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: true, primary_education_free_compulsory: true,
@@ -464,7 +464,7 @@ const COUNTRIES = [
   {
     name: "India", flag: "🇮🇳", iso2: "in", isoNumeric: 356, continent: "Asia", region: "South Asia",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 7000, biomes: ["tropical","desert"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Himalayas", major_river: true, major_river_name: "Ganges River",
+    coastline_km: 7000, biomes: ["tropical","desert","tundra"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Himalayas", major_river: true, major_river_name: "Ganges River",
     population_tier: "huge", area_tier: "large", language_family: "other",
     government_type: "federal_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: true,
     free_press: false, press_freedom_score: 32.96, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: false, multiple_official_languages: true, literacy_rate: 74.4, literacy_rate_above_90: false, suffrage_pre_1950: true, strict_marriage_age_18: false, internet_censored: true, primary_education_free_compulsory: true,
@@ -508,7 +508,7 @@ const COUNTRIES = [
   {
     name: "Pakistan", flag: "🇵🇰", iso2: "pk", isoNumeric: 586, continent: "Asia", region: "South Asia",
     hemisphere_ns: "north", hemisphere_ew: "east", landlocked: false, island_nation: false,
-    coastline_km: 1046, biomes: ["desert"], dominant_biome: "desert", major_mountain_range: true, mountain_range_name: "Karakoram", major_river: true, major_river_name: "Indus River",
+    coastline_km: 1046, biomes: ["desert","tundra"], dominant_biome: "desert", major_mountain_range: true, mountain_range_name: "Karakoram", major_river: true, major_river_name: "Indus River",
     population_tier: "huge", area_tier: "large", language_family: "other",
     government_type: "federal_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 29.62, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: false, multiple_official_languages: true, literacy_rate: 58, literacy_rate_above_90: false, suffrage_pre_1950: true, strict_marriage_age_18: false, internet_censored: true, primary_education_free_compulsory: true,
@@ -662,7 +662,7 @@ const COUNTRIES = [
   {
     name: "New Zealand", flag: "🇳🇿", iso2: "nz", isoNumeric: 554, continent: "Oceania", region: "Oceania",
     hemisphere_ns: "south", hemisphere_ew: "east", landlocked: false, island_nation: true,
-    coastline_km: 15134, biomes: ["forest"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Southern Alps", major_river: false, major_river_name: null,
+    coastline_km: 15134, biomes: ["forest","tundra"], dominant_biome: "forest", major_mountain_range: true, mountain_range_name: "Southern Alps", major_river: false, major_river_name: null,
     population_tier: "small", area_tier: "small", language_family: "Germanic",
     government_type: "constitutional_monarchy", is_monarchy: true, is_republic: false, eu_member: false, nato_member: false, g20_member: false,
     free_press: true, press_freedom_score: 81.37, compulsory_voting: false, uses_own_currency: true, capital_is_largest_city: false, head_of_state_is_head_of_government: false, multiple_official_languages: true, literacy_rate: 99, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: false, internet_censored: false, primary_education_free_compulsory: true,
@@ -959,7 +959,7 @@ const COUNTRIES = [
   {
     name: "Ecuador", flag: "🇪🇨", iso2: "ec", isoNumeric: 218, continent: "South America", region: "South America",
     hemisphere_ns: "south", hemisphere_ew: "west", landlocked: false, island_nation: false,
-    coastline_km: 2237, biomes: ["tropical"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Napo River",
+    coastline_km: 2237, biomes: ["tropical","tundra"], dominant_biome: "tropical", major_mountain_range: true, mountain_range_name: "Andes", major_river: true, major_river_name: "Napo River",
     population_tier: "medium", area_tier: "medium", language_family: "Romance",
     government_type: "unitary_republic", is_monarchy: false, is_republic: true, eu_member: false, nato_member: false, g20_member: false,
     free_press: false, press_freedom_score: 53.76, compulsory_voting: true, uses_own_currency: false, capital_is_largest_city: false, head_of_state_is_head_of_government: true, multiple_official_languages: true, literacy_rate: 93.6, literacy_rate_above_90: true, suffrage_pre_1950: true, strict_marriage_age_18: true, internet_censored: false, primary_education_free_compulsory: true,
@@ -1050,7 +1050,7 @@ const QUESTION_CATEGORIES = [
       { id: "q_forest",       text: "Is the dominant landscape forest?",                         attr: "dominant_biome",       match: "forest"       },
       { id: "q_grassland",    text: "Is the dominant landscape grassland or savanna?",           attr: "dominant_biome",       match: "grassland"    },
       { id: "q_mediterranean",text: "Is the dominant landscape Mediterranean?",                  attr: "dominant_biome",       match: "mediterranean"},
-      { id: "q_tundra",       text: "Does this country have tundra or arctic terrain?",          fn: c => c.biomes.includes("tundra") },
+      { id: "q_tundra",       text: "Does this country have tundra or arctic terrain (excluding overseas territories)?",          fn: c => c.biomes.includes("tundra") },
       { id: "q_mountains",    text: "Does this country have a major mountain range?",            attr: "major_mountain_range", match: true           },
       { id: "q_river",        text: "Does a major river flow through this country?",             attr: "major_river",          match: true           },
       { id: "q_manyborders",  text: "Does this country share borders with 4 or more countries?", attr: "borders_count_tier", match: ["several","many"] },
