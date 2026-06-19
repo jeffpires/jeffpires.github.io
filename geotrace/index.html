@@ -11,6 +11,11 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+* { scrollbar-width: thin; scrollbar-color: rgba(100,140,75,0.35) rgba(10,18,11,0.85); }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: rgba(10,18,11,0.85); }
+*::-webkit-scrollbar-thumb { background: rgba(100,140,75,0.35); border: none; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(130,165,90,0.55); }
 html, body { width: 100%; height: 100%; overflow: hidden; background: #090f0b; }
 
 canvas#terrain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: brightness(0.6);}
@@ -348,6 +353,34 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 }
 .geo-ping circle { animation: geo-ping 1s ease-out; opacity: 0; }
 
+/* ── Scope bar ── */
+.scope-bar {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.6rem 2rem 0;
+  background: rgba(9,15,11,0.75); flex-shrink: 0;
+}
+.scope-label {
+  font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(170,190,130,0.78); font-weight: 200;
+}
+.scope-select {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.78rem; letter-spacing: 0.04em;
+  color: rgba(195,212,150,0.9); background: rgba(14,24,16,0.6);
+  border: 1px solid rgba(100,140,75,0.3);
+  padding: 0.28rem 0.5rem; cursor: pointer; outline: none;
+  transition: border-color 0.3s;
+}
+.scope-select:focus, .scope-select:hover { border-color: rgba(130,165,90,0.6); }
+.scope-select option { background: #0a120b; color: rgba(220,210,182,0.95); }
+
+.scope-chip {
+  font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+  font-weight: 200; color: rgba(165,195,115,0.75);
+  border: 1px solid rgba(80,110,55,0.22);
+  padding: 0.16rem 0.5rem; line-height: 1;
+}
+
 /* ── Input area ── */
 .input-wrap {
   padding: 1rem 2rem 1.25rem;
@@ -414,6 +447,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   .map-panel { width: 100% !important; height: 0; transition: height 0.55s; border-left: none; border-top: 1px solid rgba(100,140,75,0.14); }
   .map-panel.open { height: 40vh; width: 100% !important; }
   .messages { padding: 1.1rem; }
+  .scope-bar { padding: 0.6rem 1.1rem 0; }
   .input-wrap { padding: 0.8rem 1.1rem 1rem; }
   header { padding: 0.9rem 1.1rem; }
   .session-pill { display: none; }
@@ -456,6 +490,10 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
     → <b>Distance</b> and direction from a known point
   </span></p>
         </div>
+      </div>
+      <div class="scope-bar">
+        <label class="scope-label" for="country-sel">Scope</label>
+        <select id="country-sel" class="scope-select" onchange="onCountryChange()"></select>
       </div>
       <div class="input-wrap">
         <textarea id="inp" placeholder="Describe the location. The more context you provide, the better the result."></textarea>
@@ -576,6 +614,261 @@ const WORKER = 'https://geotrace.jeff-pires.workers.dev/query';
 const ARCGIS_API_KEY = 'AAPTar4bJfAIgsPKDUAIYTbkfZQ..0Sf_U1Etp__vsdp5YF9EJ2djOriQsF_mULPraeEpIoNKMq5SsY8ND934x49fo6ami-yUXSAElNDxnZFM_n7rll7IychuU49-tXmaSbtmHcKJX-UqUBKESOFAf_-jSP-Up6gON8ZXXSYDVzpO7JDgKofz7MqEVmqsGl213TL1n-Jiu7kRwt-x4AEU8_2WzHh2ddKq9CqBM70tJ6Lwp3RmUThHpR6A1l7g_RUdOOJCfs0ktynAAUVcCcYrAeidPg..AT1_eq1vEjEh';
 let leafMap = null, markers = [];
 
+const COUNTRIES = [
+  ['AD', 'Andorra'],
+  ['AE', 'United Arab Emirates'],
+  ['AF', 'Afghanistan'],
+  ['AG', 'Antigua and Barbuda'],
+  ['AI', 'Anguilla'],
+  ['AL', 'Albania'],
+  ['AM', 'Armenia'],
+  ['AO', 'Angola'],
+  ['AQ', 'Antarctica'],
+  ['AR', 'Argentina'],
+  ['AS', 'American Samoa'],
+  ['AT', 'Austria'],
+  ['AU', 'Australia'],
+  ['AW', 'Aruba'],
+  ['AX', 'Åland Islands'],
+  ['AZ', 'Azerbaijan'],
+  ['BA', 'Bosnia and Herzegovina'],
+  ['BB', 'Barbados'],
+  ['BD', 'Bangladesh'],
+  ['BE', 'Belgium'],
+  ['BF', 'Burkina Faso'],
+  ['BG', 'Bulgaria'],
+  ['BH', 'Bahrain'],
+  ['BI', 'Burundi'],
+  ['BJ', 'Benin'],
+  ['BL', 'Saint Barthélemy'],
+  ['BM', 'Bermuda'],
+  ['BN', 'Brunei Darussalam'],
+  ['BO', 'Bolivia (Plurinational State of)'],
+  ['BQ', 'Bonaire, Sint Eustatius and Saba'],
+  ['BR', 'Brazil'],
+  ['BS', 'Bahamas'],
+  ['BT', 'Bhutan'],
+  ['BV', 'Bouvet Island'],
+  ['BW', 'Botswana'],
+  ['BY', 'Belarus'],
+  ['BZ', 'Belize'],
+  ['CA', 'Canada'],
+  ['CC', 'Cocos (Keeling) Islands'],
+  ['CD', 'Congo (Democratic Republic of the)'],
+  ['CF', 'Central African Republic'],
+  ['CG', 'Congo'],
+  ['CH', 'Switzerland'],
+  ['CI', "Côte d'Ivoire"],
+  ['CK', 'Cook Islands'],
+  ['CL', 'Chile'],
+  ['CM', 'Cameroon'],
+  ['CN', 'China'],
+  ['CO', 'Colombia'],
+  ['CR', 'Costa Rica'],
+  ['CU', 'Cuba'],
+  ['CV', 'Cabo Verde'],
+  ['CW', 'Curaçao'],
+  ['CX', 'Christmas Island'],
+  ['CY', 'Cyprus'],
+  ['CZ', 'Czechia'],
+  ['DE', 'Germany'],
+  ['DJ', 'Djibouti'],
+  ['DK', 'Denmark'],
+  ['DM', 'Dominica'],
+  ['DO', 'Dominican Republic'],
+  ['DZ', 'Algeria'],
+  ['EC', 'Ecuador'],
+  ['EE', 'Estonia'],
+  ['EG', 'Egypt'],
+  ['EH', 'Western Sahara'],
+  ['ER', 'Eritrea'],
+  ['ES', 'Spain'],
+  ['ET', 'Ethiopia'],
+  ['FI', 'Finland'],
+  ['FJ', 'Fiji'],
+  ['FK', 'Falkland Islands (Malvinas)'],
+  ['FM', 'Micronesia (Federated States of)'],
+  ['FO', 'Faroe Islands'],
+  ['FR', 'France'],
+  ['GA', 'Gabon'],
+  ['GB', 'United Kingdom of Great Britain and Northern Ireland'],
+  ['GD', 'Grenada'],
+  ['GE', 'Georgia'],
+  ['GF', 'French Guiana'],
+  ['GG', 'Guernsey'],
+  ['GH', 'Ghana'],
+  ['GI', 'Gibraltar'],
+  ['GL', 'Greenland'],
+  ['GM', 'Gambia'],
+  ['GN', 'Guinea'],
+  ['GP', 'Guadeloupe'],
+  ['GQ', 'Equatorial Guinea'],
+  ['GR', 'Greece'],
+  ['GS', 'South Georgia and the South Sandwich Islands'],
+  ['GT', 'Guatemala'],
+  ['GU', 'Guam'],
+  ['GW', 'Guinea-Bissau'],
+  ['GY', 'Guyana'],
+  ['HK', 'Hong Kong'],
+  ['HM', 'Heard Island and McDonald Islands'],
+  ['HN', 'Honduras'],
+  ['HR', 'Croatia'],
+  ['HT', 'Haiti'],
+  ['HU', 'Hungary'],
+  ['ID', 'Indonesia'],
+  ['IE', 'Ireland'],
+  ['IL', 'Israel'],
+  ['IM', 'Isle of Man'],
+  ['IN', 'India'],
+  ['IO', 'British Indian Ocean Territory'],
+  ['IQ', 'Iraq'],
+  ['IR', 'Iran (Islamic Republic of)'],
+  ['IS', 'Iceland'],
+  ['IT', 'Italy'],
+  ['JE', 'Jersey'],
+  ['JM', 'Jamaica'],
+  ['JO', 'Jordan'],
+  ['JP', 'Japan'],
+  ['KE', 'Kenya'],
+  ['KG', 'Kyrgyzstan'],
+  ['KH', 'Cambodia'],
+  ['KI', 'Kiribati'],
+  ['KM', 'Comoros'],
+  ['KN', 'Saint Kitts and Nevis'],
+  ['KP', "Korea (Democratic People's Republic of)"],
+  ['KR', 'Korea (Republic of)'],
+  ['KW', 'Kuwait'],
+  ['XK', 'Kosovo'],
+  ['KY', 'Cayman Islands'],
+  ['KZ', 'Kazakhstan'],
+  ['LA', "Lao People's Democratic Republic"],
+  ['LB', 'Lebanon'],
+  ['LC', 'Saint Lucia'],
+  ['LI', 'Liechtenstein'],
+  ['LK', 'Sri Lanka'],
+  ['LR', 'Liberia'],
+  ['LS', 'Lesotho'],
+  ['LT', 'Lithuania'],
+  ['LU', 'Luxembourg'],
+  ['LV', 'Latvia'],
+  ['LY', 'Libya'],
+  ['MA', 'Morocco'],
+  ['MC', 'Monaco'],
+  ['MD', 'Moldova (Republic of)'],
+  ['ME', 'Montenegro'],
+  ['MF', 'Saint Martin (French part)'],
+  ['MG', 'Madagascar'],
+  ['MH', 'Marshall Islands'],
+  ['MK', 'North Macedonia'],
+  ['ML', 'Mali'],
+  ['MM', 'Myanmar'],
+  ['MN', 'Mongolia'],
+  ['MO', 'Macao'],
+  ['MP', 'Northern Mariana Islands'],
+  ['MQ', 'Martinique'],
+  ['MR', 'Mauritania'],
+  ['MS', 'Montserrat'],
+  ['MT', 'Malta'],
+  ['MU', 'Mauritius'],
+  ['MV', 'Maldives'],
+  ['MW', 'Malawi'],
+  ['MX', 'Mexico'],
+  ['MY', 'Malaysia'],
+  ['MZ', 'Mozambique'],
+  ['NA', 'Namibia'],
+  ['NC', 'New Caledonia'],
+  ['NE', 'Niger'],
+  ['NF', 'Norfolk Island'],
+  ['NG', 'Nigeria'],
+  ['NI', 'Nicaragua'],
+  ['NL', 'Netherlands'],
+  ['NO', 'Norway'],
+  ['NP', 'Nepal'],
+  ['NR', 'Nauru'],
+  ['NU', 'Niue'],
+  ['NZ', 'New Zealand'],
+  ['OM', 'Oman'],
+  ['PA', 'Panama'],
+  ['PE', 'Peru'],
+  ['PF', 'French Polynesia'],
+  ['PG', 'Papua New Guinea'],
+  ['PH', 'Philippines'],
+  ['PK', 'Pakistan'],
+  ['PL', 'Poland'],
+  ['PM', 'Saint Pierre and Miquelon'],
+  ['PN', 'Pitcairn'],
+  ['PR', 'Puerto Rico'],
+  ['PS', 'Palestine, State of'],
+  ['PT', 'Portugal'],
+  ['PW', 'Palau'],
+  ['PY', 'Paraguay'],
+  ['QA', 'Qatar'],
+  ['RE', 'Réunion'],
+  ['RO', 'Romania'],
+  ['RS', 'Serbia'],
+  ['RU', 'Russian Federation'],
+  ['RW', 'Rwanda'],
+  ['SA', 'Saudi Arabia'],
+  ['SB', 'Solomon Islands'],
+  ['SC', 'Seychelles'],
+  ['SD', 'Sudan'],
+  ['SE', 'Sweden'],
+  ['SG', 'Singapore'],
+  ['SH', 'Saint Helena, Ascension and Tristan da Cunha'],
+  ['SI', 'Slovenia'],
+  ['SJ', 'Svalbard and Jan Mayen'],
+  ['SK', 'Slovakia'],
+  ['SL', 'Sierra Leone'],
+  ['SM', 'San Marino'],
+  ['SN', 'Senegal'],
+  ['SO', 'Somalia'],
+  ['SR', 'Suriname'],
+  ['SS', 'South Sudan'],
+  ['ST', 'Sao Tome and Principe'],
+  ['SV', 'El Salvador'],
+  ['SX', 'Sint Maarten (Dutch part)'],
+  ['SY', 'Syrian Arab Republic'],
+  ['SZ', 'Eswatini'],
+  ['TC', 'Turks and Caicos Islands'],
+  ['TD', 'Chad'],
+  ['TF', 'French Southern Territories'],
+  ['TG', 'Togo'],
+  ['TH', 'Thailand'],
+  ['TJ', 'Tajikistan'],
+  ['TK', 'Tokelau'],
+  ['TL', 'Timor-Leste'],
+  ['TM', 'Turkmenistan'],
+  ['TN', 'Tunisia'],
+  ['TO', 'Tonga'],
+  ['TR', 'Türkiye'],
+  ['TT', 'Trinidad and Tobago'],
+  ['TV', 'Tuvalu'],
+  ['TW', 'Taiwan (Province of China)'],
+  ['TZ', 'Tanzania, United Republic of'],
+  ['UA', 'Ukraine'],
+  ['UG', 'Uganda'],
+  ['UM', 'United States Minor Outlying Islands'],
+  ['US', 'United States of America'],
+  ['UY', 'Uruguay'],
+  ['UZ', 'Uzbekistan'],
+  ['VA', 'Holy See'],
+  ['VC', 'Saint Vincent and the Grenadines'],
+  ['VE', 'Venezuela (Bolivarian Republic of)'],
+  ['VG', 'Virgin Islands (British)'],
+  ['VI', 'Virgin Islands (U.S.)'],
+  ['VN', 'Viet Nam'],
+  ['VU', 'Vanuatu'],
+  ['WF', 'Wallis and Futuna'],
+  ['WS', 'Samoa'],
+  ['YE', 'Yemen'],
+  ['YT', 'Mayotte'],
+  ['ZA', 'South Africa'],
+  ['ZM', 'Zambia'],
+  ['ZW', 'Zimbabwe']
+];
+
+const COMMON_CODES = ['SS','CD','SO','YE','SD','TD','ML','NE','HT','MM','UA','SY'];
+
 function sid() {
   let id = sessionStorage.getItem('gt-sid');
   if (!id) { id = crypto.randomUUID(); sessionStorage.setItem('gt-sid', id); }
@@ -584,8 +877,35 @@ function sid() {
 function refreshLabel() {
   document.getElementById('sess-label').textContent = 'session ' + sid().slice(0,8);
 }
+
+// ── Country scope ────────────────────────────────────────────────────────
+function countryCode() {
+  return sessionStorage.getItem('gt-country') || '';
+}
+function onCountryChange() {
+  const val = document.getElementById('country-sel').value;
+  if (val) sessionStorage.setItem('gt-country', val);
+  else sessionStorage.removeItem('gt-country');
+}
+function populateCountrySelect() {
+  const sel = document.getElementById('country-sel');
+  const commonSet = new Set(COMMON_CODES);
+  const common = COUNTRIES.filter(([code]) => commonSet.has(code));
+  const all = COUNTRIES.slice().sort((a, b) => a[1].localeCompare(b[1]));
+
+  const optionsHtml = (list) => list.map(([code, name]) =>
+    `<option value="${code}">${name}</option>`).join('');
+
+  sel.innerHTML = `
+    <option value="">Anywhere</option>
+    <optgroup label="Common">${optionsHtml(common)}</optgroup>
+    <optgroup label="All countries">${optionsHtml(all)}</optgroup>`;
+  sel.value = countryCode();
+}
 function newSession() {
   sessionStorage.removeItem('gt-sid');
+  sessionStorage.removeItem('gt-country');
+  document.getElementById('country-sel').value = '';
   document.getElementById('msgs').innerHTML = `
     <div class="welcome">
       <span class="welcome-glyph">⊕</span>
@@ -735,7 +1055,7 @@ function pushMsg(role, payload) {
   if (role === 'user') {
     row.innerHTML = `<div class="bubble">${esc(payload)}</div>`;
   } else {
-    const { type, narrative, data, sources_with_results=[], turn, variants_tried } = payload;
+    const { type, narrative, data, sources_with_results=[], turn, variants_tried, country_code, country_source } = payload;
     const label = { answer:'Answer', question:'Clarification needed', null_result:'Not located' }[type] || type;
     const conf = data?.confidence;
     const confHtml = conf ? `<span class="confidence-pip ${conf}"><span class="pip"></span>${conf}</span>` : '';
@@ -743,6 +1063,8 @@ function pushMsg(role, payload) {
       ? `<div class="variants-note">Alternate spellings tried: ${variants_tried.map(esc).join(', ')}</div>` : '';
     const srcHtml = sources_with_results.length
       ? `<div class="sources-row">${sources_with_results.map(s=>`<span class="src-chip">${esc(s)}</span>`).join('')}</div>` : '';
+    const scopeHtml = country_code
+      ? `<span class="scope-chip">${esc(country_code)} · ${country_source === 'user' ? 'selected' : 'inferred'}</span>` : '';
 
     row.innerHTML = `
       <div class="bubble">
@@ -753,6 +1075,7 @@ function pushMsg(role, payload) {
       <div class="msg-meta">
         <span class="type-chip ${type}">${label}</span>
         ${confHtml}
+        ${scopeHtml}
         ${turn ? `<span class="turn-mark">↻ ${turn}</span>` : ''}
       </div>
       ${srcHtml}`;
@@ -858,10 +1181,11 @@ async function send() {
   pushMsg('user', msg); pushTyping(); refreshLabel();
 
   try {
+    const country = countryCode();
     const res = await fetch(WORKER, {
       method:'POST',
       headers:{'Content-Type':'application/json','X-Session-ID':sid()},
-      body: JSON.stringify({message:msg})
+      body: JSON.stringify(country ? {message:msg, country} : {message:msg})
     });
     const json = await res.json();
     clearTyping(); pushMsg('assistant', json);
@@ -880,6 +1204,7 @@ inp.addEventListener('input', function() {
 });
 inp.addEventListener('keydown', e => { if (e.key==='Enter' && (e.ctrlKey||e.metaKey)) send(); });
 
+populateCountrySelect();
 refreshLabel();
 </script>
 </body>
