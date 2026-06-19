@@ -89,6 +89,96 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 /* Subtle fade-in on load */
 .overlay { animation: fadeIn 2.5s ease forwards; opacity: 0; }
 @keyframes fadeIn { to { opacity: 1; } }
+
+.page-links {
+  display: flex; align-items: center; gap: 1.2rem;
+  margin-top: 3rem;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: clamp(0.6rem, 0.95vw, 0.75rem);
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  pointer-events: all;
+}
+.page-link {
+  color: rgba(180, 210, 120, 0.72);
+  text-decoration: none;
+  transition: color 0.35s;
+}
+.page-link:hover { color: rgba(225, 215, 190, 0.95); }
+.page-link-sep { color: rgba(130, 165, 90, 0.35); }
+
+/* Lab beaker widget */
+.lab-widget {
+  position: fixed; left: 1.8rem; bottom: 1.8rem; z-index: 15;
+  display: flex; flex-direction: column; align-items: flex-start;
+  justify-content: flex-end; gap: 0.6rem;
+}
+
+.lab-links {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+}
+.lab-link {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(180, 210, 120, 0.85);
+  text-decoration: none;
+  background: rgba(9, 15, 11, 0.6);
+  border: 1px solid rgba(100, 140, 75, 0.3);
+  border-radius: 3px;
+  padding: 0.4rem 0.75rem;
+  opacity: 0; transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+.lab-link:hover { color: rgba(225, 215, 190, 0.95); border-color: rgba(130, 165, 90, 0.5); }
+.lab-widget.open .lab-link {
+  opacity: 1; transform: translateY(0); pointer-events: auto;
+}
+.lab-link:nth-child(2) { transition-delay: 0.05s; }
+
+.lab-beaker {
+  background: none; border: none; padding: 0.3rem;
+  cursor: pointer; line-height: 0;
+}
+.lab-beaker svg { width: 30px; height: 36px; display: block; }
+.lab-beaker:hover svg, .lab-widget.open .lab-beaker svg {
+  animation: labShake 0.5s ease-in-out infinite;
+}
+
+@keyframes labShake {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  20% { transform: rotate(-3deg) translateX(-1px); }
+  40% { transform: rotate(2deg) translateX(1px); }
+  60% { transform: rotate(-2deg) translateX(-1px); }
+  80% { transform: rotate(3deg) translateX(1px); }
+}
+
+.lab-bubble {
+  transform-box: fill-box; transform-origin: center;
+  animation: labBubble 3.6s ease-in infinite;
+}
+.lab-bubble.b1 { animation-delay: 0s; }
+.lab-bubble.b2 { animation-delay: 1s; }
+.lab-bubble.b3 { animation-delay: 2s; }
+.lab-beaker:hover .lab-bubble, .lab-widget.open .lab-bubble {
+  animation-duration: 1s;
+}
+
+@keyframes labBubble {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.85; }
+  85% { opacity: 0.5; }
+  100% { transform: translateY(-16px); opacity: 0; }
+}
+
+@media (max-width: 480px) {
+  .lab-widget { left: 1.1rem; bottom: 1.1rem; }
+  .lab-beaker svg { width: 26px; height: 31px; }
+}
 </style>
 </head>
 <body>
@@ -111,8 +201,37 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 
   <!--
   <div class="coming-soon">Coming Soon</div>
+
+
+  <div class="page-links">
+    <a href="cv.html" class="page-link">CV</a>
+    <span class="page-link-sep">·</span>
+    <a href="mailto:jeff@gaiaanalytica.ch" class="page-link">jeff@gaiaanalytica.ch</a>
+  </div>
   -->
-  
+</div>
+
+<div class="lab-widget" id="labWidget">
+  <div class="lab-links" id="labLinks">
+    <a href="https://gaiaanalytica.ch/GuessWhere" class="lab-link">Guess Where?</a>
+    <a href="https://gaiaanalytica.ch/geotrace" class="lab-link">GeoTrace</a>
+  </div>
+  <button class="lab-beaker" id="labBeaker" aria-label="Open lab projects" aria-expanded="false">
+    <svg viewBox="0 0 40 50" fill="none">
+      <defs>
+        <clipPath id="flaskClip">
+          <path d="M16 4 L16 14 L6 40 Q6 46 12 46 L28 46 Q34 46 34 40 L24 14 L24 4 Z"/>
+        </clipPath>
+      </defs>
+      <rect x="6" y="27" width="28" height="19" fill="rgba(180,210,120,0.4)" clip-path="url(#flaskClip)"/>
+      <circle class="lab-bubble b1" cx="15" cy="40" r="1.4" fill="rgba(225,215,190,0.8)" clip-path="url(#flaskClip)"/>
+      <circle class="lab-bubble b2" cx="20" cy="38" r="1.1" fill="rgba(225,215,190,0.8)" clip-path="url(#flaskClip)"/>
+      <circle class="lab-bubble b3" cx="25" cy="41" r="1.6" fill="rgba(225,215,190,0.8)" clip-path="url(#flaskClip)"/>
+      <path d="M16 4 L16 14 L6 40 Q6 46 12 46 L28 46 Q34 46 34 40 L24 14 L24 4 Z"
+        stroke="rgba(130,165,90,0.75)" stroke-width="1.3" stroke-linejoin="round"/>
+      <line x1="14" y1="4" x2="26" y2="4" stroke="rgba(130,165,90,0.75)" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+  </button>
 </div>
 
 <script>
@@ -221,22 +340,60 @@ function draw() {
   /* setTimeout(() => requestAnimationFrame(animate), 1000 / 30); */
 })();
 
-  // Sticky dot movement
+  // Sticky dot movement + link hover glow
   const dot = document.querySelector('.rule-dot');
-  document.addEventListener('mousemove', (e) => {
-  const pct = e.clientX / window.innerWidth;
-  const offset = Math.pow(pct - 0.5, 3) * 120;
-  const opacity = Math.pow(1 - Math.abs(pct - 0.5) * 2, 3);
-  dot.style.transform = `translateX(${offset}px)`;
-  dot.style.opacity = opacity;
+  let linkActive = false;
 
-  // Glow when near center
-const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 25, 1);
-const glowSize = proximity * 18;
-const glowOpacity = proximity * 0.9;
-dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.5}px rgba(180, 210, 120, ${glowOpacity})`;
-});
-  
+  document.querySelectorAll('.page-link').forEach(link => {
+    link.addEventListener('mouseenter', () => {
+      linkActive = true;
+      dot.style.opacity = '1';
+      dot.style.boxShadow = '0 0 18px 9px rgba(180, 210, 120, 0.88)';
+    });
+    link.addEventListener('mouseleave', () => {
+      linkActive = false;
+    });
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (linkActive) return;
+    const pct = e.clientX / window.innerWidth;
+    const offset = Math.pow(pct - 0.5, 3) * 120;
+    // Keep dot visible across the full screen; dims toward edges but stays at min 0.35
+    const opacity = 0.35 + 0.65 * Math.pow(Math.max(0, 1 - Math.abs(pct - 0.5) * 2), 2);
+    dot.style.transform = `translateX(${offset}px)`;
+    dot.style.opacity = opacity;
+
+    // Glow when near center
+    const proximity = 1 - Math.min(Math.abs(pct - 0.5) * 25, 1);
+    const glowSize = proximity * 18;
+    const glowOpacity = proximity * 0.9;
+    dot.style.boxShadow = `0 0 ${glowSize}px ${glowSize * 0.5}px rgba(180, 210, 120, ${glowOpacity})`;
+  });
+
+  // Lab beaker toggle: click to reveal lab project links, click outside or Escape to close
+  const labWidget = document.getElementById('labWidget');
+  const labBeaker = document.getElementById('labBeaker');
+
+  function closeLab() {
+    labWidget.classList.remove('open');
+    labBeaker.setAttribute('aria-expanded', 'false');
+  }
+
+  labBeaker.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = labWidget.classList.toggle('open');
+    labBeaker.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!labWidget.contains(e.target)) closeLab();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLab();
+  });
+
 </script>
 </body>
 </html>
