@@ -228,6 +228,16 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   color: rgba(220,210,182,0.95);
 }
 
+/* Usage notice aside (daily message cap) */
+.usage-notice {
+  align-self: center; max-width: 86%; margin: 0.4rem 0;
+  padding: 0.55rem 1rem;
+  border-left: 2px solid rgba(162,130,48,0.4);
+  background: rgba(72,60,16,0.16);
+  font-size: 0.82rem; font-weight: 300; line-height: 1.65;
+  color: rgba(212,182,120,0.92);
+}
+
 /* Variants aside */
 .variants-note {
   max-width: 86%; margin-top: 0.5rem;
@@ -877,6 +887,40 @@ const COUNTRIES = [
 
 const COMMON_CODES = ['SS','CD','SO','YE','SD','TD','ML','NE','HT','MM','UA','SY'];
 
+// ── Daily usage notice (client-side only — friendly heads-up, not real
+// enforcement) ──────────────────────────────────────────────────────────
+// localStorage, not sessionStorage: must survive "New Session" and tab
+// closes, since the cap is per calendar day, not per chat session.
+// Base64-wrapped JSON, mirroring the GuessWhere sibling project's
+// win/loss record pattern — not security, just house style.
+const DAILY_MESSAGE_CAP = 20;
+const FRIENDLY_NOTE_AT = 15;
+
+function todayUTC() {
+  return new Date().toISOString().slice(0, 10);
+}
+function getUsage() {
+  let rec;
+  try {
+    rec = JSON.parse(atob(localStorage.getItem('gt-usage') || ''));
+  } catch (e) {
+    rec = null;
+  }
+  if (!rec || rec.date !== todayUTC()) rec = { date: todayUTC(), count: 0 };
+  return rec;
+}
+function saveUsage(rec) {
+  localStorage.setItem('gt-usage', btoa(JSON.stringify(rec)));
+}
+function pushNotice(text) {
+  const msgs = document.getElementById('msgs');
+  const row = document.createElement('div');
+  row.className = 'msg-row assistant';
+  row.innerHTML = `<div class="usage-notice">${esc(text)}</div>`;
+  msgs.appendChild(row);
+  row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
 function sid() {
   let id = sessionStorage.getItem('gt-sid');
   if (!id) { id = crypto.randomUUID(); sessionStorage.setItem('gt-sid', id); }
@@ -1186,9 +1230,19 @@ async function send() {
   const inp = document.getElementById('inp');
   const msg = inp.value.trim();
   if (!msg) return;
+
+  const usage = getUsage();
+  if (usage.count >= DAILY_MESSAGE_CAP) {
+    pushNotice("You've reached today's limit of 20 queries. GeoTrace is a free, experimental side project, and this cap helps keep it sustainable. It will reset at midnight. If you need more than this regularly, please email jeff@gaiaanalytica.ch and I'll help find a solution.");
+    return;
+  }
+
   const btn = document.getElementById('go');
   btn.disabled = true; inp.value = ''; inp.style.height = 'auto';
   pushMsg('user', msg); pushTyping(); refreshLabel();
+
+  usage.count += 1;
+  saveUsage(usage);
 
   try {
     const country = countryCode();
@@ -1203,7 +1257,12 @@ async function send() {
   } catch(e) {
     clearTyping();
     pushMsg('assistant', { type:'null_result', narrative:'Request failed — check your connection and try again.', sources_queried:[], turn:null, variants_tried:null });
-  } finally { btn.disabled = false; inp.focus(); }
+  } finally {
+    btn.disabled = false; inp.focus();
+    if (usage.count === FRIENDLY_NOTE_AT) {
+      pushNotice("You've sent 15 queries today! Heads up that GeoTrace is a free, experimental side project, and each interaction costs me a small amount. If you're finding genuine use for it, I'd love to hear from you and I'm sure we can find a more efficient solution for sustained use. Please get in touch: jeff@gaiaanalytica.ch");
+    }
+  }
 }
 
 // ── Input ─────────────────────────────────────────────────────────────────
