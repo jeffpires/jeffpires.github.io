@@ -279,13 +279,21 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
 /* Structured data toggle */
 .data-toggle {
-  display: inline-flex; align-items: center; gap: 0.4rem;
+  display: inline-flex; align-items: center; gap: 0.5rem;
   margin-top: 0.8rem; font-family: 'Raleway', sans-serif;
   font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase;
-  font-weight: 200; color: rgba(170,200,120,0.8); cursor: pointer;
-  background: none; border: none;
+  font-weight: 200; color: rgba(180,210,120,0.85); cursor: pointer;
+  background: rgba(58,88,52,0.16); border: 1px solid rgba(100,140,75,0.3);
+  padding: 0.4rem 0.75rem; transition: all 0.25s;
 }
-.data-toggle:hover { color: rgba(180,210,120,0.8); }
+.data-toggle:hover {
+  color: rgba(225,215,190,0.95); border-color: rgba(130,165,90,0.55);
+  background: rgba(58,88,52,0.3);
+}
+.data-toggle .data-toggle-arr {
+  display: inline-block; transition: transform 0.25s; font-size: 0.85em;
+}
+.data-toggle.open .data-toggle-arr { transform: rotate(90deg); }
 
 .data-drawer { display: none; }
 .data-drawer.open { display: block; }
@@ -1037,13 +1045,15 @@ function dataDrawer(data) {
     <td>${esc(k)}</td>
     <td>${copyable ? copyableVal(v, k) : `<span style="font-family:'Courier New',monospace">${esc(v)}</span>`}</td>
   </tr>`).join('');
-  return `<button class="data-toggle" onclick="toggleDr('${uid}')"><span id="arr-${uid}">▸</span> Structured data</button>
+  return `<button class="data-toggle" id="btn-${uid}" onclick="toggleDr('${uid}')">
+      <span class="data-toggle-arr">▸</span> Coordinates, sources &amp; admin path
+    </button>
     <div class="data-drawer" id="${uid}"><table class="data-table">${trs}</table></div>`;
 }
 
 function toggleDr(id) {
   document.getElementById(id).classList.toggle('open');
-  document.getElementById('arr-'+id).textContent = document.getElementById(id).classList.contains('open') ? '▾' : '▸';
+  document.getElementById('btn-'+id).classList.toggle('open');
 }
 
 function pushMsg(role, payload) {
