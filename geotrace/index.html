@@ -185,19 +185,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 }
 .welcome-sub {
   font-family: 'Newsreader', serif; font-weight: 300; font-style: italic;
-  font-size: 1.13rem; letter-spacing: 0.01em; line-height: 1.65;
-  color: rgba(180,210,120,0.75); margin-bottom: 1.4rem;
-}
-.welcome p {
-  font-size: 0.94rem; font-weight: 300; letter-spacing: 0.06em;
-  color: rgba(210,199,162,0.93); line-height: 1.9;
-}
-.welcome-list {
-  display: block; text-align: left; margin: 0.6rem 0 0;
-  padding-left: calc(15px + 7ch); line-height: 1.9;
-}
-.welcome-list b {
-  font-weight: 400; color: rgba(225,215,190,0.95);
+  font-size: 1.13rem; letter-spacing: 0.04em; line-height: 1.65;
+  color: rgba(210,200,170,0.70); margin-bottom: 1.4rem;
 }
 .welcome-rule {
   width: 40px; height: 1px; margin: 1.2rem auto;
@@ -500,13 +489,6 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
           <h2>Location Research</h2>
           <div class="welcome-rule"></div>
           <p class="welcome-sub">Standard geocoders rely on formal place names and clean administrative data. Humanitarian work rarely has either.</p>
-          <p>Describe the location as you know it. The more context you provide, the better:<br>
-<span class="welcome-list">
-    → <b>Local or informal name</b><br>
-    → <b>Country</b> and administrative zone<br>
-    → <b>Nearby landmarks</b>, institutions, or infrastructure<br>
-    → <b>Distance</b> and direction from a known point
-  </span></p>
         </div>
       </div>
       <div class="scope-bar">
@@ -965,13 +947,6 @@ function newSession() {
       <h2>Location Research</h2>
       <div class="welcome-rule"></div>
       <p class="welcome-sub">Standard geocoders rely on formal place names and clean administrative data. Humanitarian work rarely has either.</p>
-      <p>Describe the location as you know it. The more context you provide, the better:<br>
-<span class="welcome-list">
-    → <b>Local or informal name</b><br>
-    → <b>Country</b> and administrative zone<br>
-    → <b>Nearby landmarks</b>, institutions, or infrastructure<br>
-    → <b>Distance</b> and direction from a known point
-  </span></p>
     </div>`;
   document.getElementById('inp').value = '';
   closeMap(); refreshLabel();
