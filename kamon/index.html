@@ -1,1 +1,890 @@
-test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Kamon</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --c-red:    #d94040;
+  --c-orange: #d97820;
+  --c-yellow: #c8a800;
+  --c-green:  #2e9048;
+  --c-teal:   #1a8888;
+  --c-blue:   #2858a8;
+  --c-bg:     #2d5a4a;
+  --c-panel:  #242424;
+  --c-border: #3a3a3a;
+  --c-text:   #e8e8e8;
+  --c-muted:  #888;
+  --c-p1:     #e8e8e8;
+  --c-p2:     #aaaaaa;
+}
+
+html, body {
+  height: 100%;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── Top bar ── */
+#topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--c-panel);
+  border-bottom: 1px solid var(--c-border);
+  min-height: 52px;
+}
+#turn-label {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+#turn-label.your-turn { color: #a0e880; }
+#turn-label.their-turn { color: var(--c-muted); }
+#constraint-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--c-muted);
+}
+.constraint-swatch {
+  width: 18px; height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: inline-block;
+}
+.constraint-sym {
+  width: 20px; height: 20px;
+}
+
+/* ── Board ── */
+#board-wrap {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  overflow: hidden;
+}
+#board {
+  max-width: 100%;
+  max-height: 100%;
+  touch-action: manipulation;
+}
+
+/* Hex base styles */
+.hex-bg {
+  stroke: rgba(0,0,0,0.35);
+  stroke-width: 0.04;
+  cursor: default;
+  transition: opacity 0.15s;
+}
+.hex-sym {
+  pointer-events: none;
+}
+.hex-group {
+  cursor: default;
+}
+.hex-group.clickable {
+  cursor: pointer;
+}
+.hex-group.clickable .hex-bg:hover {
+  opacity: 0.85;
+}
+
+/* Valid-move ring: invisible (tiles are clickable but not highlighted) */
+.valid-ring {
+  fill: none;
+  stroke: #ffe060;
+  stroke-width: 0.12;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Last-claimed gold ring: same grow-shrink pulse as the old valid-move ring */
+.claimed-ring {
+  fill: none;
+  stroke-width: 0.10;
+  pointer-events: none;
+  opacity: 0;
+}
+.hex-group.last-claimed .claimed-ring {
+  opacity: 1;
+  animation: pulse-claimed 1.1s ease-in-out infinite;
+}
+@keyframes pulse-claimed {
+  0%,100% { stroke-opacity: 1; stroke-width: 0.10; }
+  50%      { stroke-opacity: 0.4; stroke-width: 0.18; }
+}
+
+/* ── Win reveal bar ── */
+#win-reveal {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,10,0.93);
+  color: #f0f0f0;
+  padding: 14px 18px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.14);
+  min-height: 68px;
+  box-sizing: border-box;
+}
+#win-reveal-text { display: flex; flex-direction: column; gap: 3px; }
+#win-reveal-title { font-size: 15px; font-weight: 700; }
+#win-reveal-desc  { font-size: 12px; color: #bbb; line-height: 1.4; }
+#win-reveal .btn  { flex-shrink: 0; padding: 9px 16px; font-size: 13px; }
+#board-wrap.win-reveal-mode { padding-bottom: 68px; }
+.win-reveal-mode .hex-group:not(.win-tile):not(.win-enclosed) { opacity: 0.25; }
+.win-reveal-mode .hex-group.win-tile .valid-ring {
+  opacity: 1;
+  stroke: #ffd700;
+  stroke-width: 0.14;
+  animation: pulse-win 0.9s ease-in-out infinite;
+}
+.win-reveal-mode .hex-group.win-enclosed { opacity: 0.55; }
+@keyframes pulse-win {
+  0%,100% { stroke-opacity: 1;   stroke-width: 0.14; }
+  50%      { stroke-opacity: 0.5; stroke-width: 0.22; }
+}
+
+/* Player-claim fills — no filter, colour stays true */
+.claimed-badge {
+  pointer-events: none;
+}
+
+
+/* ── Overlays ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 100;
+  padding: 24px;
+  text-align: center;
+}
+.overlay h2 { font-size: 22px; font-weight: 700; }
+.overlay p  { font-size: 14px; color: var(--c-muted); max-width: 300px; }
+
+.url-box {
+  background: #111;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: monospace;
+  font-size: 13px;
+  word-break: break-all;
+  color: #a0d0ff;
+  max-width: 340px;
+  width: 100%;
+}
+.btn {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #3a6abf;
+  color: #fff;
+  width: 100%;
+  max-width: 260px;
+}
+.btn:active { opacity: 0.8; }
+.btn.copied { background: #2a7a4a; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 200;
+  white-space: nowrap;
+  max-width: 90vw;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Win overlay ── */
+#win-overlay { display: none; }
+#win-overlay.show { display: flex; }
+#win-overlay h2 { font-size: 28px; }
+.win-msg-p1 { color: var(--c-p1); }
+.win-msg-p2 { color: var(--c-p2); }
+.win-msg-draw { color: #aaa; }
+
+/* ── Connecting overlay ── */
+#conn-overlay .spin {
+  width: 36px; height: 36px;
+  border: 3px solid #333;
+  border-top-color: #888;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <span id="turn-label">Connecting…</span>
+    <div id="constraint-badge" style="display:none">
+      <span>Next:</span>
+      <span class="constraint-swatch" id="cb-color"></span>
+      <svg class="constraint-sym" id="cb-sym" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"></svg>
+      <span id="cb-text"></span>
+    </div>
+  </header>
+
+  <div id="board-wrap">
+    <svg id="board" xmlns="http://www.w3.org/2000/svg"
+         viewBox="-8 -8.5 16 17"
+         preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <!-- ── Symbol definitions (drawn in currentColor) ── -->
+
+        <!-- Sunflower: 16 narrow pointed petals + dark seed-head with dot rings -->
+        <symbol id="sym-sunflower" viewBox="0 0 100 100">
+          <g transform="translate(50,50)">
+            <g fill="currentColor">
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(22.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(45)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(67.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(90)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(112.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(135)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(157.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(180)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(202.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(225)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(247.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(270)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(292.5)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(315)"/>
+              <path d="M0,-20 Q8,-31 0,-43 Q-8,-31 0,-20Z" transform="rotate(337.5)"/>
+            </g>
+            <circle r="20" fill="currentColor"/>
+            <circle r="17" fill="rgba(0,0,0,0.45)"/>
+            <circle cx="0"   cy="-8"  r="2.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="7"   cy="-4"  r="2.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="7"   cy="4"   r="2.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="0"   cy="8"   r="2.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="-7"  cy="4"   r="2.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="-7"  cy="-4"  r="2.5" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="0"   cy="-13" r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="7"   cy="-11" r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="11"  cy="-6"  r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="13"  cy="0"   r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="11"  cy="6"   r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="7"   cy="11"  r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="0"   cy="13"  r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="-7"  cy="11"  r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="-11" cy="6"   r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="-13" cy="0"   r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="-11" cy="-6"  r="2"   fill="rgba(255,255,255,0.35)"/>
+            <circle cx="-7"  cy="-11" r="2"   fill="rgba(255,255,255,0.35)"/>
+          </g>
+        </symbol>
+
+        <!-- Mountains: two peaks (scaled to fill tile) -->
+        <symbol id="sym-mountains" viewBox="0 0 100 100">
+          <g transform="translate(46,52) scale(1.35)" fill="currentColor">
+            <polygon points="-26,16 -10,-14 6,16"/>
+            <polygon points="0,16 16,-18 32,16"/>
+            <polygon points="-10,-14 -14,-7 -6,-7" fill="#c8e8ff"/>
+            <polygon points="16,-18 13,-11 19,-11" fill="#c8e8ff"/>
+          </g>
+        </symbol>
+
+        <!-- Basel crest / Baselstab crozier -->
+        <symbol id="sym-basel" viewBox="176 276 401 700">
+          <g transform="translate(0,1204) scale(0.1,-0.1)" fill="currentColor" stroke="none">
+            <path d="M3050 8760 c-377 -80 -760 -397 -879 -726 -68 -188 -88 -489 -43
+-667 76 -305 278 -539 518 -602 76 -20 268 -20 353 0 158 38 286 135 351 268
+44 90 66 288 42 372 -36 125 -85 188 -180 232 -66 31 -164 30 -227 -3 -50 -26
+-105 -96 -105 -134 0 -25 4 -29 42 -35 61 -11 88 -42 88 -106 0 -46 -4 -55
+-39 -90 -127 -127 -299 100 -237 313 37 129 166 254 303 294 93 27 212 16 293
+-26 101 -53 207 -165 259 -271 70 -146 94 -256 94 -444 1 -179 -14 -282 -68
+-480 -18 -67 -36 -138 -40 -158 l-7 -37 655 0 c399 0 658 4 662 9 13 22 17
+366 6 529 -25 364 -95 653 -222 922 -207 435 -627 769 -1066 845 -126 22 -441
+19 -553 -5z"/>
+            <path d="M3334 6386 c-82 -36 -103 -145 -40 -214 l34 -37 885 -3 c952 -3 941
+-3 979 49 24 32 29 115 9 151 -7 14 -30 35 -51 47 -38 21 -38 21 -911 21 -709
+-1 -880 -3 -905 -14z"/>
+            <path d="M3103 6060 c-43 -26 -53 -48 -53 -115 0 -68 30 -106 98 -124 29 -8
+353 -11 1114 -9 1061 3 1073 3 1108 23 85 50 88 175 5 222 l-40 23 -1100 0
+c-1072 0 -1101 -1 -1132 -20z"/>
+            <path d="M3748 5760 l-496 -5 -26 -24 c-53 -50 -26 -152 44 -171 29 -8 322 -9
+1001 -4 1094 8 999 -1 1007 96 l4 56 -43 29 -43 28 -475 0 c-262 1 -700 -2
+-973 -5z"/>
+            <path d="M3370 5483 c0 -7 -29 -165 -155 -838 -13 -71 -53 -286 -89 -476 -36
+-190 -68 -370 -71 -400 -3 -30 -10 -63 -15 -74 -11 -25 -146 -757 -155 -842
+-5 -41 -3 -63 3 -63 6 0 170 119 364 264 l352 264 28 -22 c14 -11 97 -97 184
+-191 255 -277 311 -335 322 -335 6 0 25 19 43 43 18 23 85 96 149 162 64 66
+154 162 200 214 47 52 98 102 114 112 l29 17 196 -147 c337 -254 511 -381 521
+-381 6 0 8 17 4 43 -15 104 -375 2034 -474 2542 -11 55 -20 103 -20 108 0 4
+-344 7 -765 7 -421 0 -765 -3 -765 -7z"/>
+          </g>
+        </symbol>
+
+        <!-- Cow: detailed silhouette -->
+        <symbol id="sym-cow" viewBox="107 -4 611 441">
+          <g transform="translate(0,436) scale(0.1,-0.1)" fill="currentColor" stroke="none">
+            <path d="M5919 3814 c-16 -19 -85 -54 -157 -80 -65 -22 -120 -67 -138 -110
+-35 -85 2 -162 73 -151 52 9 63 23 63 82 0 58 11 71 110 138 38 25 79 90 80
+125 0 17 -15 15 -31 -4z"/>
+            <path d="M5300 3582 c-33 -16 -35 -20 -34 -63 4 -118 111 -219 233 -219 27 0
+32 -3 21 -10 -42 -27 -157 3 -210 55 l-37 36 -79 -25 c-147 -47 -213 -51 -371
+-26 -179 29 -270 24 -513 -29 -324 -71 -373 -76 -685 -76 -279 1 -583 19 -800
+50 -599 84 -808 16 -901 -290 -17 -54 -19 -103 -19 -495 l0 -435 -27 -62 c-77
+-175 -81 -188 -86 -270 -5 -86 2 -133 18 -133 6 0 10 13 10 29 0 17 5 33 10
+36 6 4 10 -6 10 -23 0 -16 5 -54 11 -84 8 -39 8 -69 1 -104 -13 -61 -9 -65 29
+-28 42 40 87 137 98 209 5 33 9 47 10 30 2 -56 18 -63 32 -14 23 78 17 194
+-14 283 l-28 78 11 417 c11 446 18 517 55 598 27 59 111 123 162 123 26 0 25
+-2 -19 -30 -166 -104 -186 -310 -79 -793 91 -409 91 -485 -1 -676 l-41 -84 9
+-101 c11 -128 11 -554 0 -623 -8 -50 -8 -51 22 -67 37 -19 42 -32 42 -105 0
+-78 16 -93 112 -99 152 -9 186 21 126 114 -78 123 -82 139 -83 349 0 224 12
+273 101 428 30 50 91 164 136 252 136 266 250 350 433 316 85 -16 86 -27 2
+-23 -87 5 -126 -6 -203 -56 -72 -47 -122 -120 -234 -345 l-74 -149 17 -41 c9
+-23 41 -99 71 -169 67 -153 95 -247 103 -351 6 -81 13 -93 53 -99 25 -3 28
+-11 46 -105 7 -37 111 -54 219 -35 58 10 56 33 -10 127 -184 261 -244 540
+-163 755 19 52 50 146 68 208 19 62 39 112 45 112 7 0 60 -22 118 -49 210 -99
+406 -151 566 -151 85 0 182 14 451 66 174 34 194 36 338 32 176 -5 165 -14
+127 105 -20 63 -25 97 -24 175 2 151 14 176 21 42 5 -94 11 -131 37 -204 45
+-125 68 -230 86 -386 9 -74 27 -191 41 -260 24 -116 26 -137 19 -288 -6 -151
+-5 -162 12 -168 43 -13 48 -21 54 -88 7 -88 17 -97 115 -103 162 -10 196 20
+130 113 -83 116 -95 138 -117 217 -31 113 -32 248 -2 337 16 49 24 109 32 250
+11 190 40 355 76 435 25 55 31 23 12 -58 -9 -34 -19 -90 -22 -124 -8 -75 -6
+-75 82 -34 116 55 162 121 253 362 102 270 283 570 377 624 62 35 62 36 21 54
+-45 20 -106 78 -129 124 -31 60 -17 65 26 8 85 -111 151 -135 362 -133 114 1
+161 -2 187 -13 63 -27 107 -20 177 28 82 56 99 81 106 150 l6 58 -43 37 c-155
+132 -253 238 -287 310 -26 54 -48 83 -86 115 -29 23 -75 66 -103 96 -47 49
+-57 54 -96 55 l-43 1 0 -49 c-1 -67 -38 -101 -102 -93 -37 4 -52 13 -102 64
+-86 88 -196 118 -281 75z m193 -69 c31 -18 86 -103 87 -132 0 -8 -23 11 -51
+42 -57 64 -84 81 -147 92 -25 4 -40 11 -36 17 10 16 109 2 147 -19z"/>
+            <path d="M4357 1618 c2 -51 8 -146 13 -210 16 -187 12 -271 -18 -415 l-28
+-132 28 -21 c25 -18 28 -27 28 -78 0 -91 8 -96 139 -100 135 -5 138 0 76 107
+-75 127 -88 313 -34 461 35 97 38 147 14 299 -22 146 -23 149 -53 155 -31 6
+-154 26 -163 26 -4 0 -5 -42 -2 -92z"/>
+          </g>
+        </symbol>
+
+        <!-- Fastenwahe: scored oval bread with caraway seeds -->
+        <symbol id="sym-fastenwahe" viewBox="0 0 100 100">
+          <g transform="translate(50,50) scale(1.5)">
+            <path fill-rule="evenodd" fill="currentColor"
+                  d="M0,-19 Q18,-14 26,-2 Q28,0 26,2 Q18,14 0,19 Q-18,14 -26,2 Q-28,0 -26,-2 Q-18,-14 0,-19 Z
+                     M 1.51,-9.09 A 3.2,5.5,-20,0,1,-4.51,-6.91 A 3.2,5.5,-20,0,1,1.51,-9.09 Z
+                     M 16.01,-1.09 A 3.2,5.5,-20,0,1,9.99,1.09 A 3.2,5.5,-20,0,1,16.01,-1.09 Z
+                     M 4.51,6.91 A 3.2,5.5,-20,0,1,-1.51,9.09 A 3.2,5.5,-20,0,1,4.51,6.91 Z
+                     M -9.99,-1.09 A 3.2,5.5,-20,0,1,-16.01,1.09 A 3.2,5.5,-20,0,1,-9.99,-1.09 Z"/>
+            <g fill="rgba(140,140,140,0.7)">
+              <circle cx="-14" cy="-7"  r="0.8"/>
+              <circle cx="-6"  cy="-14" r="1.0"/>
+              <circle cx="3"   cy="-11" r="0.7"/>
+              <circle cx="9"   cy="-14" r="0.9"/>
+              <circle cx="14"  cy="-8"  r="0.8"/>
+              <circle cx="21"  cy="-2"  r="0.9"/>
+              <circle cx="22"  cy="4"   r="0.7"/>
+              <circle cx="17"  cy="8"   r="1.0"/>
+              <circle cx="11"  cy="13"  r="0.8"/>
+              <circle cx="4"   cy="15"  r="0.9"/>
+              <circle cx="-3"  cy="12"  r="0.7"/>
+              <circle cx="-10" cy="11"  r="0.9"/>
+              <circle cx="-17" cy="6"   r="0.8"/>
+              <circle cx="-22" cy="0"   r="1.0"/>
+              <circle cx="-19" cy="-5"  r="0.7"/>
+              <circle cx="-1"  cy="2"   r="0.8"/>
+              <circle cx="7"   cy="-3"  r="0.7"/>
+              <circle cx="-8"  cy="-1"  r="0.9"/>
+            </g>
+          </g>
+        </symbol>
+
+        <!-- Muffin: domed top with fluted paper liner -->
+        <symbol id="sym-muffin" viewBox="0 0 100 100">
+          <g transform="translate(50,47) scale(1.3)" fill="currentColor">
+            <path d="M-23,-2 Q-25,-22 -14,-20 Q-9,-30 0,-24 Q9,-30 14,-20
+                     Q25,-22 23,-2 Q23,4 0,5 Q-23,4 -23,-2 Z"/>
+            <path d="M-19,-2 L-23,24 Q-23,28 -18,28 L18,28 Q23,28 23,24 L19,-2 Z"/>
+            <line x1="-15" y1="0"  x2="-18" y2="26" stroke="rgba(140,140,140,0.85)" stroke-width="2.5" fill="none"/>
+            <line x1="-7"  y1="1"  x2="-8"  y2="27" stroke="rgba(140,140,140,0.85)" stroke-width="2.5" fill="none"/>
+            <line x1="1"   y1="1"  x2="1"   y2="27" stroke="rgba(140,140,140,0.85)" stroke-width="2.5" fill="none"/>
+            <line x1="9"   y1="1"  x2="9"   y2="27" stroke="rgba(140,140,140,0.85)" stroke-width="2.5" fill="none"/>
+            <line x1="16"  y1="0"  x2="18"  y2="26" stroke="rgba(140,140,140,0.85)" stroke-width="2.5" fill="none"/>
+          </g>
+        </symbol>
+
+      </defs>
+
+      <!-- Hexes rendered here by JS -->
+      <g id="hex-layer"></g>
+    </svg>
+  </div>
+
+</div>
+
+<!-- Overlays -->
+<div class="overlay" id="waiting-overlay">
+  <h2>Waiting for opponent…</h2>
+  <p>Share this link with your opponent to start the game.</p>
+  <div class="url-box" id="share-url"></div>
+  <button class="btn" id="copy-btn" onclick="copyLink()">Copy Link</button>
+</div>
+
+<div class="overlay" id="conn-overlay">
+  <div class="spin"></div>
+  <p>Connecting…</p>
+</div>
+
+<div class="overlay" id="win-overlay">
+  <h2 id="win-title">Game Over</h2>
+  <p id="win-desc"></p>
+  <button class="btn" onclick="location.href=location.pathname">New Game</button>
+</div>
+
+<div id="win-reveal">
+  <div id="win-reveal-text">
+    <strong id="win-reveal-title"></strong>
+    <span id="win-reveal-desc"></span>
+  </div>
+  <button class="btn" onclick="dismissWinReveal()">Got it</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ── Constants (mirror worker.js) ─────────────────────────────────────────────
+const HEX_DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+const GRID_RADIUS = 3;
+const COLOR_MAP = {
+  red: '#d94040', orange: '#d97820', yellow: '#c8a800',
+  green: '#2e9048', teal: '#1a8888', blue: '#2858a8',
+};
+// Icon colour per tile: light tint on dark tiles, deep shade on light tiles
+const SYM_COLOR_MAP = {
+  red:    '#ffb3b3',  // light rose on red
+  orange: '#5c2600',  // dark brown on orange
+  yellow: '#4a3800',  // dark amber on yellow
+  green:  '#b3ffc8',  // light mint on green
+  teal:   '#b3eeee',  // light aqua on teal
+  blue:   '#b3ccff',  // light periwinkle on blue
+};
+const SYM_LABEL = {
+  sunflower: 'Sunflower', mountains: 'Mountains', basel: 'Basel',
+  cow: 'Cow', fastenwahe: 'Fastenwahe', muffin: 'Muffin',
+};
+
+// ── Hex geometry (flat-top, s=1 SVG units) ──────────────────────────────────
+const hexKey = (q, r) => `${q},${r}`;
+function hexCenter(q, r) {
+  return { x: 1.5 * q, y: (Math.sqrt(3) / 2) * q + Math.sqrt(3) * r };
+}
+function hexCornerPoints(cx, cy, scale = 1) {
+  return Array.from({ length: 6 }, (_, i) => {
+    const a = (Math.PI / 3) * i;
+    return `${cx + scale * Math.cos(a)},${cy + scale * Math.sin(a)}`;
+  }).join(' ');
+}
+
+// ── Session / room ID ────────────────────────────────────────────────────────
+function getOrCreatePlayerId() {
+  let id = localStorage.getItem('kamon_player_id');
+  if (!id) {
+    id = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('kamon_player_id', id);
+  }
+  return id;
+}
+
+// Deployed Cloudflare Worker URL — update this after running `npm run deploy`
+const WORKER_HOST = 'YOUR-WORKER-NAME.YOUR-SUBDOMAIN.workers.dev';
+
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+
+function getRoomId() {
+  return location.hash.slice(1) || null;
+}
+
+function createRoomId() {
+  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let myPlayerNum = null;
+let gameState   = null;
+let ws          = null;
+let roomId      = null;
+let winPhase    = 'none'; // 'none' | 'reveal' | 'overlay'
+let winTileKeys = new Set();
+let encTileKeys = new Set();
+
+// ── WebSocket ────────────────────────────────────────────────────────────────
+function connect() {
+  roomId = getRoomId();
+  if (!roomId) {
+    roomId = createRoomId();
+    history.replaceState(null, '', `#${roomId}`);
+  }
+
+  const url = isLocal
+    ? `ws://localhost:8787/room/${roomId}/ws`
+    : `wss://${WORKER_HOST}/room/${roomId}/ws`;
+
+  showOverlay('conn-overlay');
+  ws = new WebSocket(url);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'join', playerId: getOrCreatePlayerId() }));
+  };
+
+  ws.onmessage = ({ data }) => {
+    let msg;
+    try { msg = JSON.parse(data); } catch { return; }
+    if      (msg.type === 'assigned') handleAssigned(msg);
+    else if (msg.type === 'state')    handleState(msg.state);
+    else if (msg.type === 'error')    showToast(msg.message);
+  };
+
+  ws.onclose = () => {
+    if (gameState?.phase !== 'ended') {
+      showToast('Disconnected — reconnecting…');
+      setTimeout(connect, 2000);
+    }
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+function handleAssigned({ playerNum }) {
+  myPlayerNum = playerNum;
+}
+
+function handleState(state) {
+  gameState = state;
+  hideOverlay('conn-overlay');
+  renderAll(state);
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function renderAll(state) {
+  renderBoard(state);
+  renderTopbar(state);
+  renderPhase(state);
+  if (winPhase === 'reveal') applyWinHighlights();
+}
+
+function renderTopbar(state) {
+  const label = document.getElementById('turn-label');
+  const badge = document.getElementById('constraint-badge');
+
+  if (state.phase === 'waiting') {
+    label.textContent = 'Waiting for opponent…';
+    label.className   = 'their-turn';
+    badge.style.display = 'none';
+    return;
+  }
+  if (state.phase === 'ended') {
+    label.textContent = 'Game over';
+    label.className   = 'their-turn';
+    badge.style.display = 'none';
+    return;
+  }
+
+  const isYourTurn = state.currentPlayer === myPlayerNum;
+  label.textContent = isYourTurn ? 'Your turn' : 'Opponent\'s turn';
+  label.className   = isYourTurn ? 'your-turn' : 'their-turn';
+
+  if (state.constraint) {
+    badge.style.display = 'flex';
+    const { symbol, color } = state.constraint;
+    document.getElementById('cb-color').style.background = COLOR_MAP[color] || '#888';
+    const cbSym = document.getElementById('cb-sym');
+    cbSym.innerHTML = `<use href="#sym-${symbol}" x="0" y="0" width="100" height="100" color="white"/>`;
+    document.getElementById('cb-text').textContent =
+      `${SYM_LABEL[symbol] || symbol} or ${color}`;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+
+function renderPhase(state) {
+  if (state.phase === 'waiting' && myPlayerNum === 1) {
+    const shareUrl = location.href;
+    document.getElementById('share-url').textContent = shareUrl;
+    showOverlay('waiting-overlay');
+  } else if (state.phase === 'waiting') {
+    // Player 2 sees "Waiting for game to start" via topbar — no overlay needed
+    hideOverlay('waiting-overlay');
+  } else {
+    hideOverlay('waiting-overlay');
+  }
+
+  if (state.phase === 'ended' && winPhase === 'none') {
+    showWinReveal(state);
+  }
+}
+
+// ── Board SVG rendering ──────────────────────────────────────────────────────
+function renderBoard(state) {
+  const layer = document.getElementById('hex-layer');
+  const validSet   = new Set(state.validMoves || []);
+  const claimed1   = new Set(state.claimed['1']);
+  const claimed2   = new Set(state.claimed['2']);
+  const isMyTurn   = state.currentPlayer === myPlayerNum && state.phase === 'playing';
+
+  // Build all hex groups; reuse existing DOM nodes by key to reduce churn
+  const existing = {};
+  for (const g of layer.children) existing[g.dataset.key] = g;
+
+  const seen = new Set();
+
+  for (const key of Object.keys(state.hexMap)) {
+    seen.add(key);
+    const { symbol, color } = state.hexMap[key];
+    const [q, r] = key.split(',').map(Number);
+    const { x, y } = hexCenter(q, r);
+    const fill     = COLOR_MAP[color] || '#666';
+    const isValid  = validSet.has(key);
+    const isClaimed1 = claimed1.has(key);
+    const isClaimed2 = claimed2.has(key);
+    const isLast   = state.lastClaimed === key;
+
+    let g = existing[key];
+    if (!g) {
+      g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.dataset.key = key;
+      layer.appendChild(g);
+    }
+
+    // Recompute classes
+    const classes = ['hex-group'];
+    if (isValid && isMyTurn)  classes.push('clickable');
+    if (isClaimed1)           classes.push('claimed-1');
+    if (isClaimed2)           classes.push('claimed-2');
+    if (isLast)               classes.push('last-claimed');
+    g.setAttribute('class', classes.join(' '));
+
+    if (isValid && isMyTurn) {
+      g.onclick = () => sendMove(q, r);
+    } else {
+      g.onclick = null;
+    }
+
+    // Rebuild inner SVG only if content changed (keyed by a snapshot string)
+    const snap = `${symbol}:${color}:${isValid&&isMyTurn}:${isClaimed1}:${isClaimed2}:${isLast}`;
+    if (g.dataset.snap === snap) continue;
+    g.dataset.snap = snap;
+
+    const HEX_SCALE   = 0.97; // slight inset so borders don't overlap
+    const cornerPts   = hexCornerPoints(x, y, HEX_SCALE);
+    const ringPts     = hexCornerPoints(x, y, 0.95);
+    const symSize     = 1.4;
+    const symOff      = symSize / 2;
+
+    const symColor = SYM_COLOR_MAP[color] || 'white';
+
+    let html = `<polygon class="hex-bg" points="${cornerPts}" fill="${fill}"/>`;
+
+    // Symbol
+    html += `<use class="hex-sym" href="#sym-${symbol}"
+      x="${x - symOff}" y="${y - symOff}"
+      width="${symSize}" height="${symSize}"
+      color="${symColor}"/>`;
+
+    // Ownership ring: white border for P1, dark border (with subtle halo) for P2
+    if (isClaimed1) {
+      const ownerPts = hexCornerPoints(x, y, 0.84);
+      html += `<polygon points="${ownerPts}" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="0.24" pointer-events="none"/>`;
+    } else if (isClaimed2) {
+      const haloPts = hexCornerPoints(x, y, 0.845);
+      html += `<polygon points="${haloPts}" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.06" pointer-events="none"/>`;
+      const ownerPts = hexCornerPoints(x, y, 0.84);
+      html += `<polygon points="${ownerPts}" fill="none" stroke="rgba(10,10,10,0.95)" stroke-width="0.24" pointer-events="none"/>`;
+    }
+
+    // Valid-move ring
+    html += `<polygon class="valid-ring" points="${ringPts}"/>`;
+
+    // Last-claimed gold ring (animated via CSS class)
+    // Two concentric rings: inner in player colour, outer contrasting halo for legibility on any bg
+    const haloRingPts = hexCornerPoints(x, y, 0.965);
+    if (isClaimed2) {
+      html += `<polygon class="claimed-ring" points="${haloRingPts}" stroke="rgba(255,255,255,0.6)"/>`;
+      html += `<polygon class="claimed-ring" points="${ringPts}" stroke="#1a1a1a"/>`;
+    } else {
+      html += `<polygon class="claimed-ring" points="${haloRingPts}" stroke="rgba(0,0,0,0.5)"/>`;
+      html += `<polygon class="claimed-ring" points="${ringPts}" stroke="white"/>`;
+    }
+
+    g.innerHTML = html;
+  }
+
+  // Remove stale groups (shouldn't happen, board is fixed)
+  for (const key of Object.keys(existing)) {
+    if (!seen.has(key)) existing[key].remove();
+  }
+}
+
+// ── Move ─────────────────────────────────────────────────────────────────────
+function sendMove(q, r) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: 'move', to: { q, r } }));
+}
+
+// ── Win reveal ───────────────────────────────────────────────────────────────
+function applyWinHighlights() {
+  for (const g of document.getElementById('hex-layer').children) {
+    const key = g.dataset.key;
+    if (winTileKeys.has(key)) g.classList.add('win-tile');
+    if (encTileKeys.has(key)) g.classList.add('win-enclosed');
+  }
+}
+
+function showWinReveal(state) {
+  winPhase    = 'reveal';
+  winTileKeys = new Set(state.winTiles    || []);
+  encTileKeys = new Set(state.enclosedTiles || []);
+
+  applyWinHighlights();
+  document.getElementById('board-wrap').classList.add('win-reveal-mode');
+
+  const title = document.getElementById('win-reveal-title');
+  const desc  = document.getElementById('win-reveal-desc');
+
+  if (state.winner === 'draw') {
+    title.textContent = 'Draw!';
+    desc.textContent  = 'The board is completely full — no winner.';
+  } else {
+    const isMe        = state.winner === myPlayerNum;
+    const winnerLabel = state.winner === 1 ? 'White' : 'Black';
+    const loserLabel  = state.winner === 1 ? 'Black' : 'White';
+    title.textContent = isMe ? 'You win!' : `${winnerLabel} wins`;
+    if (state.winReason === 'edge') {
+      desc.textContent = `${winnerLabel}'s tiles connect two board edges — ${winTileKeys.size} tiles highlighted.`;
+    } else if (state.winReason === 'enclosed') {
+      const n = encTileKeys.size;
+      desc.textContent = `${winnerLabel}'s tiles enclose ${n} cell${n !== 1 ? 's' : ''} — shown dimly on the board.`;
+    } else {
+      desc.textContent = `${loserLabel} had no valid moves.`;
+    }
+  }
+
+  document.getElementById('win-reveal').style.display = 'flex';
+}
+
+function dismissWinReveal() {
+  winPhase = 'overlay';
+  for (const g of document.getElementById('hex-layer').children) {
+    g.classList.remove('win-tile', 'win-enclosed');
+  }
+  document.getElementById('board-wrap').classList.remove('win-reveal-mode');
+  document.getElementById('win-reveal').style.display = 'none';
+  showWin(gameState);
+}
+
+// ── Win overlay ──────────────────────────────────────────────────────────────
+function showWin(state) {
+  const overlay = document.getElementById('win-overlay');
+  const title   = document.getElementById('win-title');
+  const desc    = document.getElementById('win-desc');
+
+  if (state.winner === 'draw') {
+    title.textContent = 'Draw!';
+    title.className   = 'win-msg-draw';
+    desc.textContent  = 'The board is completely full — it\'s a tie.';
+  } else {
+    const isMe = state.winner === myPlayerNum;
+    const winnerLabel = state.winner === 1 ? 'White' : 'Black';
+    title.textContent = isMe ? 'You win!' : `${winnerLabel} wins`;
+    title.className   = state.winner === 1 ? 'win-msg-p1' : 'win-msg-p2';
+    if (state.winReason === 'edge') {
+      desc.textContent = isMe
+        ? 'You connected two board edges!'
+        : `${winnerLabel} connected two board edges.`;
+    } else if (state.winReason === 'enclosed') {
+      desc.textContent = isMe
+        ? 'You enclosed a region of the board!'
+        : `${winnerLabel} enclosed a region of the board.`;
+    } else {
+      desc.textContent = isMe
+        ? 'Your opponent ran out of valid moves.'
+        : 'You ran out of valid moves.';
+    }
+  }
+
+  overlay.classList.add('show');
+}
+
+// ── Overlay helpers ──────────────────────────────────────────────────────────
+function showOverlay(id) { document.getElementById(id).style.display = 'flex'; }
+function hideOverlay(id) { document.getElementById(id).style.display = 'none'; }
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Copy link ────────────────────────────────────────────────────────────────
+function copyLink() {
+  navigator.clipboard.writeText(location.href).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy Link';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+connect();
+</script>
+</body>
+</html>
