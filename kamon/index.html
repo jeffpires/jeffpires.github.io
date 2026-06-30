@@ -249,6 +249,7 @@ html, body {
 .win-msg-p1 { color: var(--c-p1); }
 .win-msg-p2 { color: var(--c-p2); }
 .win-msg-draw { color: #aaa; }
+#rematch-status { display: none; font-size: 13px; color: var(--c-muted); }
 
 /* ── Connecting overlay ── */
 #conn-overlay .spin {
@@ -478,7 +479,8 @@ c-1072 0 -1101 -1 -1132 -20z"/>
 <div class="overlay" id="win-overlay">
   <h2 id="win-title">Game Over</h2>
   <p id="win-desc"></p>
-  <button class="btn" onclick="location.href=location.pathname">New Game</button>
+  <button class="btn" id="rematch-btn" onclick="requestRematch()">Rematch</button>
+  <p id="rematch-status"></p>
 </div>
 
 <div id="win-reveal">
@@ -587,10 +589,8 @@ function connect() {
   };
 
   ws.onclose = () => {
-    if (gameState?.phase !== 'ended') {
-      showToast('Disconnected — reconnecting…');
-      setTimeout(connect, 2000);
-    }
+    showToast('Disconnected — reconnecting…');
+    setTimeout(connect, 2000);
   };
 
   ws.onerror = () => ws.close();
@@ -661,8 +661,25 @@ function renderPhase(state) {
     hideOverlay('waiting-overlay');
   }
 
+  if (state.phase !== 'ended' && winPhase !== 'none') {
+    // New game started — tear down all end-game UI
+    winPhase    = 'none';
+    winTileKeys = new Set();
+    encTileKeys = new Set();
+    document.getElementById('win-overlay').classList.remove('show');
+    document.getElementById('win-reveal').style.display = 'none';
+    document.getElementById('board-wrap').classList.remove('win-reveal-mode');
+    for (const g of document.getElementById('hex-layer').children) {
+      g.classList.remove('win-tile', 'win-enclosed');
+    }
+  }
+
   if (state.phase === 'ended' && winPhase === 'none') {
     showWinReveal(state);
+  }
+
+  if (state.phase === 'ended' && winPhase === 'overlay') {
+    updateRematchUI(state);
   }
 }
 
@@ -854,7 +871,37 @@ function showWin(state) {
     }
   }
 
+  updateRematchUI(state);
   overlay.classList.add('show');
+}
+
+function updateRematchUI(state) {
+  const btn    = document.getElementById('rematch-btn');
+  const status = document.getElementById('rematch-status');
+  const rematch = state.rematch || {};
+  const myReq   = rematch[String(myPlayerNum)];
+  const oppNum  = myPlayerNum === 1 ? 2 : 1;
+  const oppReq  = rematch[String(oppNum)];
+
+  if (myReq) {
+    btn.style.display    = 'none';
+    status.textContent   = 'Rematch requested…';
+    status.style.display = 'block';
+  } else if (oppReq) {
+    btn.textContent      = "You've been challenged to a rematch! Accept?";
+    btn.style.display    = '';
+    status.style.display = 'none';
+  } else {
+    btn.textContent      = 'Rematch';
+    btn.style.display    = '';
+    status.style.display = 'none';
+  }
+}
+
+function requestRematch() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'rematch' }));
+  }
 }
 
 // ── Overlay helpers ──────────────────────────────────────────────────────────
