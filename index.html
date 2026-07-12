@@ -201,20 +201,19 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 
   <!--
   <div class="coming-soon">Coming Soon</div>
-
+  -->
 
   <div class="page-links">
     <a href="cv.html" class="page-link">CV</a>
     <span class="page-link-sep">·</span>
     <a href="mailto:jeff@gaiaanalytica.ch" class="page-link">jeff@gaiaanalytica.ch</a>
   </div>
-  -->
 </div>
 
 <div class="lab-widget" id="labWidget">
   <div class="lab-links" id="labLinks">
-    <a href="https://gaiaanalytica.ch/geotrace" class="lab-link">GeoTrace</a>
     <a href="https://gaiaanalytica.ch/GuessWhere" class="lab-link">Guess Where?</a>
+    <a href="https://gaiaanalytica.ch/geotrace" class="lab-link">GeoTrace</a>
   </div>
   <button class="lab-beaker" id="labBeaker" aria-label="Open lab projects" aria-expanded="false">
     <svg viewBox="0 0 40 50" fill="none">
@@ -246,37 +245,32 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Multi-octave terrain field (sum of sines as cheap noise)
+// Lightweight terrain field (sum of sines as cheap noise)
 function field(x, y, t) {
-  const s = 0.0028;
+  const s = 0.003;
   return (
-    Math.sin(x * s * 1.1 + t * 0.18 + Math.cos(y * s * 0.9 - t * 0.05)) * 1.1 +
-    Math.sin(y * s * 1.3 - t * 0.13 + Math.cos(x * s * 1.15 + t * 0.07)) * 0.85 +
-    Math.sin((x - y) * s * 0.85 + t * 0.09) * 0.65 +
-    Math.cos(x * s * 2.2 + y * s * 1.7 - t * 0.22) * 0.4 +
-    Math.sin((x * 0.7 + y * 1.3) * s * 1.6 + t * 0.12) * 0.3
+    Math.sin(x * s * 1.1 + t * 0.17 + Math.cos(y * s * 0.9 - t * 0.05)) * 1.2 +
+    Math.sin(y * s * 1.25 - t * 0.12 + Math.cos(x * s * 1.1 + t * 0.07)) * 0.9 +
+    Math.sin((x - y) * s * 0.8 + t * 0.085) * 0.6
   );
 }
 
 // Earthy contour palette: deep forest → sage → ochre ridge
 const contours = [
-  { v: -2.4, rgba: [16, 34, 18, 0.85] },
-  { v: -1.8, rgba: [22, 44, 25, 0.8]  },
-  { v: -1.2, rgba: [30, 56, 33, 0.75] },
-  { v: -0.6, rgba: [42, 70, 44, 0.7]  },
-  { v:  0.0, rgba: [58, 88, 52, 0.65] },
-  { v:  0.5, rgba: [76, 105, 60, 0.6] },
-  { v:  1.0, rgba: [100, 125, 68, 0.55] },
-  { v:  1.4, rgba: [128, 148, 82, 0.5] },
-  { v:  1.8, rgba: [155, 155, 92, 0.42] },
-  { v:  2.2, rgba: [170, 148, 95, 0.35] },
+  { v: -1.8, rgba: [22, 44, 25, 0.82] },
+  { v: -0.8, rgba: [38, 65, 42, 0.72] },
+  { v:  0.1, rgba: [58, 88, 52, 0.65] },
+  { v:  0.7, rgba: [82, 108, 62, 0.58] },
+  { v:  1.2, rgba: [112, 132, 72, 0.5]  },
+  { v:  1.6, rgba: [140, 150, 85, 0.42] },
+  { v:  2.0, rgba: [165, 148, 95, 0.34] },
 ];
 
 function draw() {
   ctx.fillStyle = '#090f0b';
   ctx.fillRect(0, 0, W, H);
 
-  const res = 8;
+  const res = 13;
   const cols = Math.ceil(W / res) + 2;
   const rows = Math.ceil(H / res) + 2;
 
@@ -333,12 +327,16 @@ function draw() {
   }
 }
 
-(function animate() {
-  t += 0.0035;
-  draw();
+let lastFrame = 0;
+function animate(ts) {
   requestAnimationFrame(animate);
-  /* setTimeout(() => requestAnimationFrame(animate), 1000 / 30); */
-})();
+  if (document.hidden) return;
+  if (ts - lastFrame < 40) return; // ~25fps ceiling
+  lastFrame = ts;
+  t += 0.0084;
+  draw();
+}
+requestAnimationFrame(animate);
 
   // Sticky dot movement + link hover glow
   const dot = document.querySelector('.rule-dot');
