@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Jeffrey Pires, GISP: Senior GIS &amp; Data Visualization Professional. Geneva-based geospatial expert available for consulting and senior roles.">
+<title>Jeffrey Pires, GISP | Gaia Analytica</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: #090f0b;
+  color: rgba(210, 200, 170, 0.85);
+  font-family: 'Raleway', sans-serif;
+  font-weight: 300;
+  font-size: 1rem;
+  line-height: 1.75;
+  overflow-x: hidden;
+}
+a { color: rgba(180, 210, 120, 0.85); text-decoration: none; transition: color 0.3s; }
+a:hover { color: rgba(225, 215, 190, 0.98); }
+
+#terrain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+
+.vignette {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 30%, rgba(9,15,11,0.45) 68%, rgba(9,15,11,0.88) 100%);
+}
+.scrim {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: rgba(9, 15, 11, 0.12);
+}
+
+/* ── Navigation ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+  padding: 1.4rem 2.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(to bottom, rgba(9,15,11,0.96) 0%, rgba(9,15,11,0) 100%);
+}
+.nav-brand {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.82rem; letter-spacing: 0.32em; text-transform: uppercase;
+  color: rgba(225, 215, 190, 0.85);
+}
+.nav-brand:hover { color: rgba(225, 215, 190, 1); }
+.nav-right {
+  display: flex; gap: 1.8rem; align-items: center;
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+}
+.nav-current { color: rgba(225, 215, 190, 0.6); }
+.nav-sep { color: rgba(100, 140, 75, 0.4); }
+.nav-right a { color: rgba(180, 210, 120, 0.7); }
+.nav-right a:hover { color: rgba(180, 210, 120, 1); }
+
+/* ── Page ── */
+.page {
+  position: relative; z-index: 10;
+  max-width: 860px; margin: 0 auto;
+  padding: 8.5rem 2rem 5rem;
+}
+
+/* ── Section helpers ── */
+.section { margin-bottom: 5.5rem; scroll-margin-top: 6.5rem; }
+
+/* Section labels sit directly on the canvas, in the gaps between panels;
+   the dark halo keeps them legible over moving contour lines. */
+.section-label {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.68rem; letter-spacing: 0.45em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.8); margin-bottom: 1rem;
+  text-shadow: 0 1px 8px rgba(9,15,11,0.95), 0 0 20px rgba(9,15,11,0.85);
+}
+.section-title {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(225, 215, 190, 0.95); margin-bottom: 1.6rem;
+  text-shadow: 0 1px 8px rgba(9,15,11,0.95), 0 0 20px rgba(9,15,11,0.85);
+}
+
+/* Content panels: each section's body sits on its own readable surface
+   (same family as the achievement cards) so the global scrim can stay light
+   and the topography reads in the gutters and section gaps. */
+.panel {
+  position: relative;
+  border: 1px solid rgba(100, 140, 75, 0.18);
+  background: rgba(14, 26, 16, 0.7);
+  padding: 2.1rem 2.4rem 2.3rem;
+}
+.panel::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(130,165,90,0.4), transparent);
+}
+.panel > :last-child { margin-bottom: 0; }
+
+.rule {
+  display: flex; align-items: center; gap: 1.2rem;
+  margin: 1.8rem 0;
+}
+.rule-line { width: 60px; height: 1px; background: linear-gradient(to right, transparent, rgba(130,165,90,0.45)); }
+.rule-line.r { transform: scaleX(-1); }
+.rule-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(130, 165, 90, 0.65); }
+
+/* ── Hero ── */
+/* The hero stays unpaneled so the page opens on the canvas itself, like
+   index.html; a soft radial pool behind the type keeps it readable without
+   a hard panel edge. */
+.hero { text-align: center; padding-top: 0.5rem; position: relative; }
+.hero::before {
+  content: ''; position: absolute; inset: -5rem -9rem; z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(9,15,11,0.6) 30%, transparent 72%);
+  pointer-events: none;
+}
+.hero-portrait {
+  width: 112px; height: 112px;
+  display: block; margin: 0 auto 1.2rem;
+  filter: drop-shadow(0 0 26px rgba(90, 130, 70, 0.4));
+}
+.hero-name {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(225, 215, 190, 0.97);
+  text-shadow: 0 2px 40px rgba(90, 130, 70, 0.35);
+  line-height: 1.15;
+}
+.hero-gisp {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: clamp(0.62rem, 1.1vw, 0.8rem);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.9); margin-top: 0.6rem;
+}
+.hero-location {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: clamp(0.72rem, 1.2vw, 0.88rem);
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(210, 200, 170, 0.58); margin-top: 0.3rem;
+}
+.hero-subtitle {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: clamp(0.72rem, 1.3vw, 0.9rem);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(210, 200, 170, 0.65); margin-top: 0.25rem;
+}
+.hero-positioning {
+  max-width: 600px; margin: 2.2rem auto 0;
+  font-size: clamp(0.9rem, 1.4vw, 1.02rem);
+  line-height: 1.9; color: rgba(210, 200, 170, 0.8); font-weight: 300;
+}
+.hero-contact {
+  margin-top: 1.8rem;
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.75rem; letter-spacing: 0.2em;
+  color: rgba(180, 210, 120, 0.75);
+}
+.hero-contact a { color: rgba(180, 210, 120, 0.82); }
+.hero-contact a:hover { color: rgba(180, 210, 120, 1); }
+
+/* ── Achievement Cards ── */
+.achievements {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem; margin-top: 1.4rem;
+}
+.card {
+  border: 1px solid rgba(100, 140, 75, 0.2);
+  background: rgba(14, 26, 16, 0.72);
+  padding: 1.5rem 1.4rem;
+  position: relative; overflow: hidden;
+  transition: border-color 0.35s, background 0.35s;
+}
+.card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(130,165,90,0.55), transparent);
+  opacity: 0; transition: opacity 0.35s;
+}
+.card:hover { border-color: rgba(130, 165, 90, 0.35); background: rgba(18, 34, 20, 0.8); }
+.card:hover::after { opacity: 1; }
+.card-ctx {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.75); margin-bottom: 0.55rem; line-height: 1.5;
+}
+.card-title {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.95rem; letter-spacing: 0.08em;
+  color: rgba(225, 215, 190, 0.95);
+  margin-bottom: 0.9rem; line-height: 1.4;
+}
+.card-fig {
+  display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.65rem;
+}
+.card-stat {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 1.8rem; letter-spacing: 0.04em;
+  color: rgba(180, 210, 120, 0.85); line-height: 1;
+}
+.card-stat-ref {
+  font-family: 'Raleway', sans-serif; font-weight: 300;
+  font-size: 0.78rem; letter-spacing: 0.1em;
+  color: rgba(210, 200, 170, 0.65);
+}
+.card-desc { font-size: 0.82rem; line-height: 1.7; color: rgba(210, 200, 170, 0.65); }
+
+/* ── Timeline ── */
+.timeline { position: relative; margin-top: 1.2rem; }
+.timeline-track {
+  position: absolute; left: 90px; top: 8px; bottom: 0; width: 1px;
+  background: linear-gradient(to bottom, rgba(100,140,75,0) 0%, rgba(100,140,75,0.32) 4%, rgba(100,140,75,0.32) 96%, rgba(100,140,75,0) 100%);
+}
+.tl-item { display: flex; margin-bottom: 0.2rem; cursor: pointer; }
+.tl-year {
+  width: 90px; padding-right: 1.2rem; flex-shrink: 0;
+  text-align: right; padding-top: 0.2rem;
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.7rem; letter-spacing: 0.1em;
+  color: rgba(130, 165, 90, 0.6); line-height: 1.55;
+}
+.tl-node { width: 0; flex-shrink: 0; position: relative; }
+.tl-node::before {
+  content: ''; position: absolute; top: 0.42rem; left: 50%; transform: translateX(-50%);
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid rgba(100, 140, 75, 0.45); background: #090f0b;
+  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+}
+.tl-item:hover .tl-node::before,
+.tl-item.open .tl-node::before {
+  border-color: rgba(180, 210, 120, 0.85);
+  background: rgba(100, 140, 75, 0.22);
+  box-shadow: 0 0 10px rgba(180, 210, 120, 0.38);
+}
+.tl-body { flex: 1; padding: 0 0 2rem 1.5rem; }
+.tl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; }
+.tl-role {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.95rem; letter-spacing: 0.08em;
+  color: rgba(225, 215, 190, 0.92); transition: color 0.3s;
+}
+.tl-item:hover .tl-role { color: rgba(225, 215, 190, 1); }
+.tl-org {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.76rem; letter-spacing: 0.12em;
+  color: rgba(130, 165, 90, 0.72); margin-top: 0.18rem;
+}
+.tl-progression {
+  margin-top: 0.35rem; list-style: none;
+}
+.tl-progression li {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.72rem; letter-spacing: 0.1em;
+  color: rgba(210, 200, 170, 0.52);
+  padding-left: 0.8rem; position: relative; line-height: 1.7;
+}
+.tl-progression li::before { content: '·'; position: absolute; left: 0; color: rgba(130,165,90,0.5); }
+.tl-detail {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.5s ease, opacity 0.4s ease;
+  opacity: 0;
+}
+.tl-item.open .tl-detail { max-height: 800px; opacity: 1; }
+.tl-bullets { list-style: none; margin-top: 0.75rem; }
+.tl-bullets li {
+  font-size: 0.84rem; line-height: 1.75;
+  color: rgba(210, 200, 170, 0.7);
+  padding-left: 1rem; position: relative; margin-bottom: 0.3rem;
+}
+.tl-bullets li::before { content: '–'; position: absolute; left: 0; color: rgba(130, 165, 90, 0.55); }
+.tl-sub-year {
+  font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.68rem; letter-spacing: 0.08em;
+  color: rgba(130, 165, 90, 0.75); margin-right: 0.5rem;
+}
+.tl-bullets.tl-bullets-dot li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(130, 165, 90, 0.55); top: 0.65rem; }
+.tl-tags { display: flex; flex-wrap: wrap; gap: 0.38rem; margin-top: 0.8rem; }
+.tag {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 0.22rem 0.55rem; border: 1px solid rgba(100, 140, 75, 0.22);
+  color: rgba(130, 165, 90, 0.68);
+}
+
+/* ── Skills Radar ── */
+.radar-wrap {
+  display: flex; gap: 4rem; align-items: center;
+  flex-wrap: wrap; margin-top: 1.4rem;
+}
+#skills-cv { flex-shrink: 0; cursor: crosshair; }
+.radar-detail { flex: 1; min-width: 200px; }
+.radar-label {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.88rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(225, 215, 190, 0.95); margin-bottom: 0.75rem; min-height: 1.3em;
+}
+#radar-items { list-style: none; min-height: 8em; }
+#radar-items li {
+  font-size: 0.82rem; line-height: 1.85;
+  color: rgba(210, 200, 170, 0.75);
+  padding-left: 0.9rem; position: relative;
+}
+#radar-items li::before { content: '·'; position: absolute; left: 0; color: rgba(130, 165, 90, 0.75); }
+
+/* ── Credentials / Education ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 1.2rem; }
+.subsection-title {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.65rem; letter-spacing: 0.38em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.65); margin-bottom: 1.1rem;
+}
+.cred-item { margin-bottom: 1.3rem; border-left: 1px solid rgba(100,140,75,0.28); padding-left: 0.9rem; }
+.cred-name {
+  font-family: 'Cinzel', serif; font-weight: 300;
+  font-size: 0.9rem; letter-spacing: 0.08em;
+  color: rgba(225, 215, 190, 0.92);
+}
+.cred-issuer { font-size: 0.76rem; color: rgba(130, 165, 90, 0.68); margin-top: 0.12rem; }
+.cred-year { font-family: 'Cinzel', serif; font-weight: 200; font-size: 0.65rem; letter-spacing: 0.15em; color: rgba(210, 200, 170, 0.42); margin-top: 0.1rem; }
+.edu-item { margin-bottom: 1rem; }
+.edu-degree { font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.88rem; letter-spacing: 0.06em; color: rgba(225, 215, 190, 0.9); }
+.edu-school { font-size: 0.76rem; color: rgba(130, 165, 90, 0.68); margin-top: 0.12rem; }
+
+/* ── Awards & Presentations ── */
+.award-item { margin-bottom: 1rem; }
+.award-name { font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.9rem; letter-spacing: 0.08em; color: rgba(225, 215, 190, 0.92); }
+.award-detail { font-size: 0.78rem; color: rgba(210, 200, 170, 0.65); margin-top: 0.15rem; }
+
+.pres-group { margin-bottom: 2rem; }
+.pres-group-label {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.62); margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(100,140,75,0.15); padding-bottom: 0.4rem;
+}
+.pres-list { list-style: none; }
+.pres-list li {
+  font-size: 0.84rem; line-height: 1.8;
+  color: rgba(210, 200, 170, 0.72);
+  padding-left: 1.1rem; position: relative;
+}
+.pres-list li::before { content: '◆'; position: absolute; left: 0; color: rgba(130, 165, 90, 0.38); font-size: 0.42rem; top: 0.58rem; }
+.pres-note { font-size: 0.72rem; color: rgba(210, 200, 170, 0.42); font-style: italic; }
+
+/* ── Training entries ── */
+.training-list { list-style: none; margin-top: 1rem; }
+.training-list li {
+  font-size: 0.84rem; line-height: 1.82;
+  color: rgba(210, 200, 170, 0.72);
+  padding-left: 1.1rem; position: relative;
+}
+.training-list li::before { content: '◆'; position: absolute; left: 0; color: rgba(130, 165, 90, 0.38); font-size: 0.42rem; top: 0.58rem; }
+
+/* ── Publications ── */
+.pub-group { margin-bottom: 2.2rem; }
+.pub-group-label {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.65); margin-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(100,140,75,0.15); padding-bottom: 0.4rem;
+}
+.pub-item { margin-bottom: 1.4rem; padding-left: 1rem; border-left: 1px solid rgba(100,140,75,0.2); }
+.pub-title {
+  font-family: 'Raleway', sans-serif; font-weight: 400;
+  font-size: 0.84rem; line-height: 1.6;
+  color: rgba(225, 215, 190, 0.9);
+}
+.pub-meta { font-size: 0.76rem; color: rgba(130, 165, 90, 0.68); margin-top: 0.2rem; }
+.pub-note { font-size: 0.72rem; color: rgba(210, 200, 170, 0.48); margin-top: 0.15rem; font-style: italic; }
+.pub-link { font-size: 0.72rem; color: rgba(130, 165, 90, 0.58); margin-top: 0.15rem; }
+.pub-link a { color: rgba(130, 165, 90, 0.65); }
+.pub-link a:hover { color: rgba(180, 210, 120, 1); }
+
+/* ── Footer ── */
+footer {
+  position: relative; z-index: 10;
+  text-align: center; padding: 2.5rem 2rem 4.5rem;
+  border-top: 1px solid rgba(100, 140, 75, 0.14);
+}
+.footer-brand { font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.7rem; letter-spacing: 0.38em; text-transform: uppercase; color: rgba(225, 215, 190, 0.48); margin-bottom: 0.75rem; }
+.footer-scope { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1.4rem; }
+.footer-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.38rem; }
+.footer-tag {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 0.22rem 0.55rem;
+}
+.footer-tag.service { border: 1px solid rgba(100, 140, 75, 0.28); color: rgba(130, 165, 90, 0.75); }
+.footer-tag.sector { background: rgba(100, 140, 75, 0.14); color: rgba(210, 200, 170, 0.68); }
+.footer-contact { font-family: 'Raleway', sans-serif; font-weight: 200; font-size: 0.74rem; letter-spacing: 0.18em; color: rgba(180, 210, 120, 0.62); }
+.footer-contact a { color: rgba(180, 210, 120, 0.72); }
+.footer-contact a:hover { color: rgba(180, 210, 120, 1); }
+.footer-back { margin-top: 1.2rem; }
+
+/* ── Section dot nav ── */
+/* Right-edge rail in the gutter the lighter scrim opened up; dots reuse the
+   timeline node treatment (same size, border, glow) so the rail reads as
+   part of the existing vocabulary. */
+.dot-nav {
+  /* Overrides the global nav rule (full-width bar) this element would
+     otherwise inherit as a <nav>. */
+  position: fixed; left: auto; right: 1.5rem; top: 50%; transform: translateY(-50%);
+  bottom: auto; width: auto; padding: 0; background: none;
+  z-index: 25; display: flex; flex-direction: column;
+  justify-content: flex-start; align-items: flex-end; gap: 1rem;
+}
+.dot-nav a {
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem;
+  padding: 0.1rem 0;
+}
+.dn-label {
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.58rem; letter-spacing: 0.24em; text-transform: uppercase;
+  color: rgba(210, 200, 170, 0.78);
+  background: rgba(9, 15, 11, 0.88);
+  border: 1px solid rgba(100, 140, 75, 0.18);
+  padding: 0.16rem 0.5rem 0.16rem 0.62rem;
+  white-space: nowrap;
+  opacity: 0; transform: translateX(5px);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+.dot-nav a:hover .dn-label,
+.dot-nav a:focus-visible .dn-label { opacity: 1; transform: translateX(0); }
+.dn-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid rgba(100, 140, 75, 0.5); background: rgba(9, 15, 11, 0.7);
+  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+}
+.dot-nav a:hover .dn-dot {
+  border-color: rgba(180, 210, 120, 0.7);
+}
+.dot-nav a.active .dn-dot {
+  border-color: rgba(180, 210, 120, 0.85);
+  background: rgba(100, 140, 75, 0.3);
+  box-shadow: 0 0 10px rgba(180, 210, 120, 0.38);
+}
+@media (max-width: 899px) { .dot-nav { display: none; } }
+
+/* ── Fade-in ── */
+.fi { opacity: 0; transform: translateY(14px); transition: opacity 0.85s ease, transform 0.85s ease; }
+.fi.vis { opacity: 1; transform: translateY(0); }
+
+/* ── Mobile ── */
+@media (max-width: 680px) {
+  nav { padding: 1.1rem 1.2rem; }
+  .nav-right { gap: 1rem; font-size: 0.6rem; }
+  .page { padding: 7rem 1.2rem 4rem; }
+  .panel { padding: 1.5rem 1.1rem 1.7rem; }
+  .hero::before { inset: -3rem -2rem; }
+  .achievements { grid-template-columns: 1fr; }
+  .tl-year { width: 58px; font-size: 0.62rem; padding-right: 0.7rem; }
+  .timeline-track { left: 58px; }
+  .radar-wrap { flex-direction: column; align-items: flex-start; }
+  #skills-cv { width: min(320px, 88vw) !important; height: min(320px, 88vw) !important; }
+  .two-col { grid-template-columns: 1fr; gap: 2rem; }
+  .hero-name { letter-spacing: 0.12em; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="terrain"></canvas>
+<div class="vignette"></div>
+<div class="scrim"></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">Gaia Analytica</a>
+  <div class="nav-right">
+    <a href="Jeffrey_Pires_CV_2026.pdf" target="_blank" rel="noopener">Download PDF</a>
+  </div>
+</nav>
+
+<nav class="dot-nav" aria-label="Page sections">
+  <a href="#profile"><span class="dn-label">Profile</span><span class="dn-dot"></span></a>
+  <a href="#achievements"><span class="dn-label">Achievements</span><span class="dn-dot"></span></a>
+  <a href="#experience"><span class="dn-label">Experience</span><span class="dn-dot"></span></a>
+  <a href="#skills"><span class="dn-label">Skills</span><span class="dn-dot"></span></a>
+  <a href="#credentials"><span class="dn-label">Credentials</span><span class="dn-dot"></span></a>
+  <a href="#recognition"><span class="dn-label">Awards</span><span class="dn-dot"></span></a>
+  <a href="#publications"><span class="dn-label">Publications</span><span class="dn-dot"></span></a>
+</nav>
+
+<div class="page">
+
+  <!-- ── Hero ── -->
+  <section class="section hero fi" id="profile">
+    <div class="hero-name">Jeffrey Pires</div>
+    <div class="hero-gisp">Geographic Information Systems Professional</div>
+    <div class="hero-location">Geneva, Switzerland</div>
+    <div class="rule" style="justify-content:center; margin:1.8rem auto;">
+      <div class="rule-line"></div>
+      <div class="rule-dot"></div>
+      <div class="rule-line r"></div>
+    </div>
+    <p class="hero-positioning">
+      Twenty years delivering GIS and information management solutions, turning fragmented data into intelligence people can act on. I've tracked a global pandemic, supported humanitarian operations in the world's largest refugee camp, and run real-time power grid systems serving millions of customers. Different sectors, one constant: I absorb the complexity of chaotic data landscapes, turning confusion into clarity.
+    </p>
+    <div class="hero-contact">
+      <a href="mailto:jeff@gaiaanalytica.ch">jeff@gaiaanalytica.ch</a>
+    </div>
+  </section>
+
+
+  <!-- ── Key Achievements ── -->
+  <section class="section fi" id="achievements">
+    <div class="section-label">Key Achievements</div>
+    <div class="achievements">
+
+      <div class="card">
+        <div class="card-ctx">WHO / Europe<br>2020–2023</div>
+        <div class="card-title">COVID-19 Dashboard</div>
+        <div class="card-fig">
+          <span class="card-stat">53</span>
+          <span class="card-stat-ref">countries</span>
+        </div>
+        <div class="card-desc">Architected data integration and governance across dozens of authoritative sources, producing near-real time analytical and visualization outputs relied upon by governments, researchers, and media throughout the pandemic.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-ctx">IOM &nbsp;·&nbsp; Cox's Bazar, Bangladesh<br>2018</div>
+        <div class="card-title">Rohingya Refugee<br>Response</div>
+        <div class="card-fig">
+          <span class="card-stat">1M+</span>
+          <span class="card-stat-ref">population</span>
+        </div>
+        <div class="card-desc">Led IM/GIS coordination for field data collection, inter-agency site profiles, multi-sectoral needs assessments, UAV imagery geodata packs, and a live humanitarian monitoring dashboard guiding response operations.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-ctx">GISCorps &nbsp;·&nbsp; WHO HQ, Geneva<br>2015</div>
+        <div class="card-title">Ebola Outbreak<br>GIS Coordination</div>
+        <div class="card-fig">
+          <span class="card-stat">28K+</span>
+          <span class="card-stat-ref">cases</span>
+        </div>
+        <div class="card-desc">Supported GIS and data management coordination for the West Africa Ebola outbreak response: managing data flows, producing situation maps and analysis, supporting field operations, and launching the open data portal.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-ctx">WHO HQ &nbsp;·&nbsp; Zimbabwe<br>2019</div>
+        <div class="card-title">Cyclone Idai<br>Emergency Response</div>
+        <div class="card-fig">
+          <span class="card-stat">2</span>
+          <span class="card-stat-ref">vaccination campaigns</span>
+        </div>
+        <div class="card-desc">Led emergency geospatial support for two oral cholera vaccination (OCV) campaigns and a comprehensive assessment of health facilities following severe landslides and flash flooding.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-ctx">GISCorps &nbsp;·&nbsp; WHO DRC Polio Eradication<br>2017</div>
+        <div class="card-title">Polio Eradication<br>Crowdsourcing Platform</div>
+        <div class="card-fig">
+          <span class="card-stat">750K+</span>
+          <span class="card-stat-ref">structures digitized</span>
+        </div>
+        <div class="card-desc">Architected a crowdsourcing platform enabling community-driven digitization of structures across the Democratic Republic of the Congo, generating the spatial data foundation to plan and deliver vaccination campaigns.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-ctx">National Grid &nbsp;·&nbsp; Boston, USA<br>2003–2016</div>
+        <div class="card-title">Emergency Storm<br>Response</div>
+        <div class="card-fig">
+          <span class="card-stat">7M+</span>
+          <span class="card-stat-ref">customers</span>
+        </div>
+        <div class="card-desc">Pioneered web GIS enterprise adoption across utility operations, building real-time situation dashboards and mobile damage assessment tools for power grid restoration following major storm events.</div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ── Career Timeline ── -->
+  <section class="section fi" id="experience">
+    <div class="section-label">Experience</div>
+    <div class="section-title">Career Timeline</div>
+
+    <div class="panel">
+    <div class="timeline">
+      <div class="timeline-track"></div>
+
+      <!-- WHO/Europe 2024-2025 -->
+      <div class="tl-item" data-id="who3">
+        <div class="tl-year">2024<br>–2025</div>
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-head">
+            <div>
+              <div class="tl-role">GIS / Data Visualization Officer</div>
+              <div class="tl-org">World Health Organization (WHO), Regional Office for Europe &nbsp;·&nbsp; Copenhagen, Denmark</div>
+            </div>
+          </div>
+          <div class="tl-detail">
+            <ul class="tl-bullets">
+              <li>Delivered IM/GIS solutions for multi-hazard emergencies including infectious disease monitoring (mpox, cholera, hepatitis, zoonotic influenza) and complex humanitarian crises (Ukraine, Gaza); led data management for the mpox Incident Management Support Team (IMST) during its emergency response</li>
+              <li>Contributed to event-based surveillance workflows, translating multi-source signals from EIOS (Epidemic Intelligence from Open Sources) into risk visualizations for surveillance teams, and collaborated with immunization and vaccination programmes on vaccination data mapping</li>
+              <li>Led clearance of 250+ geospatial products through legal review with technical teams; contributing author on peer-reviewed publications and reports</li>
+            </ul>
+            <div class="tl-tags">
+              <span class="tag">Health Emergencies</span>
+              <span class="tag">Event-based Surveillance</span>
+              <span class="tag">Geospatial Products</span>
+              <span class="tag">Publications</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHO/Europe 2020-2023 -->
+      <div class="tl-item" data-id="who2">
+        <div class="tl-year">2020<br>–2023</div>
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-head">
+            <div>
+              <div class="tl-role">GIS Consultant</div>
+              <div class="tl-org">World Health Organization (WHO), Regional Office for Europe &nbsp;·&nbsp; Copenhagen, Denmark</div>
+            </div>
+          </div>
+          <div class="tl-detail">
+            <ul class="tl-bullets">
+              <li>Developed and maintained WHO/Europe COVID-19 Dashboard (Feb 2020–Nov 2023); architected open data integration across dozens of authoritative sources in near-real time using Python, with data governance protocols ensuring reliable and timely updates across 53 countries</li>
+              <li>Co-founded the WHO/Europe GIS Hub; contributed to regional strategy and GIS for Health roadmap; strengthened regional capacity for health emergency detection, surveillance, and response</li>
+            </ul>
+            <div class="tl-tags">
+              <span class="tag">COVID-19</span>
+              <span class="tag">Python</span>
+              <span class="tag">Data Architecture</span>
+              <span class="tag">Open Data</span>
+              <span class="tag">AWS</span>
+              <span class="tag">Strategy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHO HQ 2019 -->
+      <div class="tl-item" data-id="who1">
+        <div class="tl-year">2019</div>
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-head">
+            <div>
+              <div class="tl-role">GIS Consultant</div>
+              <div class="tl-org">WHO Headquarters &nbsp;·&nbsp; Geneva, Switzerland</div>
+            </div>
+          </div>
+          <div class="tl-detail">
+            <ul class="tl-bullets">
+              <li>Emergency GIS deployment: Cyclone Idai response, Zimbabwe. Rapid geospatial support for WHO humanitarian operations following the March 2019 disaster.</li>
+              <li>Geospatial analysis and mapping in support of WHO headquarters health emergency programs</li>
+            </ul>
+            <div class="tl-tags">
+              <span class="tag">Emergency Response</span>
+              <span class="tag">Cyclone Idai</span>
+              <span class="tag">Humanitarian GIS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IOM 2018 -->
+      <div class="tl-item" data-id="iom">
+        <div class="tl-year">2018</div>
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-head">
+            <div>
+              <div class="tl-role">Information Management / GIS Officer</div>
+              <div class="tl-org">International Organization for Migration (IOM) &nbsp;·&nbsp; Cox's Bazar, Bangladesh</div>
+            </div>
+          </div>
+          <div class="tl-detail">
+            <ul class="tl-bullets">
+              <li>Coordinated IM/GIS support in Rohingya refugee camps (1M+ population); managed data collection, analysis, and publication of site profiles and needs assessments guiding inter-agency coordination</li>
+              <li>Developed web portal, portable UAV imagery geodata packs, and interactive incident dashboard for humanitarian monitoring</li>
+              <li>Designed GIS-supported vetiver grass cash-for-work slope stabilization program: innovative field application of geospatial analysis to reduce landslide risk in densely settled camp areas</li>
+            </ul>
+            <div class="tl-tags">
+              <span class="tag">Humanitarian IM</span>
+              <span class="tag">UAV</span>
+              <span class="tag">Field Operations</span>
+              <span class="tag">Inter-agency Coordination</span>
+              <span class="tag">HDX / OCHA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GISCorps -->
+      <div class="tl-item" data-id="giscorps">
+        <div class="tl-year">2013<br>–2017</div>
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-head">
+            <div>
+              <div class="tl-role">GISCorps Volunteer Projects</div>
+              <div class="tl-org">West Africa &nbsp;·&nbsp; DRC &nbsp;·&nbsp; Philippines &nbsp;·&nbsp; USA</div>
+            </div>
+          </div>
+          <div class="tl-detail">
+            <ul class="tl-bullets tl-bullets-dot">
+              <li><span class="tl-sub-year">2017</span><span style="color:rgba(225,215,190,0.8)">US-CDC Shelter Monitoring:</span> Developed real-time dashboards tracking shelter capacity for emergency response</li>
+              <li><span class="tl-sub-year">2017</span><span style="color:rgba(225,215,190,0.8)">WHO DRC Polio Eradication:</span> Architected crowdsourcing platform; led digitization of 750K+ structures across the DRC</li>
+              <li><span class="tl-sub-year">2015</span><span style="color:rgba(225,215,190,0.8)">WHO Ebola Outbreak, Geneva:</span> GISCorps specialist for the WHO West Africa response; managed data flows, maintained situation maps, launched open data portal from WHO headquarters. This mission marked the pivot from utility infrastructure GIS into humanitarian and public health work</li>
+              <li><span class="tl-sub-year">2014</span><span style="color:rgba(225,215,190,0.8)">USGS iCoast: Did the Coast Change?:</span> Pilot crowdsourcing study identifying changes to the coastline following Hurricane Sandy</li>
+              <li><span class="tl-sub-year">2014</span><span style="color:rgba(225,215,190,0.8)">Typhoon Hagupit/Ruby Social Media Crowdsourcing, Philippines:</span> Geolocated social media content to map damage reports and requests for assistance</li>
+              <li><span class="tl-sub-year">2013</span><span style="color:rgba(225,215,190,0.8)">Hurricane Sandy Aerial Damage Assessment, USA:</span> Evaluated crowdsourced assessments of storm damage imagery</li>
+            </ul>
+            <div class="tl-tags">
+              <span class="tag">Disease Surveillance</span>
+              <span class="tag">Crowdsourcing</span>
+              <span class="tag">Crisis Mapping</span>
+              <span class="tag">Volunteer Projects</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- National Grid -->
+      <div class="tl-item" data-id="ng">
+        <div class="tl-year">2003<br>–2016</div>
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-head">
+            <div>
+              <div class="tl-role">Lead GIS Analyst</div>
+              <div class="tl-org">National Grid &nbsp;·&nbsp; Boston, USA</div>
+              <ul class="tl-progression">
+                <li>Lead GIS Analyst, 2013–2016</li>
+                <li>Senior GIS Analyst, 2008–2012</li>
+                <li>GIS Analyst, 2005–2007</li>
+                <li>Contractor, 2003–2004</li>
+              </ul>
+            </div>
+          </div>
+          <div class="tl-detail">
+            <ul class="tl-bullets">
+              <li>Developed and launched enterprise mapping portal as an ArcGIS Online early adopter; scaled from initial pilot to 2000+ office and mobile users by identifying departmental challenges and delivering targeted GIS solutions</li>
+              <li>Developed mobile damage assessment tools and real-time dashboards integrating live weather, crew locations, power grid status, customer outages, and asset conditions</li>
+              <li>Pioneered web GIS enterprise adoption supporting operations serving 7M+ customers; built emergency response tools enabling real-time situational awareness across the grid; deployed and managed GIS infrastructure on AWS</li>
+              <li>Co-authored the enterprise asset data governance policy, establishing single-source-of-truth and accountability standards that carried forward into every later data architecture role</li>
+            </ul>
+            <div class="tl-tags">
+              <span class="tag">Enterprise GIS</span>
+              <span class="tag">ArcGIS Online</span>
+              <span class="tag">Critical Infrastructure</span>
+              <span class="tag">Real-time Dashboards</span>
+              <span class="tag">AWS</span>
+              <span class="tag">Data Governance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Skills Radar ── -->
+  <section class="section fi" id="skills">
+    <div class="section-label">Skills &amp; Expertise</div>
+    <div class="section-title">Competency Domains</div>
+    <div class="panel">
+    <div class="radar-wrap">
+      <canvas id="skills-cv" width="360" height="360" style="width:360px;height:360px;" aria-label="Interactive skills radar: hover an axis to explore"></canvas>
+      <div class="radar-detail">
+        <div class="radar-label" id="radar-label"></div>
+        <ul id="radar-items">
+          <li>ArcGIS Pro &amp; ArcGIS Online</li>
+          <li>Emergency Response GIS</li>
+          <li>ETL &amp; Data Pipeline Automation</li>
+          <li>Data Governance &amp; Strategy</li>
+          <li>Python &nbsp;·&nbsp; SQL &nbsp;·&nbsp; R</li>
+          <li>UAV Operations (FAA Part 107)</li>
+        </ul>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- ── Credentials & Education ── -->
+  <section class="section fi" id="credentials">
+    <div class="section-label">Credentials &amp; Education</div>
+    <div class="panel">
+    <div class="two-col">
+
+      <div>
+        <div class="subsection-title">Certifications &amp; Permits</div>
+        <div class="cred-item">
+          <div class="cred-name">GISP</div>
+          <div class="cred-issuer">GIS Certification Institute</div>
+          <div class="cred-year">2009–present</div>
+        </div>
+        <div class="cred-item">
+          <div class="cred-name">FAA Remote Pilot Certificate</div>
+          <div class="cred-issuer">Federal Aviation Administration, Part 107 UAV</div>
+          <div class="cred-year">2018–present</div>
+        </div>
+        <div class="cred-item">
+          <div class="cred-name">Swiss C Permit</div>
+          <div class="cred-issuer">Swiss long-term residence<br>and unrestricted work authorization</div>
+        </div>
+        <div style="margin-top:2.4rem;">
+          <div class="subsection-title">Professional Development</div>
+          <ul class="training-list">
+            <li>AI-Assisted Development &amp; GeoAI &nbsp;·&nbsp; 2026, ongoing</li>
+            <li>ESRI GIS For Climate Action MOOC &nbsp;·&nbsp; 2026</li>
+            <li>WHO Leadership in Health Emergencies &nbsp;·&nbsp; 2025</li>
+            <li>WHO Advanced Security in the Field &nbsp;·&nbsp; 2015</li>
+            <li>URISA Leadership Academy &nbsp;·&nbsp; 2012</li>
+          </ul>
+        </div>
+        <div style="margin-top:2.4rem;">
+          <div class="subsection-title">Languages</div>
+          <div style="display:flex; gap:2.4rem;">
+            <div class="edu-degree">English &nbsp;·&nbsp; <span class="edu-school" style="display:inline; margin-top:0;">Native</span></div>
+            <div class="edu-degree">French &nbsp;·&nbsp; <span class="edu-school" style="display:inline; margin-top:0;">A2</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="subsection-title">Education</div>
+        <div class="edu-item" style="margin-bottom:1.3rem;">
+          <div class="edu-degree">Graduate Certificate<br>Geo-Information Science</div>
+          <div class="edu-school">Salem State University &nbsp;·&nbsp; USA &nbsp;·&nbsp; 2008</div>
+        </div>
+        <div class="edu-item" style="margin-bottom:1.6rem;">
+          <div class="edu-degree">Bachelor of Arts<br>Earth Science</div>
+          <div class="edu-school">University of New Hampshire &nbsp;·&nbsp; USA &nbsp;·&nbsp; 2003</div>
+        </div>
+      </div>
+
+    </div>
+    </div>
+  </section>
+
+  <!-- ── Awards & Presentations ── -->
+  <section class="section fi" id="recognition">
+    <div class="section-label">Awards &amp; Presentations</div>
+
+    <div class="panel">
+    <div class="award-item" style="margin-bottom:2rem;">
+      <div class="award-name">ESRI Special Achievement in GIS (SAG) Award</div>
+      <div class="award-detail">Esri Annual User Conference &nbsp;·&nbsp; 2013 &nbsp;·&nbsp; Recognized for pioneering enterprise mobile and web GIS adoption at National Grid</div>
+    </div>
+
+    <div class="pres-group">
+      <div class="pres-group-label">Esri International User Conference &nbsp;·&nbsp; San Diego, CA, USA</div>
+      <ul class="pres-list">
+        <li>2019 &nbsp;·&nbsp; GIS for Cholera Vaccination Campaigns (OCV) following Cyclone Idai</li>
+        <li>2018 &nbsp;·&nbsp; GIS Technology in the Rohingya Refugee Camps</li>
+        <li>2015 &nbsp;·&nbsp; GIS in the West Africa Ebola Response</li>
+        <li>2010 &nbsp;·&nbsp; GIS for Electricity Distribution Asset Management</li>
+        <li>2008 &nbsp;·&nbsp; GeoCEMI: Pockets of Poor Performance</li>
+      </ul>
+    </div>
+
+    <div class="pres-group">
+      <div class="pres-group-label">Esri Community &amp; Regional Events</div>
+      <ul class="pres-list">
+        <li>2025 &nbsp;·&nbsp; GIS for Health in the WHO/European Region <span class="pres-note">(Esri GIS for Good Seminar, Geneva, CH)</span></li>
+        <li>2015 &nbsp;·&nbsp; National Grid's Integrated Mapping Applications Portal <span class="pres-note">(GeoConX / EGUG Plenary, Providence, RI, USA)</span></li>
+        <li>2013–2014 &nbsp;·&nbsp; ArcGIS Online at National Grid <span class="pres-note">(EGUG, San Antonio, TX; multiple regional/community events, New England, USA)</span></li>
+      </ul>
+    </div>
+
+    <div class="pres-group">
+      <div class="pres-group-label">URISA &amp; Professional Organizations</div>
+      <ul class="pres-list">
+        <li>2024 &nbsp;·&nbsp; GIS in Public Health Emergency Operating Centers <span class="pres-note">(EOC Network, virtual)</span></li>
+        <li>2016 &nbsp;·&nbsp; GIS in the West Africa Ebola Response <span class="pres-note">(URISA GIS &amp; Health Symposium, Washington DC, USA)</span></li>
+        <li>2013 &nbsp;·&nbsp; ArcGIS Online at National Grid <span class="pres-note">(NEURISA, Boston, MA, USA)</span></li>
+      </ul>
+    </div>
+    </div>
+
+  </section>
+
+  <!-- ── Publications & Media ── -->
+  <section class="section fi" id="publications">
+    <div class="section-label">Publications &amp; Media</div>
+
+    <div class="panel">
+    <div class="pub-group">
+      <div class="pub-group-label">Technical Reports &amp; Peer-reviewed</div>
+
+      <div class="pub-item">
+        <div class="pub-title">Comparing Outcomes of COVID-19 and Influenza Among Hospitalized Adults in the European Severe Acute Respiratory Infection Vaccine Effectiveness (EuroSAVE) Network, 2021–2024: A Retrospective Cohort Analysis</div>
+        <div class="pub-meta">The Lancet Regional Health – Europe &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; Vol. 65</div>
+        <div class="pub-note">Co-author.</div>
+        <div class="pub-link"><a href="https://www.thelancet.com/journals/lanepe/article/PIIS2666-7762(26)00084-0/fulltext" target="_blank" rel="noopener">thelancet.com (PIIS2666-7762(26)00084-0)</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Epidemiology and Characteristics of Cases With Monkeypox Virus Clade I in the WHO European Region, 2024 to 2025</div>
+        <div class="pub-meta">Eurosurveillance &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; 31(24):2500955</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://doi.org/10.2807/1560-7917.ES.2026.31.24.2500955" target="_blank" rel="noopener">doi.org/10.2807/1560-7917.ES.2026.31.24.2500955</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Prevalence of Legionella as a Waterborne Pathogen and Its Health Impacts in the Pan-European Region</div>
+        <div class="pub-meta">WHO Regional Office for Europe &nbsp;·&nbsp; Copenhagen &nbsp;·&nbsp; 2025 &nbsp;·&nbsp; Licence: CC BY-NC-SA 3.0 IGO</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://www.who.int/europe/publications/i/item/9789289062572" target="_blank" rel="noopener">who.int/europe/publications/i/item/9789289062572</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">FEEDcities Project: Extension of the FEEDcities Protocol for Monitoring the Content of Specific Nutrients in Food Products. Ukraine Assessment</div>
+        <div class="pub-meta">WHO Regional Office for Europe &nbsp;·&nbsp; 2025 &nbsp;·&nbsp; Licence: CC BY-NC-SA 3.0 IGO</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://iris.who.int/handle/10665/381722" target="_blank" rel="noopener">iris.who.int/handle/10665/381722</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">FEEDcities Project: The Food Environment in Cities in Eastern Europe and Central Asia – Ukraine</div>
+        <div class="pub-meta">WHO Regional Office for Europe &nbsp;·&nbsp; 2025 &nbsp;·&nbsp; Licence: CC BY-NC-SA 3.0 IGO</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://iris.who.int/handle/10665/381781" target="_blank" rel="noopener">iris.who.int/handle/10665/381781</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Continued Circulation of Mpox: An Epidemiological and Phylogenetic Assessment, European Region, 2023 to 2024</div>
+        <div class="pub-meta">Eurosurveillance &nbsp;·&nbsp; 2024 &nbsp;·&nbsp; 29(27):2400330</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://doi.org/10.2807/1560-7917.ES.2024.29.27.2400330" target="_blank" rel="noopener">doi.org/10.2807/1560-7917.ES.2024.29.27.2400330</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Child and Adolescent Health in Europe: Report on Progress to 2021</div>
+        <div class="pub-meta">WHO Regional Office for Europe &nbsp;·&nbsp; Copenhagen &nbsp;·&nbsp; 2024 &nbsp;·&nbsp; Licence: CC BY-NC-SA 3.0 IGO</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://www.who.int/europe/publications/i/item/9789289058407" target="_blank" rel="noopener">who.int/europe/publications/i/item/9789289058407</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Novel Use of Existing Data for Smart Grid Preliminary Analysis and for Asset Optimization</div>
+        <div class="pub-meta">CIGRE US National Committee &nbsp;·&nbsp; 2013 Grid of the Future Symposium</div>
+        <div class="pub-note">Contributing author.</div>
+        <div class="pub-link"><a href="https://cigre-usnc.org/wp-content/uploads/2015/11/Forte.pdf" target="_blank" rel="noopener">cigre-usnc.org/wp-content/uploads/2015/11/Forte.pdf</a></div>
+      </div>
+
+    </div>
+
+    <div class="pub-group">
+      <div class="pub-group-label">Features &amp; Media</div>
+
+      <div class="pub-item">
+        <div class="pub-title">Mapping Regions of DRC to Help WHO's Global Polio Eradication Initiative</div>
+        <div class="pub-meta">GISCorps &nbsp;·&nbsp; 2017</div>
+        <div class="pub-note">Feature on the GISCorps volunteer project supporting the DRC Polio Eradication Initiative.</div>
+        <div class="pub-link"><a href="https://www.giscorps.org/polio_204/" target="_blank" rel="noopener">giscorps.org/polio_204</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Using GIS for a Greater Good</div>
+        <div class="pub-meta">ArcNews &nbsp;·&nbsp; Esri &nbsp;·&nbsp; 2016</div>
+        <div class="pub-note">Featured in Esri's "GIS Heroes" series profiling GISCorps volunteers.</div>
+        <div class="pub-link"><a href="https://www.esri.com/about/newsroom/arcnews/using-gis-for-a-greater-good" target="_blank" rel="noopener">esri.com/about/newsroom/arcnews/using-gis-for-a-greater-good</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">GISCorps Assists World Health Organization in Mapping Ebola Response</div>
+        <div class="pub-meta">GISCorps &nbsp;·&nbsp; 2015</div>
+        <div class="pub-note">Feature on the GISCorps volunteers supporting the WHO West Africa Ebola response.</div>
+        <div class="pub-link"><a href="https://www.giscorps.org/who_157/" target="_blank" rel="noopener">giscorps.org/who_157</a></div>
+      </div>
+
+      <div class="pub-item">
+        <div class="pub-title">Energising the Utility Data Paradigm</div>
+        <div class="pub-meta">Geospatial World &nbsp;·&nbsp; 2014</div>
+        <div class="pub-note">Co-author.</div>
+        <div class="pub-link"><a href="https://geospatialworld.net/article/energising-the-utility-data-paradigm/" target="_blank" rel="noopener">geospatialworld.net/article/energising-the-utility-data-paradigm</a></div>
+      </div>
+
+    </div>
+
+    <div class="pub-group">
+      <div class="pub-group-label">Map Publications</div>
+
+      <div class="pub-item">
+        <div class="pub-title">Geo-CEMI: Spatial Analysis of IEEE Electricity Distribution Reliability Metrics</div>
+        <div class="pub-meta">Esri Map Book, Volume 24 &nbsp;·&nbsp; Esri Press &nbsp;·&nbsp; 2009 &nbsp;·&nbsp; p. 113</div>
+        <div class="pub-note">Applied spatial analysis to geographically visualize IEEE CEMI (Customer Experiencing Multiple Interruptions) metrics, terming the technique Geo-CEMI. Presented at ESRI, EGUG, and GITA conferences.</div>
+      </div>
+
+    </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="fi">
+  <div class="footer-scope">
+    <div class="footer-tags">
+      <span class="footer-tag service">GIS</span>
+      <span class="footer-tag service">Information Management</span>
+      <span class="footer-tag service">Data Governance&nbsp;·&nbsp;Analysis&nbsp;·&nbsp;Visualization</span>
+    </div>
+    <div class="footer-tags">
+      <span class="footer-tag sector">Humanitarian Response</span>
+      <span class="footer-tag sector">Public Health</span>
+      <span class="footer-tag sector">Energy Infrastructure</span>
+      <span class="footer-tag sector">Environmental Sustainability</span>
+    </div>
+  </div>
+  <div class="footer-contact">
+    Available for consulting &amp; senior roles &nbsp;·&nbsp;
+    <a href="mailto:jeff@gaiaanalytica.ch">jeff@gaiaanalytica.ch</a>
+  </div>
+  <div class="footer-back"><a href="index.html" class="footer-brand">Gaia Analytica</a></div>
+</footer>
+
+<script>
+// ── Terrain canvas — identical parameters to index.html ──────────────────
+const canvas = document.getElementById('terrain');
+const ctx = canvas.getContext('2d');
+let W, H, t = 0;
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+function field(x, y, t) {
+  const s = 0.003;
+  return (
+    Math.sin(x * s * 1.1 + t * 0.16 + Math.cos(y * s * 0.9 - t * 0.05)) * 1.2 +
+    Math.sin(y * s * 1.25 - t * 0.11 + Math.cos(x * s * 1.1 + t * 0.07)) * 0.9 +
+    Math.sin((x - y) * s * 0.8 + t * 0.08) * 0.6
+  );
+}
+
+const contours = [
+  { v: -1.8, rgba: [22, 44, 25, 0.82] }, { v: -0.8, rgba: [38, 65, 42, 0.72] },
+  { v:  0.1, rgba: [58, 88, 52, 0.65] }, { v:  0.7, rgba: [82, 108, 62, 0.58] },
+  { v:  1.2, rgba: [112, 132, 72, 0.5] }, { v:  1.6, rgba: [140, 150, 85, 0.42] },
+  { v:  2.0, rgba: [165, 148, 95, 0.34] },
+];
+
+function drawTerrain() {
+  ctx.fillStyle = '#090f0b'; ctx.fillRect(0, 0, W, H);
+  const res = 13, cols = Math.ceil(W / res) + 2, rows = Math.ceil(H / res) + 2;
+  const g = [];
+  for (let j = 0; j < rows; j++) {
+    g[j] = new Float32Array(cols);
+    for (let i = 0; i < cols; i++) g[j][i] = field(i * res, j * res, t);
+  }
+  for (const { v: thr, rgba: [r, gv, b, a] } of contours) {
+    ctx.beginPath(); ctx.strokeStyle = `rgba(${r},${gv},${b},${a})`; ctx.lineWidth = 0.75; ctx.lineCap = 'round';
+    for (let j = 0; j < rows - 1; j++) {
+      for (let i = 0; i < cols - 1; i++) {
+        const x0 = i * res, y0 = j * res;
+        const tl = g[j][i], tr = g[j][i+1], bl = g[j+1][i], br = g[j+1][i+1];
+        const pts = [];
+        if ((tl-thr)*(tr-thr) < 0) pts.push([x0 + res*(thr-tl)/(tr-tl), y0]);
+        if ((tr-thr)*(br-thr) < 0) pts.push([x0+res, y0 + res*(thr-tr)/(br-tr)]);
+        if ((bl-thr)*(br-thr) < 0) pts.push([x0 + res*(thr-bl)/(br-bl), y0+res]);
+        if ((tl-thr)*(bl-thr) < 0) pts.push([x0, y0 + res*(thr-tl)/(bl-tl)]);
+        if (pts.length === 2) { ctx.moveTo(pts[0][0], pts[0][1]); ctx.lineTo(pts[1][0], pts[1][1]); }
+        else if (pts.length === 4) {
+          ctx.moveTo(pts[0][0], pts[0][1]); ctx.lineTo(pts[1][0], pts[1][1]);
+          ctx.moveTo(pts[2][0], pts[2][1]); ctx.lineTo(pts[3][0], pts[3][1]);
+        }
+      }
+    }
+    ctx.stroke();
+  }
+}
+let lastFrame = 0;
+function animate(ts) {
+  requestAnimationFrame(animate);
+  if (document.hidden) return;
+  if (ts - lastFrame < 40) return; // ~25fps ceiling
+  lastFrame = ts;
+  t += 0.0084;
+  drawTerrain();
+}
+requestAnimationFrame(animate);
+
+// ── Timeline ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.tl-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.tl-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+// ── Skills Radar ─────────────────────────────────────────────────────────
+const domains = [
+  { label: 'Geospatial Platforms', v: 0.92,
+    items: ['ArcGIS Pro', 'ArcGIS Online', 'QGIS', 'Survey123', 'Dashboards &amp; StoryMaps', 'Kobo / ODK'] },
+  { label: 'Analysis &amp; Visualization', v: 0.90,
+    items: ['Emergency Response GIS', 'Optimized Routing Analysis', 'Accessibility &amp; Siting Analysis', 'Spatial &amp; Network Analysis', 'Climate Resilience Mapping', 'Strategic Map Design', 'Power BI, Tableau &amp; Complex Data Visualization'] },
+  { label: 'Data Architecture', v: 0.88,
+    items: ['Data Governance, Strategy &amp; Architecture', 'FME &amp; ETL Pipeline Automation', 'Data Integration &amp; Transformation', 'Quality, Accuracy &amp; Timeliness', 'Accessibility, Discoverability &amp; Interoperability', 'Open Data Systems', 'Lifecycle Management'] },
+  { label: 'Programming &amp; APIs', v: 0.78,
+    items: ['Python', 'SQL &amp; PostGIS', 'R', 'Arcade', 'REST APIs', 'Cloud Deployment (AWS)', 'Git / GitHub'] },
+  { label: 'Field &amp; Operations', v: 0.85,
+    items: ['UAV Operations (FAA Part 107)', 'Inter-agency Coordination', 'IM in Complex Emergencies', 'Innovative Field Solutions', 'Crowdsourcing Platforms', 'Needs Assessments'] }
+];
+
+const sc = document.getElementById('skills-cv');
+const sctx = sc.getContext('2d');
+const N = domains.length;
+const CX = sc.width / 2, CY = sc.height / 2;
+const R = sc.width * 0.30; // smaller polygon leaves ample room for labels
+let active = -1, prog = 0;
+
+function axisAngle(i) { return -Math.PI / 2 + (2 * Math.PI * i) / N; }
+function axisPoint(i, r) {
+  const a = axisAngle(i);
+  return [CX + Math.cos(a) * r, CY + Math.sin(a) * r];
+}
+
+function drawRadar(p) {
+  sctx.clearRect(0, 0, sc.width, sc.height);
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    const rr = R * ring / 4;
+    sctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const [x, y] = axisPoint(i, rr);
+      i === 0 ? sctx.moveTo(x, y) : sctx.lineTo(x, y);
+    }
+    sctx.closePath();
+    sctx.strokeStyle = `rgba(100,140,75,${ring === 4 ? 0.22 : 0.09})`;
+    sctx.lineWidth = 0.5; sctx.stroke();
+  }
+
+  // Axes
+  for (let i = 0; i < N; i++) {
+    const [x, y] = axisPoint(i, R);
+    sctx.beginPath(); sctx.moveTo(CX, CY); sctx.lineTo(x, y);
+    sctx.strokeStyle = 'rgba(100,140,75,0.15)'; sctx.lineWidth = 0.5; sctx.stroke();
+  }
+
+  // Active segment highlight
+  if (active >= 0) {
+    const prev = (active - 1 + N) % N, next = (active + 1) % N;
+    sctx.beginPath();
+    sctx.moveTo(CX, CY);
+    sctx.lineTo(...axisPoint(prev, R * domains[prev].v * p));
+    sctx.lineTo(...axisPoint(active, R * domains[active].v * p));
+    sctx.lineTo(...axisPoint(next, R * domains[next].v * p));
+    sctx.closePath();
+    sctx.fillStyle = 'rgba(100,140,75,0.2)'; sctx.fill();
+    sctx.strokeStyle = 'rgba(180,210,120,0.55)'; sctx.lineWidth = 1; sctx.stroke();
+  }
+
+  // Fill polygon
+  sctx.beginPath();
+  for (let i = 0; i < N; i++) {
+    const [x, y] = axisPoint(i, R * domains[i].v * p);
+    i === 0 ? sctx.moveTo(x, y) : sctx.lineTo(x, y);
+  }
+  sctx.closePath();
+  sctx.fillStyle = active >= 0 ? 'rgba(58,88,52,0.28)' : 'rgba(76,105,60,0.22)'; sctx.fill();
+  sctx.strokeStyle = 'rgba(130,165,90,0.5)'; sctx.lineWidth = 1.2; sctx.stroke();
+
+  // Labels: centered on each axis point rather than direction-aware
+  // left/right anchoring. Centering lets text extend both toward and away
+  // from the pentagon, which roughly doubles the usable width for the
+  // near-horizontal axes (a one-directional anchor there runs out of room
+  // before reaching the canvas edge). The buffer beyond the outer ring (R)
+  // has to clear not just that ring's radius but its straight pentagon
+  // edges near each vertex; the near-horizontal axes (Analysis & Visualization,
+  // Field & Operations) need the full 34 to clear it, while the other three
+  // have ample room and sit closer in for a tighter layout.
+  const labelBuffer = [22, 34, 22, 22, 34];
+  const labelSize = 11.5; // same size in resting and hovered states; only color changes
+  const labelGeom = [];
+  for (let i = 0; i < N; i++) {
+    const [anchorX, ly] = axisPoint(i, R + labelBuffer[i]);
+
+    // Split label into two lines
+    const rawLabel = domains[i].label.replace('&amp;', '&');
+    const words = rawLabel.split(' ');
+    let line1, line2;
+    if (words.length <= 2) { line1 = rawLabel; line2 = ''; }
+    else { const m = Math.ceil(words.length / 2); line1 = words.slice(0, m).join(' '); line2 = words.slice(m).join(' '); }
+
+    labelGeom.push({ ly, anchorX, line1, line2 });
+  }
+
+  // Dots and labels
+  for (let i = 0; i < N; i++) {
+    const [dx, dy] = axisPoint(i, R * domains[i].v * p);
+    const isActive = i === active;
+
+    sctx.beginPath(); sctx.arc(dx, dy, isActive ? 5 : 3, 0, Math.PI * 2);
+    sctx.fillStyle = isActive ? 'rgba(180,210,120,0.95)' : 'rgba(130,165,90,0.72)'; sctx.fill();
+    if (isActive) {
+      sctx.beginPath(); sctx.arc(dx, dy, 9, 0, Math.PI * 2);
+      sctx.strokeStyle = 'rgba(180,210,120,0.28)'; sctx.lineWidth = 1; sctx.stroke();
+    }
+
+    const { anchorX, ly, line1, line2 } = labelGeom[i];
+    sctx.font = `300 ${labelSize}px Raleway, sans-serif`;
+    sctx.fillStyle = isActive ? 'rgba(225,215,190,0.98)' : 'rgba(210,200,170,0.7)';
+    sctx.textAlign = 'center';
+    sctx.textBaseline = 'middle';
+
+    const lh = labelSize + 1.5, offset = line2 ? -lh / 2 : 0;
+    sctx.fillText(line1, anchorX, ly + offset);
+    if (line2) sctx.fillText(line2, anchorX, ly + offset + lh);
+  }
+}
+
+function animateRadar() {
+  if (prog < 1) { prog = Math.min(1, prog + 0.026); drawRadar(prog); requestAnimationFrame(animateRadar); }
+  else drawRadar(1);
+}
+
+new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && prog === 0) animateRadar();
+}, { threshold: 0.3 }).observe(sc);
+
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => drawRadar(prog));
+}
+
+function nearestAxis(mx, my) {
+  const dx = mx - CX, dy = my - CY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist < 12 || dist > R + 44) return -1;
+  const angle = Math.atan2(dy, dx);
+  let best = -1, bestDiff = Infinity;
+  for (let i = 0; i < N; i++) {
+    const diff = Math.abs(((angle - axisAngle(i) + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+    if (diff < bestDiff) { bestDiff = diff; best = i; }
+  }
+  return bestDiff < Math.PI / N * 1.15 ? best : -1;
+}
+
+const defaultItems = '<li>ArcGIS Pro &amp; ArcGIS Online</li><li>Emergency Response GIS</li><li>ETL &amp; Data Pipeline Automation</li><li>Data Governance &amp; Strategy</li><li>Python &nbsp;·&nbsp; SQL &nbsp;·&nbsp; R</li><li>UAV Operations (FAA Part 107)</li>';
+
+function setActive(idx) {
+  if (idx === active) return;
+  active = idx;
+  drawRadar(prog);
+  const lbl = document.getElementById('radar-label');
+  const items = document.getElementById('radar-items');
+  if (idx >= 0) {
+    lbl.textContent = domains[idx].label.replace('&amp;', '&');
+    items.innerHTML = domains[idx].items.map(s => `<li>${s}</li>`).join('');
+  } else {
+    lbl.textContent = '';
+    items.innerHTML = defaultItems;
+  }
+}
+
+sc.addEventListener('mousemove', e => {
+  const r = sc.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * (sc.width / r.width);
+  const my = (e.clientY - r.top) * (sc.height / r.height);
+  const idx = nearestAxis(mx, my);
+  setActive(idx);
+  sc.style.cursor = idx >= 0 ? 'pointer' : 'crosshair';
+});
+sc.addEventListener('mouseleave', () => setActive(-1));
+sc.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const touch = e.touches[0], r = sc.getBoundingClientRect();
+  const mx = (touch.clientX - r.left) * (sc.width / r.width);
+  const my = (touch.clientY - r.top) * (sc.height / r.height);
+  setActive(nearestAxis(mx, my));
+}, { passive: false });
+
+// ── Section dot nav scrollspy ────────────────────────────────────────────
+const dotLinks = Array.from(document.querySelectorAll('.dot-nav a'));
+const dotTargets = dotLinks.map(a => document.querySelector(a.getAttribute('href')));
+let dotPending = false;
+function updateDots() {
+  dotPending = false;
+  // Active section: the last one whose top has crossed the upper third of
+  // the viewport. Live rects (not cached offsets) so timeline expansion
+  // can't leave the rail pointing at the wrong section.
+  const probe = window.innerHeight * 0.38;
+  let cur = 0;
+  dotTargets.forEach((sec, i) => { if (sec.getBoundingClientRect().top <= probe) cur = i; });
+  dotLinks.forEach((a, i) => a.classList.toggle('active', i === cur));
+}
+window.addEventListener('scroll', () => {
+  if (!dotPending) { dotPending = true; requestAnimationFrame(updateDots); }
+}, { passive: true });
+window.addEventListener('resize', updateDots);
+updateDots();
+
+// ── Scroll fade-in ────────────────────────────────────────────────────────
+const fiObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); fiObserver.unobserve(e.target); } });
+}, { threshold: 0.08 });
+document.querySelectorAll('.fi').forEach(el => fiObserver.observe(el));
+</script>
+</body>
+</html>
