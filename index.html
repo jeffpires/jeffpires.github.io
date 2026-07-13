@@ -91,12 +91,8 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 @keyframes fadeIn { to { opacity: 1; } }
 
 .page-links {
-  display: flex; align-items: center; gap: 1.2rem;
+  display: flex; flex-direction: column; align-items: center; gap: 1.4rem;
   margin-top: 3rem;
-  font-family: 'Raleway', sans-serif;
-  font-weight: 200;
-  font-size: clamp(0.6rem, 0.95vw, 0.75rem);
-  letter-spacing: 0.38em;
   text-transform: uppercase;
   pointer-events: all;
 }
@@ -106,7 +102,29 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
   transition: color 0.35s;
 }
 .page-link:hover { color: rgba(225, 215, 190, 0.95); }
-.page-link-sep { color: rgba(130, 165, 90, 0.35); }
+.cv-button {
+  font-family: 'Cinzel', serif;
+  font-weight: 300;
+  font-size: clamp(0.72rem, 1.15vw, 0.82rem);
+  letter-spacing: 0.32em;
+  color: rgba(225, 215, 190, 0.9);
+  padding: 0.9rem 2.1rem 0.9rem calc(2.1rem + 0.32em);
+  border: 1px solid rgba(100, 140, 75, 0.35);
+  border-radius: 3px;
+  background: rgba(14, 26, 16, 0.55);
+  transition: color 0.35s, border-color 0.35s, background 0.35s;
+}
+.cv-button:hover {
+  color: rgba(225, 215, 190, 1);
+  border-color: rgba(130, 165, 90, 0.6);
+  background: rgba(20, 36, 22, 0.7);
+}
+.page-email {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: clamp(0.58rem, 0.9vw, 0.7rem);
+  letter-spacing: 0.32em;
+}
 
 /* Lab beaker widget */
 .lab-widget {
@@ -187,6 +205,12 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 @media (max-width: 480px) {
   .lab-widget { left: 1.1rem; bottom: 1.1rem; }
   .lab-beaker svg { width: 26px; height: 31px; }
+  .page-links { margin-top: 2.4rem; gap: 1.2rem; }
+  .cv-button {
+    letter-spacing: 0.24em;
+    padding: 0.8rem 1.5rem 0.8rem calc(1.5rem + 0.24em);
+  }
+  .page-email { letter-spacing: 0.26em; }
 }
 </style>
 </head>
@@ -213,9 +237,8 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
   -->
 
   <div class="page-links">
-    <a href="cv.html" class="page-link">CV</a>
-    <span class="page-link-sep">·</span>
-    <a href="mailto:jeff@gaiaanalytica.ch" class="page-link">jeff@gaiaanalytica.ch</a>
+    <a href="cv.html" class="page-link cv-button">Explore My Work</a>
+    <a href="mailto:jeff@gaiaanalytica.ch" class="page-link page-email">jeff@gaiaanalytica.ch</a>
   </div>
 </div>
 
