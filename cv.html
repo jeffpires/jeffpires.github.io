@@ -78,16 +78,16 @@ nav {
    the dark halo keeps them legible over moving contour lines. */
 .section-label {
   font-family: 'Cinzel', serif; font-weight: 300;
-  font-size: 0.68rem; letter-spacing: 0.45em; text-transform: uppercase;
-  color: rgba(130, 165, 90, 0.8); margin-bottom: 1rem;
-  text-shadow: 0 1px 8px rgba(9,15,11,0.95), 0 0 20px rgba(9,15,11,0.85);
+  font-size: 0.68rem; letter-spacing: 0.38em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.92); margin-bottom: 1rem;
+  text-shadow: 0 1px 6px rgba(9,15,11,1), 0 0 16px rgba(9,15,11,0.95), 0 0 32px rgba(9,15,11,0.8);
 }
 .section-title {
   font-family: 'Cinzel', serif; font-weight: 300;
   font-size: clamp(1.05rem, 2vw, 1.35rem);
   letter-spacing: 0.16em; text-transform: uppercase;
   color: rgba(225, 215, 190, 0.95); margin-bottom: 1.6rem;
-  text-shadow: 0 1px 8px rgba(9,15,11,0.95), 0 0 20px rgba(9,15,11,0.85);
+  text-shadow: 0 1px 6px rgba(9,15,11,1), 0 0 16px rgba(9,15,11,0.95), 0 0 32px rgba(9,15,11,0.8);
 }
 
 /* Content panels: each section's body sits on its own readable surface
@@ -146,19 +146,22 @@ nav {
   font-family: 'Cinzel', serif; font-weight: 300;
   font-size: clamp(0.62rem, 1.1vw, 0.8rem);
   letter-spacing: 0.12em; text-transform: uppercase;
-  color: rgba(130, 165, 90, 0.9); margin-top: 0.6rem;
+  color: rgba(130, 165, 90, 0.92); margin-top: 0.6rem;
+  text-shadow: 0 1px 6px rgba(9,15,11,0.85);
 }
 .hero-location {
   font-family: 'Raleway', sans-serif; font-weight: 200;
   font-size: clamp(0.72rem, 1.2vw, 0.88rem);
   letter-spacing: 0.22em; text-transform: uppercase;
-  color: rgba(210, 200, 170, 0.58); margin-top: 0.3rem;
+  color: rgba(210, 200, 170, 0.72); margin-top: 0.3rem;
+  text-shadow: 0 1px 6px rgba(9,15,11,0.85);
 }
 .hero-subtitle {
   font-family: 'Raleway', sans-serif; font-weight: 200;
   font-size: clamp(0.72rem, 1.3vw, 0.9rem);
   letter-spacing: 0.2em; text-transform: uppercase;
-  color: rgba(210, 200, 170, 0.65); margin-top: 0.25rem;
+  color: rgba(210, 200, 170, 0.76); margin-top: 0.25rem;
+  text-shadow: 0 1px 6px rgba(9,15,11,0.85);
 }
 .hero-positioning {
   max-width: 600px; margin: 2.2rem auto 0;
@@ -195,8 +198,8 @@ nav {
 .card:hover::after { opacity: 1; }
 .card-ctx {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
-  color: rgba(130, 165, 90, 0.75); margin-bottom: 0.55rem; line-height: 1.5;
+  font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.85); margin-bottom: 0.55rem; line-height: 1.5;
 }
 .card-title {
   font-family: 'Cinzel', serif; font-weight: 300;
@@ -231,7 +234,7 @@ nav {
   text-align: right; padding-top: 0.2rem;
   font-family: 'Cinzel', serif; font-weight: 300;
   font-size: 0.7rem; letter-spacing: 0.1em;
-  color: rgba(130, 165, 90, 0.6); line-height: 1.55;
+  color: rgba(130, 165, 90, 0.75); line-height: 1.55;
 }
 .tl-node { width: 0; flex-shrink: 0; position: relative; }
 .tl-node::before {
@@ -257,15 +260,15 @@ nav {
 .tl-org {
   font-family: 'Raleway', sans-serif; font-weight: 200;
   font-size: 0.76rem; letter-spacing: 0.12em;
-  color: rgba(130, 165, 90, 0.72); margin-top: 0.18rem;
+  color: rgba(130, 165, 90, 0.8); margin-top: 0.18rem;
 }
 .tl-progression {
   margin-top: 0.35rem; list-style: none;
 }
 .tl-progression li {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.72rem; letter-spacing: 0.1em;
-  color: rgba(210, 200, 170, 0.52);
+  font-size: 0.74rem; letter-spacing: 0.1em;
+  color: rgba(210, 200, 170, 0.66);
   padding-left: 0.8rem; position: relative; line-height: 1.7;
 }
 .tl-progression li::before { content: '·'; position: absolute; left: 0; color: rgba(130,165,90,0.5); }
@@ -290,9 +293,9 @@ nav {
 .tl-tags { display: flex; flex-wrap: wrap; gap: 0.38rem; margin-top: 0.8rem; }
 .tag {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
-  padding: 0.22rem 0.55rem; border: 1px solid rgba(100, 140, 75, 0.22);
-  color: rgba(130, 165, 90, 0.68);
+  font-size: 0.64rem; letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 0.24rem 0.58rem; border: 1px solid rgba(100, 140, 75, 0.28);
+  color: rgba(130, 165, 90, 0.82);
 }
 
 /* ── Skills Radar ── */
@@ -319,8 +322,8 @@ nav {
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 1.2rem; }
 .subsection-title {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.65rem; letter-spacing: 0.38em; text-transform: uppercase;
-  color: rgba(130, 165, 90, 0.65); margin-bottom: 1.1rem;
+  font-size: 0.68rem; letter-spacing: 0.3em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.78); margin-bottom: 1.1rem;
 }
 .cred-item { margin-bottom: 1.3rem; border-left: 1px solid rgba(100,140,75,0.28); padding-left: 0.9rem; }
 .cred-name {
@@ -328,11 +331,11 @@ nav {
   font-size: 0.9rem; letter-spacing: 0.08em;
   color: rgba(225, 215, 190, 0.92);
 }
-.cred-issuer { font-size: 0.76rem; color: rgba(130, 165, 90, 0.68); margin-top: 0.12rem; }
-.cred-year { font-family: 'Cinzel', serif; font-weight: 200; font-size: 0.65rem; letter-spacing: 0.15em; color: rgba(210, 200, 170, 0.42); margin-top: 0.1rem; }
+.cred-issuer { font-size: 0.76rem; color: rgba(130, 165, 90, 0.78); margin-top: 0.12rem; }
+.cred-year { font-family: 'Cinzel', serif; font-weight: 200; font-size: 0.68rem; letter-spacing: 0.15em; color: rgba(210, 200, 170, 0.58); margin-top: 0.1rem; }
 .edu-item { margin-bottom: 1rem; }
 .edu-degree { font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.88rem; letter-spacing: 0.06em; color: rgba(225, 215, 190, 0.9); }
-.edu-school { font-size: 0.76rem; color: rgba(130, 165, 90, 0.68); margin-top: 0.12rem; }
+.edu-school { font-size: 0.76rem; color: rgba(130, 165, 90, 0.78); margin-top: 0.12rem; }
 
 /* ── Awards & Presentations ── */
 .award-item { margin-bottom: 1rem; }
@@ -342,8 +345,8 @@ nav {
 .pres-group { margin-bottom: 2rem; }
 .pres-group-label {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
-  color: rgba(130, 165, 90, 0.62); margin-bottom: 0.75rem;
+  font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.78); margin-bottom: 0.75rem;
   border-bottom: 1px solid rgba(100,140,75,0.15); padding-bottom: 0.4rem;
 }
 .pres-list { list-style: none; }
@@ -353,7 +356,7 @@ nav {
   padding-left: 1.1rem; position: relative;
 }
 .pres-list li::before { content: '◆'; position: absolute; left: 0; color: rgba(130, 165, 90, 0.38); font-size: 0.42rem; top: 0.58rem; }
-.pres-note { font-size: 0.72rem; color: rgba(210, 200, 170, 0.42); font-style: italic; }
+.pres-note { font-size: 0.75rem; color: rgba(210, 200, 170, 0.6); font-style: italic; }
 
 /* ── Training entries ── */
 .training-list { list-style: none; margin-top: 1rem; }
@@ -368,8 +371,8 @@ nav {
 .pub-group { margin-bottom: 2.2rem; }
 .pub-group-label {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.64rem; letter-spacing: 0.35em; text-transform: uppercase;
-  color: rgba(130, 165, 90, 0.65); margin-bottom: 0.85rem;
+  font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(130, 165, 90, 0.78); margin-bottom: 0.85rem;
   border-bottom: 1px solid rgba(100,140,75,0.15); padding-bottom: 0.4rem;
 }
 .pub-item { margin-bottom: 1.4rem; padding-left: 1rem; border-left: 1px solid rgba(100,140,75,0.2); }
@@ -378,10 +381,10 @@ nav {
   font-size: 0.84rem; line-height: 1.6;
   color: rgba(225, 215, 190, 0.9);
 }
-.pub-meta { font-size: 0.76rem; color: rgba(130, 165, 90, 0.68); margin-top: 0.2rem; }
-.pub-note { font-size: 0.72rem; color: rgba(210, 200, 170, 0.48); margin-top: 0.15rem; font-style: italic; }
-.pub-link { font-size: 0.72rem; color: rgba(130, 165, 90, 0.58); margin-top: 0.15rem; }
-.pub-link a { color: rgba(130, 165, 90, 0.65); }
+.pub-meta { font-size: 0.76rem; color: rgba(130, 165, 90, 0.78); margin-top: 0.2rem; }
+.pub-note { font-size: 0.75rem; color: rgba(210, 200, 170, 0.6); margin-top: 0.15rem; font-style: italic; }
+.pub-link { font-size: 0.75rem; color: rgba(130, 165, 90, 0.72); margin-top: 0.15rem; }
+.pub-link a { color: rgba(130, 165, 90, 0.78); }
 .pub-link a:hover { color: rgba(180, 210, 120, 1); }
 
 /* ── Footer ── */
@@ -390,17 +393,17 @@ footer {
   text-align: center; padding: 2.5rem 2rem 4.5rem;
   border-top: 1px solid rgba(100, 140, 75, 0.14);
 }
-.footer-brand { font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.7rem; letter-spacing: 0.38em; text-transform: uppercase; color: rgba(225, 215, 190, 0.48); margin-bottom: 0.75rem; }
+.footer-brand { font-family: 'Cinzel', serif; font-weight: 300; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(225, 215, 190, 0.6); margin-bottom: 0.75rem; }
 .footer-scope { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1.4rem; }
 .footer-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.38rem; }
 .footer-tag {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase;
-  padding: 0.22rem 0.55rem;
+  font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.24rem 0.58rem;
 }
-.footer-tag.service { border: 1px solid rgba(100, 140, 75, 0.28); color: rgba(130, 165, 90, 0.75); }
-.footer-tag.sector { background: rgba(100, 140, 75, 0.14); color: rgba(210, 200, 170, 0.68); }
-.footer-contact { font-family: 'Raleway', sans-serif; font-weight: 200; font-size: 0.74rem; letter-spacing: 0.18em; color: rgba(180, 210, 120, 0.62); }
+.footer-tag.service { border: 1px solid rgba(100, 140, 75, 0.32); color: rgba(130, 165, 90, 0.85); }
+.footer-tag.sector { background: rgba(100, 140, 75, 0.18); color: rgba(210, 200, 170, 0.78); }
+.footer-contact { font-family: 'Raleway', sans-serif; font-weight: 200; font-size: 0.74rem; letter-spacing: 0.18em; color: rgba(180, 210, 120, 0.74); }
 .footer-contact a { color: rgba(180, 210, 120, 0.72); }
 .footer-contact a:hover { color: rgba(180, 210, 120, 1); }
 .footer-back { margin-top: 1.2rem; }
@@ -423,8 +426,8 @@ footer {
 }
 .dn-label {
   font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.58rem; letter-spacing: 0.24em; text-transform: uppercase;
-  color: rgba(210, 200, 170, 0.78);
+  font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(210, 200, 170, 0.85);
   background: rgba(9, 15, 11, 0.88);
   border: 1px solid rgba(100, 140, 75, 0.18);
   padding: 0.16rem 0.5rem 0.16rem 0.62rem;
@@ -481,7 +484,7 @@ footer {
 <div class="scrim"></div>
 
 <nav>
-  <a href="index.html" class="nav-brand">Gaia Analytica</a>
+  <a href="https://gaiaanalytica.ch" class="nav-brand">Gaia Analytica</a>
   <div class="nav-right">
     <a href="Jeffrey_Pires_CV_2026.pdf" target="_blank" rel="noopener">Download PDF CV</a>
   </div>
@@ -1070,7 +1073,7 @@ footer {
     Open to new roles, projects, and collaborations &nbsp;·&nbsp;
     <a href="mailto:jeff@gaiaanalytica.ch">jeff@gaiaanalytica.ch</a>
   </div>
-  <div class="footer-back"><a href="index.html" class="footer-brand">© 2026 Gaia Analytica</a></div>
+  <div class="footer-back"><a href="https://gaiaanalytica.ch" class="footer-brand">© 2026 Gaia Analytica</a></div>
 </footer>
 
 <script>
