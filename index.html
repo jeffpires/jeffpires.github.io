@@ -19,6 +19,13 @@
 html, body { width: 100%; height: 100%; overflow: hidden; background: #090f0b; }
 canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 
+#fog {
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: screen; /* near-black pixels are a no-op; only the
+                              glow itself adds light over the terrain */
+}
+
 .vignette {
   position: fixed; inset: 0; z-index: 5; pointer-events: none;
   background: radial-gradient(ellipse at center,
@@ -103,6 +110,9 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 }
 .page-link:hover { color: rgba(225, 215, 190, 0.95); }
 .cv-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
   font-family: 'Cinzel', serif;
   font-weight: 300;
   font-size: clamp(0.72rem, 1.15vw, 0.82rem);
@@ -112,12 +122,59 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
   border: 1px solid rgba(100, 140, 75, 0.35);
   border-radius: 3px;
   background: rgba(14, 26, 16, 0.55);
-  transition: color 0.35s, border-color 0.35s, background 0.35s;
+  box-shadow: 0 0 0 rgba(130, 165, 90, 0);
+  transition: color 0.35s, border-color 0.35s, background 0.35s, box-shadow 0.45s ease-out;
 }
+
+/* faint glass sheen in the upper-left, brightens slightly on hover;
+   a toned-down, sage-retinted take on the gaiaglow composer's glass
+   background (see gaiaglow.html for the fuller-strength original) */
+.cv-button::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(120% 160% at 10% -20%, rgba(225, 235, 195, 0.14) 0%, rgba(130, 165, 90, 0.06) 40%, transparent 70%);
+  opacity: 0.7;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.cv-button:hover::before { opacity: 1; }
+
+/* bright rim-light ring, same conic-gradient + mask-exclude technique
+   as the gaiaglow composer's glow border, retinted sage/ochre and
+   toned down to sit quietly until hovered */
+.cv-button::after {
+  content: "";
+  position: absolute; inset: 0; z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background:
+    conic-gradient(from 218deg at 50% 50%,
+      rgba(130,165,90,.05) 0deg, rgba(225,215,190,.32) 38deg,
+      rgba(130,165,90,.05) 94deg, transparent 150deg, transparent 228deg,
+      rgba(130,165,90,.05) 282deg, rgba(225,215,190,.24) 326deg,
+      rgba(130,165,90,.05) 1turn);
+  filter: drop-shadow(0 0 2px rgba(225,215,190,.3)) drop-shadow(0 0 8px rgba(130,165,90,.2));
+  opacity: 0.55;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+.cv-button:hover::after {
+  opacity: 1;
+  filter:
+    drop-shadow(0 0 3px rgba(225,215,190,.55))
+    drop-shadow(0 0 14px rgba(130,165,90,.4))
+    drop-shadow(0 0 30px rgba(130,165,90,.22));
+}
+
 .cv-button:hover {
   color: rgba(225, 215, 190, 1);
   border-color: rgba(130, 165, 90, 0.6);
   background: rgba(20, 36, 22, 0.7);
+  box-shadow: 0 0 22px rgba(130, 165, 90, 0.18), 0 0 46px rgba(130, 165, 90, 0.1);
 }
 .page-email {
   font-family: 'Raleway', sans-serif;
@@ -217,6 +274,7 @@ canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
 <body>
 
 <canvas id="terrain"></canvas>
+<canvas id="fog"></canvas>
 <div class="vignette"></div>
 
 <div class="overlay">
@@ -426,6 +484,309 @@ requestAnimationFrame(animate);
     if (e.key === 'Escape') closeLab();
   });
 
+</script>
+
+<!--
+  ============================================================
+  Ambient fog glow — WebGL volumetric raymarch anchored to the
+  "Explore My Work" button, retinted to this page's sage/ochre
+  contour palette and blended with `mix-blend-mode: screen` over
+  the terrain canvas (so near-black pixels are a no-op and only
+  the glow itself adds light). Reacts to hovering/clicking the
+  button only; does not track the cursor elsewhere on the page.
+  ============================================================
+-->
+<script>
+(function () {
+  const FREQS = [4, 8, 16, 32];
+  const WEIGHTS = [.48, .27, .16, .09];
+  const TILE = 128;
+
+  function bilinear(grid, size, u, v) {
+    const s = u * size, o = v * size;
+    const l = Math.floor(s) % size, c = Math.floor(o) % size;
+    const d = (l + 1) % size, uu = (c + 1) % size;
+    const fx = s - Math.floor(s), fy = o - Math.floor(o);
+    const m = fx * fx * (3 - 2 * fx);
+    const h = fy * fy * (3 - 2 * fy);
+    const p = grid[c * size + l], f = grid[c * size + d];
+    const b = grid[uu * size + l], w = grid[uu * size + d];
+    const x = p + (f - p) * m;
+    return x + (b + (w - b) * m - x) * h;
+  }
+
+  function buildNoiseTexture() {
+    const layers = Array.from({ length: 4 }, (_, ch) =>
+      FREQS.map((size, fi) => {
+        let seed = (0x6d2b79f5 ^ ((ch + 1) * 0x45d9f3b) ^ ((fi + 1) * 0x9e3779b9)) >>> 0;
+        const rand = () => {
+          seed ^= seed << 13; seed >>>= 0;
+          seed ^= seed >>> 17;
+          seed ^= seed << 5; seed >>>= 0;
+          return seed / 0xffffffff;
+        };
+        const arr = new Float32Array(size * size);
+        for (let i = 0; i < arr.length; i++) arr[i] = rand();
+        return arr;
+      })
+    );
+    const tex = new Uint8Array(TILE * TILE * 4);
+    for (let y = 0; y < TILE; y++) {
+      for (let x = 0; x < TILE; x++) {
+        const u = x / TILE, v = y / TILE;
+        const px = (TILE * y + x) * 4;
+        for (let ch = 0; ch < 4; ch++) {
+          let val = 0;
+          for (let fi = 0; fi < FREQS.length; fi++) {
+            val += bilinear(layers[ch][fi], FREQS[fi], u, v) * WEIGHTS[fi];
+          }
+          val = (val - 0.5) * 1.9 + 0.5;
+          tex[px + ch] = Math.round(255 * Math.min(1, Math.max(0, val)));
+        }
+      }
+    }
+    return tex;
+  }
+  const NOISE_BYTES = buildNoiseTexture();
+
+  function compile(gl, type, src) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.warn(gl.getShaderInfoLog(sh));
+      return null;
+    }
+    return sh;
+  }
+  function makeProgram(gl, vsSrc, fsSrc) {
+    const vs = compile(gl, gl.VERTEX_SHADER, vsSrc);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, fsSrc);
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.warn(gl.getProgramInfoLog(prog));
+      return null;
+    }
+    return prog;
+  }
+  function makeNoiseTexture(gl) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, TILE, TILE, 0, gl.RGBA, gl.UNSIGNED_BYTE, NOISE_BYTES);
+    return tex;
+  }
+
+  const VERT_SRC = `
+attribute vec2 a_position;
+varying vec2 v_uv;
+void main() {
+  v_uv = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+
+  // Retinted toward the page's own contour palette (deep forest ->
+  // sage -> warm ochre ridge) instead of the original neon green.
+  const SMOKE_FRAG = `
+precision highp float;
+varying vec2 v_uv;
+uniform sampler2D u_noise;
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec4 u_emitter;
+uniform float u_focus;
+uniform float u_pulse;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
+
+float roundedBoxDistance(vec2 p, vec2 halfSize, float radius) {
+  vec2 edge = abs(p) - halfSize + radius;
+  return min(max(edge.x, edge.y), 0.0) + length(max(edge, 0.0)) - radius;
+}
+
+float smokeDensity(vec3 p, vec2 halfSize, float radius, float time) {
+  vec2 rise = vec2(-time * 0.021, time * 0.035);
+  vec2 depthA = vec2(p.z * 0.082, -p.z * 0.047);
+  vec4 macroNoise = texture2D(u_noise, p.xy * 0.42 + depthA + rise);
+  vec2 warp = (macroNoise.rg - 0.5) * 0.11;
+  vec4 mediumNoise = texture2D(u_noise, p.xy * 0.85 + vec2(-p.z * 0.13, p.z * 0.074) + rise * 1.7 + warp + 0.31);
+  vec4 fineNoise = texture2D(u_noise, p.xy * 1.7 + vec2(p.z * 0.21, p.z * 0.11) + rise * 2.9 - warp * 0.65 + 0.63);
+
+  float billow = macroNoise.r * 0.5 + mediumNoise.g * 0.34 + fineNoise.b * 0.16;
+  float erosion = mediumNoise.b * 0.62 + fineNoise.a * 0.38;
+  float filament = 1.0 - abs(macroNoise.g - mediumNoise.r);
+  float structure = smoothstep(0.32, 0.59, billow);
+  structure *= smoothstep(0.24, 0.64, erosion);
+  structure *= mix(0.38, 1.0, smoothstep(0.32, 0.82, filament));
+  structure *= mix(0.24, 1.0, smoothstep(0.31, 0.61, macroNoise.a));
+
+  float frameDistance = abs(roundedBoxDistance(p.xy, halfSize, radius));
+  vec2 cloudScale = max(halfSize * vec2(3.4, 5.4), vec2(0.001));
+  vec2 cloudPoint = p.xy / cloudScale;
+  float heroEnvelope = exp(-dot(cloudPoint, cloudPoint) * 0.42);
+
+  float frameEnvelope = clamp(exp(-frameDistance * 1.1) + heroEnvelope * 0.46, 0.0, 1.0);
+  float depthEnvelope = exp(-abs(p.z) * 0.68);
+  float verticalBreakup = 0.72 + 0.28 * sin(p.y * 2.1 - time * 0.22 + macroNoise.a * 4.0);
+
+  return clamp(structure * frameEnvelope * depthEnvelope * verticalBreakup, 0.0, 1.0);
+}
+
+float phaseFunction(float cosA) {
+  const float g = 0.24;
+  float g2 = g * g;
+  return (1.0 - g2) / pow(max(1.0 + g2 - 2.0 * g * cosA, 0.001), 1.5);
+}
+
+void main() {
+  float aspect = u_resolution.x / max(u_resolution.y, 1.0);
+  vec2 screenPoint = (v_uv - u_emitter.xy) * vec2(aspect, 1.0);
+  vec2 halfSize = u_emitter.zw * vec2(aspect, 1.0);
+  float radius = 0.05;
+  float time = u_time * 1.05;
+  float energy = 0.85 + u_focus * 0.3 + u_pulse * 0.22;
+
+  const float rayStart = -0.72;
+  const float rayLength = 1.44;
+  const float stepLength = rayLength / 14.0;
+  float jitter = hash(gl_FragCoord.xy);
+  float transmittance = 1.0;
+  vec3 radiance = vec3(0.0);
+
+  for (int i = 0; i < 14; i++) {
+    float rayPos = (float(i) + 0.34 + jitter * 0.32) * stepLength;
+    float depth = rayStart + rayPos;
+    vec3 sp = vec3(screenPoint, depth);
+    float density = smokeDensity(sp, halfSize, radius, time);
+
+    float edgeDist = abs(roundedBoxDistance(sp.xy, halfSize, radius));
+    float lightDist = sqrt(edgeDist * edgeDist + sp.z * sp.z * 0.58 + 0.0007);
+    float attenuation = exp(-lightDist * 3.6) / (1.0 + lightDist * lightDist * 4.2);
+
+    vec2 shadowUv = sp.xy * 0.72 + vec2(sp.z * 0.07, -sp.z * 0.04) + vec2(-time * 0.004, time * 0.007) + 0.17;
+    float shadowNoise = texture2D(u_noise, shadowUv).a;
+    float opticalShadow = exp(-density * lightDist * mix(1.8, 3.2, shadowNoise));
+    float viewCos = abs(sp.z) / max(lightDist, 0.001);
+    float phase = phaseFunction(clamp(viewCos, 0.0, 1.0));
+    float scattering = attenuation * opticalShadow * mix(0.58, 1.0, shadowNoise) * (0.54 + phase * 0.19) * energy;
+
+    // sage -> warm ochre highlight, matching the terrain's own ridge tone
+    vec3 lightColor = mix(vec3(0.05, 0.09, 0.04), vec3(0.62, 0.66, 0.42), clamp(exp(-lightDist * 8.0) * 1.1, 0.0, 1.0));
+    vec3 ambient = vec3(0.004, 0.006, 0.004);
+
+    radiance += transmittance * density * (ambient + lightColor * scattering) * stepLength * 3.0;
+    transmittance *= exp(-density * stepLength * 3.2);
+  }
+
+  float verticalVignette = smoothstep(0.0, 0.17, v_uv.y) * (1.0 - smoothstep(0.84, 1.0, v_uv.y));
+  float centeredVignette = smoothstep(1.14, 0.2, length((v_uv - u_emitter.xy) * vec2(0.72, 1.0)));
+  radiance *= mix(0.42, 1.0, verticalVignette * centeredVignette);
+
+  radiance += (hash(gl_FragCoord.xy) - 0.5) / 540.0;
+  // reduced to ~25% of original brightness (two 50% cuts)
+  radiance *= 0.25;
+  radiance = 1.0 - exp(-max(radiance, vec3(0.0)) * 3.2);
+  radiance = pow(radiance, vec3(0.86));
+
+  gl_FragColor = vec4(radiance, 1.0);
+}
+`;
+
+  const canvas = document.getElementById('fog');
+  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
+  if (!gl) return;
+
+  const prog = makeProgram(gl, VERT_SRC, SMOKE_FRAG);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+  gl.useProgram(prog);
+  const posLoc = gl.getAttribLocation(prog, 'a_position');
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+  const tex = makeNoiseTexture(gl);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.uniform1i(gl.getUniformLocation(prog, 'u_noise'), 0);
+  gl.clearColor(0, 0, 0, 1);
+
+  const u = {};
+  ['u_resolution','u_time','u_emitter','u_focus','u_pulse']
+    .forEach(n => u[n] = gl.getUniformLocation(prog, n));
+
+  const anchor = document.querySelector('.cv-button');
+  let focusTarget = 0, focusVal = 0, pulseVal = 0;
+  let start = performance.now();
+
+  if (anchor) {
+    anchor.addEventListener('mouseenter', () => focusTarget = 1);
+    anchor.addEventListener('mouseleave', () => focusTarget = 0);
+    anchor.addEventListener('click', () => pulseVal = 1);
+  }
+
+  const SMOKE_DPR_CAP = 0.65;
+  const RENDER_FPS = 24;
+  const RENDER_INTERVAL = 1000 / RENDER_FPS;
+  let lastRenderTime = 0;
+
+  let cachedAnchorRect = null;
+  function refreshLayoutCache() {
+    cachedAnchorRect = anchor ? anchor.getBoundingClientRect() : null;
+  }
+  refreshLayoutCache();
+  window.addEventListener('resize', refreshLayoutCache, { passive: true });
+  window.addEventListener('scroll', refreshLayoutCache, { passive: true });
+  new ResizeObserver(refreshLayoutCache).observe(document.body);
+
+  function resizeCanvasToDisplaySize(canvas, dprCap) {
+    const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  }
+
+  function frame(now) {
+    if (document.hidden) { requestAnimationFrame(frame); return; }
+    const dt = Math.min(0.05, Math.max(0.001, (now - start) / 1000));
+    start = now;
+    const t = now / 1000 * 1.05 + 6.0;
+
+    focusVal += (focusTarget - focusVal) * (1 - Math.exp(-6 * dt));
+    pulseVal = Math.max(0, pulseVal - 1.0 * dt);
+
+    if (now - lastRenderTime >= RENDER_INTERVAL) {
+      lastRenderTime = now;
+      resizeCanvasToDisplaySize(canvas, SMOKE_DPR_CAP);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+
+      const stageW = window.innerWidth, stageH = window.innerHeight;
+      const r = cachedAnchorRect;
+      const emitter = r ? [
+        (r.left + r.width / 2) / stageW,
+        1 - (r.top + r.height / 2) / stageH,
+        Math.min(0.34, r.width * 0.5 / stageW * 1.6),
+        Math.min(0.26, r.height * 0.5 / stageH * 2.4),
+      ] : [0.5, 0.35, 0.3, 0.22];
+
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform2f(u.u_resolution, canvas.width, canvas.height);
+      gl.uniform1f(u.u_time, t);
+      gl.uniform4f(u.u_emitter, emitter[0], emitter[1], emitter[2], emitter[3]);
+      gl.uniform1f(u.u_focus, focusVal);
+      gl.uniform1f(u.u_pulse, pulseVal);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
 </script>
 </body>
 </html>
