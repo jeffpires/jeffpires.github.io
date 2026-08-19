@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /kamon/
+
+Sitemap: https://gaiaanalytica.ch/sitemap.xml
