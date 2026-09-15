@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Newsreader:ital,wght@1,300;1,400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,48 +33,52 @@ canvas#terrain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-
 }
 
 /* ── Header ── */
+/* Grid, not flex: a 1fr/auto/1fr track is what lets .brand-name sit at
+   the true horizontal center of the bar regardless of how unequal
+   .brand-parent and .header-actions are in width — flex space-between
+   only pins two edge groups, it can't center a third, independent
+   element between them. Repositioning only; every child below keeps
+   its pre-existing font/size/color rules unchanged. */
 header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   padding: 1.1rem 2rem;
   border-bottom: 1px solid rgba(100,140,75,0.2);
   background: rgba(9,15,11,0.65); backdrop-filter: blur(10px);
   flex-shrink: 0;
 }
 
-.brand { display: flex; align-items: baseline; gap: 0.9rem; }
-
 .brand-name {
   font-family: 'Cinzel', serif; font-weight: 300;
   font-size: 1.46rem; letter-spacing: 0.3em;
   color: rgba(225,215,190,0.98); text-transform: uppercase;
+  justify-self: center;
 }
-
-.brand-rule { color: rgba(130,165,90,0.45); font-size: 0.9rem; }
 
 .brand-parent {
   font-weight: 200; font-size: 0.78rem; letter-spacing: 0.38em;
   text-transform: uppercase; color: rgba(150,185,105,0.82);
   text-decoration: none; transition: color 0.3s;
+  justify-self: start;
 }
 .brand-parent:hover { color: rgba(190,218,130,0.92); }
 
-.header-actions { display: flex; align-items: center; gap: 1.5rem; }
+.header-actions { display: flex; align-items: center; gap: 1.5rem; justify-self: end; }
 
-.session-pill {
-  font-size: 0.68rem; letter-spacing: 0.14em; font-weight: 200;
-  color: rgba(165,185,125,0.75);
-}
+/* Kept in the DOM and still updated by refreshLabel() — sid()-derived
+   session tracking is unchanged — just not shown, since the raw ID is
+   meaningless to the end user. */
+.session-pill { display: none; }
 
 .btn-ghost {
   font-family: 'Raleway', sans-serif; font-weight: 200;
   font-size: 0.99rem; letter-spacing: 0.35em; text-transform: uppercase;
-  color: rgba(220,235,160,1); background: transparent;
-  border: 1px solid rgba(100,140,75,0.25); padding: 0.42rem 1rem;
+  color: rgba(220,235,160,1); background: rgba(58,88,52,0.16);
+  border: 1px solid rgba(130,165,90,0.5); padding: 0.42rem 1rem;
   cursor: pointer; transition: all 0.3s;
 }
 .btn-ghost:hover {
-  color: rgba(225,215,190,0.95); border-color: rgba(130,165,90,0.5);
-  background: rgba(58,88,52,0.22);
+  color: rgba(225,215,190,0.95); border-color: rgba(150,190,105,0.75);
+  background: rgba(58,88,52,0.3);
 }
 
 /* ── Main ── */
@@ -168,30 +172,41 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 .messages::-webkit-scrollbar { width: 3px; }
 .messages::-webkit-scrollbar-thumb { background: rgba(100,140,75,0.18); }
 
-/* Welcome */
+/* Welcome — top-weighted (margin-bottom:auto collects empty space below)
+   so the panel sits high in the message pane rather than hovering just
+   above the scope bar/composer. This is a reversal of an earlier pass,
+   which deliberately bottom-anchored it for a "conversation about to
+   start" feel — see CHANGELOG. */
 .welcome {
-  margin: auto; text-align: center;
-  padding: 2.5rem 1.5rem; max-width: 54ch;
+  margin: 2rem auto auto; text-align: center;
+  padding: 1rem 1.5rem 1.5rem; max-width: 54ch;
 }
+/* The glyph now sits between .welcome-sub and the scope-note paragraphs,
+   standing in for the divider line that used to be there (see
+   CHANGELOG) — its margin carries the old rule's 2.8rem/2rem rhythm so
+   that section break survives the swap. */
 .welcome-glyph {
-  font-family: 'Cinzel', serif; font-size: 2.2rem; font-weight: 300;
-  color: rgba(130,165,90,0.38); margin-bottom: 1.25rem;
-  display: block; letter-spacing: 0.2em;
+  font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: 300;
+  color: rgba(182,207,142,0.85); margin: 2.8rem 0 2rem;
+  display: block; line-height: 1;
+  /* no letter-spacing: it's a single character, so it would only add
+     trailing phantom space and visually shift the glyph off-center */
 }
-.welcome h2 {
-  font-family: 'Cinzel', serif; font-weight: 300;
-  font-size: 2rem; letter-spacing: 0.32em; text-transform: uppercase;
-  color: rgba(222,212,185,0.92); margin-bottom: 1rem;
-}
+/* Reuses the old "Location Research" h2's Cinzel/uppercase treatment,
+   pulled back from 2rem/0.32em (sized for two words) to fit a full
+   two-sentence paragraph without running excessively long per line. */
 .welcome-sub {
-  font-family: 'Newsreader', serif; font-weight: 300; font-style: italic;
-  font-size: 1.13rem; letter-spacing: 0.04em; line-height: 1.65;
-  color: rgba(210,200,170,0.70); margin-bottom: 1.4rem;
+  font-family: 'Cinzel', serif; font-weight: 300; text-transform: uppercase;
+  font-size: 1.15rem; letter-spacing: 0.2em; line-height: 1.7;
+  color: rgba(222,212,185,0.92); margin: 0;
 }
-.welcome-rule {
-  width: 40px; height: 1px; margin: 1.2rem auto;
-  background: rgba(130,165,90,0.28);
+.welcome-sub-line { display: block; }
+.welcome-sub-line + .welcome-sub-line { margin-top: 0.7rem; }
+.welcome-scope-note {
+  font-size: 1rem; font-weight: 200; letter-spacing: 0.02em; line-height: 1.65;
+  color: rgba(182,207,142,0.85); margin: 0 0 0.6rem;
 }
+.welcome-scope-note:last-child { margin-bottom: 0; }
 
 /* Message rows */
 .msg-row { display: flex; flex-direction: column; }
@@ -278,7 +293,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
 /* Structured data toggle */
 .data-toggle {
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem; width: fit-content;
   margin-top: 0.8rem; font-family: 'Raleway', sans-serif;
   font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase;
   font-weight: 200; color: rgba(180,210,120,0.85); cursor: pointer;
@@ -359,27 +374,59 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   100% { r: 10px; opacity: 0; }
 }
 .geo-ping circle { animation: geo-ping 1s ease-out; opacity: 0; }
+.geo-status {
+  margin-top: 0.55rem; text-align: center;
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.76rem; letter-spacing: 0.1em;
+  color: rgba(165,195,115,0.75);
+}
+#geo-dots { display: inline-block; width: 1.1em; text-align: left; }
 
-/* ── Scope bar ── */
+/* ── Scope bar — prominent while unset ("pick this first"), collapses to a
+   low-profile row once a country is chosen for the session (still a plain
+   native <select>, still opens on click) so it fades into the background
+   rather than competing with the conversation. Re-expands on New Session,
+   since the choice is per-session, not permanent. Once collapsed, its
+   background/padding match .session-place-note so the two stacked rows
+   read as one continuous strip instead of two separate bars. ── */
 .scope-bar {
-  display: flex; align-items: center; gap: 0.65rem;
-  padding: 0.6rem 2rem 0;
-  background: rgba(9,15,11,0.75); flex-shrink: 0;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem;
+  padding: 0.65rem 2rem;
+  background: rgba(24,40,20,0.38);
+  border-bottom: 1px solid rgba(100,140,75,0.2);
+  flex-shrink: 0;
+  transition: padding 0.35s ease, background 0.35s ease, border-color 0.35s ease;
+}
+.scope-bar.set {
+  padding: 0.42rem 2rem;
+  background: rgba(9,15,11,0.75);
+  border-bottom-color: transparent;
 }
 .scope-label {
-  font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
-  color: rgba(170,190,130,0.78); font-weight: 200;
+  font-size: 0.64rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(190,215,140,0.92); font-weight: 300;
+  transition: color 0.35s ease, font-size 0.35s ease;
 }
+.scope-bar.set .scope-label { color: rgba(150,175,110,0.65); font-size: 0.58rem; }
+.scope-hint {
+  font-size: 0.8rem; font-weight: 300; letter-spacing: 0.02em;
+  color: rgba(200,222,155,0.92);
+}
+.scope-bar.set .scope-hint { display: none; }
 .scope-select {
-  font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.78rem; letter-spacing: 0.04em;
-  color: rgba(195,212,150,0.9); background: rgba(14,24,16,0.6);
-  border: 1px solid rgba(100,140,75,0.3);
-  padding: 0.28rem 0.5rem; cursor: pointer; outline: none;
-  transition: border-color 0.3s;
+  font-family: 'Raleway', sans-serif; font-weight: 300;
+  font-size: 0.86rem; letter-spacing: 0.04em;
+  color: rgba(210,225,165,0.95); background: rgba(16,28,18,0.7);
+  border: 1px solid rgba(130,165,90,0.45);
+  padding: 0.4rem 0.65rem; cursor: pointer; outline: none;
+  transition: border-color 0.3s, font-size 0.35s ease, padding 0.35s ease, background 0.35s ease;
 }
-.scope-select:focus, .scope-select:hover { border-color: rgba(130,165,90,0.6); }
+.scope-select:focus, .scope-select:hover { border-color: rgba(150,190,105,0.75); }
 .scope-select option { background: #0a120b; color: rgba(220,210,182,0.95); }
+.scope-bar.set .scope-select {
+  font-size: 0.76rem; padding: 0.22rem 0.5rem;
+  background: rgba(14,24,16,0.5); border-color: rgba(100,140,75,0.3);
+}
 
 .scope-chip {
   font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
@@ -387,6 +434,28 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   border: 1px solid rgba(80,110,55,0.22);
   padding: 0.16rem 0.5rem; line-height: 1;
 }
+.scope-flag {
+  width: 12px; height: auto; vertical-align: middle;
+  margin-right: 0.3em; margin-top: -1px;
+}
+
+/* Session-place note — persistent reminder that a session tracks one place */
+.session-place-note {
+  padding: 0.42rem 2rem 0;
+  font-size: 0.72rem; font-weight: 200; letter-spacing: 0.03em;
+  color: rgba(170,195,125,0.72);
+  background: rgba(9,15,11,0.75); flex-shrink: 0;
+}
+.session-place-note b { color: rgba(205,228,155,0.95); font-weight: 300; }
+.inline-link {
+  font-family: 'Raleway', sans-serif; font-weight: 300;
+  font-size: inherit; letter-spacing: inherit;
+  color: rgba(190,215,140,0.95); background: none; border: none;
+  padding: 0; margin: 0; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 2px;
+  transition: color 0.25s;
+}
+.inline-link:hover { color: rgba(220,235,170,1); }
 
 /* ── Input area ── */
 .input-wrap {
@@ -396,10 +465,66 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   display: flex; gap: 0.75rem; align-items: flex-end; flex-shrink: 0;
 }
 
+/* Glass composer — same sheen + rim-light technique as gaiaanalytica.ch's
+   "Explore My Work" button (.cv-button), ported to wrap the input instead
+   of a CTA. ::before/::after don't paint inside a <textarea>, so the glow
+   lives on this wrapper div and the textarea sits on top of it. The
+   ::before sheen is deliberately kept faint and #inp's own background
+   fairly opaque, so typed/placeholder text stays sharp against a mostly
+   solid field; the glow reads mainly at the ::after rim (masked to a 1px
+   band at the edge, see below) rather than washing over the text area.
+   The rim ring's conic-gradient slowly rotates via the animated custom
+   property below — a light sweep confined to that same edge band, not
+   under the typed text, so the "motion under text hurts legibility"
+   concern from the original static-only port doesn't apply here. */
+.inp-glass {
+  position: relative; isolation: isolate; flex: 1;
+}
+.inp-glass::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  background: radial-gradient(130% 170% at 10% -20%, rgba(225,235,195,0.22) 0%, rgba(130,165,90,0.11) 45%, transparent 75%);
+  opacity: 0.5; transition: opacity 0.45s ease; pointer-events: none;
+}
+.inp-glass:focus-within::before { opacity: 0.75; }
+@property --inp-rim-angle {
+  syntax: '<angle>'; inherits: false; initial-value: 218deg;
+}
+@keyframes inp-rim-sweep {
+  from { --inp-rim-angle: 218deg; }
+  to { --inp-rim-angle: 578deg; }
+}
+.inp-glass::after {
+  content: "";
+  position: absolute; inset: -1px; z-index: 1;
+  padding: 1px;
+  background:
+    conic-gradient(from var(--inp-rim-angle) at 50% 50%,
+      rgba(130,165,90,.1) 0deg, rgba(225,215,190,.55) 38deg,
+      rgba(130,165,90,.1) 94deg, transparent 150deg, transparent 228deg,
+      rgba(130,165,90,.1) 282deg, rgba(225,215,190,.42) 326deg,
+      rgba(130,165,90,.1) 1turn);
+  filter: drop-shadow(0 0 4px rgba(225,215,190,.45)) drop-shadow(0 0 14px rgba(130,165,90,.3));
+  opacity: 0.75;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.55s ease, filter 0.55s ease;
+  animation: inp-rim-sweep 7.2s linear infinite;
+}
+.inp-glass:focus-within::after {
+  opacity: 1;
+  filter:
+    drop-shadow(0 0 4px rgba(225,215,190,.65))
+    drop-shadow(0 0 18px rgba(130,165,90,.5))
+    drop-shadow(0 0 34px rgba(130,165,90,.3));
+}
+
 #inp {
-  flex: 1;
-  background: rgba(14,24,16,0.75);
-  border: 1px solid rgba(100,140,75,0.4);
+  display: block; width: 100%;
+  background: rgba(14,24,16,0.58);
+  border: 1px solid rgba(100,140,75,0.5);
   color: rgba(255,255,255,1);
   font-family: 'Raleway', sans-serif; font-weight: 300;
   font-size: 0.9rem; letter-spacing: 0.04em;
@@ -407,7 +532,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   min-height: 88px; max-height: 200px; line-height: 1.7;
   outline: none; transition: border-color 0.3s;
 }
-#inp::placeholder { color: rgba(150,180,105,0.83); font-size: 0.88rem; }
+#inp::placeholder { color: rgba(150,180,105,0.83); font-size: 0.88rem; transition: opacity 0.3s; }
 #inp:focus { border-color: rgba(130,165,90,0.84); }
 
 .input-right { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
@@ -447,6 +572,14 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 }
 .leaflet-popup-tip { background: rgba(10,18,11,0.96) !important; }
 .leaflet-popup-content { margin: 10px 14px !important; }
+.leaflet-control-scale-line {
+  background: rgba(7,12,8,0.75) !important;
+  border: 1px solid rgba(100,140,75,0.35) !important; border-top: none !important;
+  color: rgba(190,215,145,0.85) !important;
+  font-family: 'Raleway', sans-serif; font-weight: 200;
+  font-size: 0.62rem !important; letter-spacing: 0.06em;
+  box-shadow: none !important; text-shadow: none !important;
+}
 
 /* ── Responsive ── */
 @media (max-width: 780px) {
@@ -454,11 +587,12 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   .map-panel { width: 100% !important; height: 0; transition: height 0.55s; border-left: none; border-top: 1px solid rgba(100,140,75,0.14); }
   .map-panel.open { height: 40vh; width: 100% !important; }
   .messages { padding: 1.1rem; }
-  .scope-bar { padding: 0.6rem 1.1rem 0; }
+  .scope-bar { padding: 0.6rem 1.1rem; }
+  .session-place-note { padding: 0.4rem 1.1rem 0; }
   .input-wrap { padding: 0.8rem 1.1rem 1rem; }
   header { padding: 0.9rem 1.1rem; }
-  .session-pill { display: none; }
   #inp { min-height: 70px; }
+  .welcome-scope-note br { display: none; }
 }
 </style>
 </head>
@@ -469,11 +603,8 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
 <div class="app">
   <header>
-    <div class="brand">
-      <span class="brand-name">GeoTrace</span>
-      <span class="brand-rule">·</span>
-      <a class="brand-parent" href="https://gaiaanalytica.ch" target="_blank" rel="noopener">Gaia Analytica</a>
-    </div>
+    <a class="brand-parent" href="https://gaiaanalytica.ch" target="_blank" rel="noopener">Gaia Analytica</a>
+    <span class="brand-name">GeoTrace</span>
     <div class="header-actions">
       <span class="session-pill" id="sess-label"></span>
       <button class="btn-ghost" onclick="newSession()">New Session</button>
@@ -482,32 +613,29 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
   <main>
     <div class="chat-panel">
-      <div class="messages" id="msgs">
-        <div class="welcome">
-          <span class="welcome-glyph">⊕</span>
-          <div class="welcome-rule"></div>
-          <h2>Location Research</h2>
-          <div class="welcome-rule"></div>
-          <p class="welcome-sub">Standard geocoders rely on formal place names and clean administrative data. Humanitarian work rarely has either.</p>
-        </div>
-      </div>
+      <div class="messages" id="msgs"></div>
       <div class="scope-bar">
         <label class="scope-label" for="country-sel">Scope</label>
         <select id="country-sel" class="scope-select" onchange="onCountryChange()"></select>
+        <span class="scope-hint">← set this first for best results</span>
       </div>
+      <div class="session-place-note" id="session-place-note" hidden></div>
       <div class="input-wrap">
-        <textarea id="inp" placeholder="Describe the location. The more context you provide, the better the result."></textarea>
+        <div class="inp-glass">
+          <textarea id="inp" placeholder="Describe the location. The more context you provide, the better the result."></textarea>
+        </div>
         <div class="input-right">
           <button id="go" onclick="send()">Search</button>
-          <span class="hint">ctrl ↵ to send</span>
+          <span class="hint">↵ to send · shift ↵ newline</span>
         </div>
       </div>
     </div>
 
     <div class="map-panel" id="map-panel">
       <div class="basemap-toggle" id="basemap-toggle">
-        <button class="bt-btn active" data-mode="terrain" onclick="setBasemap('terrain')">Terrain</button>
+        <button class="bt-btn active" data-mode="canvas" onclick="setBasemap('canvas')">Canvas</button>
         <button class="bt-btn" data-mode="imagery" onclick="setBasemap('imagery')">Imagery</button>
+        <button class="bt-btn" data-mode="streets" onclick="setBasemap('streets')">OSM</button>
       </div>
       <div id="map"></div>
       <div class="map-bar" id="map-bar"></div>
@@ -515,9 +643,9 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   </main>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-<script src="https://unpkg.com/esri-leaflet-vector@4.2.4/dist/esri-leaflet-vector.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.14/dist/esri-leaflet.js" defer></script>
+<script src="https://unpkg.com/esri-leaflet-vector@4.3.2/dist/esri-leaflet-vector.js" defer></script>
 <script>
 // ── Topographic canvas (Randomized & Optimized) ──────────────────────────────
     const cv = document.getElementById('terrain'), cx = cv.getContext('2d');
@@ -611,7 +739,6 @@ async function copyText(text, btn) {
 
 // ── GeoTrace ──────────────────────────────────────────────────────────────
 const WORKER = 'https://geotrace.jeff-pires.workers.dev/query';
-const ARCGIS_API_KEY = 'AAPTar4bJfAIgsPKDUAIYTbkfZQ..0Sf_U1Etp__vsdp5YF9EJ2djOriQsF_mULPraeEpIoNKMq5SsY8ND934x49fo6ami-yUXSAElNDxnZFM_n7rll7IychuU49-tXmaSbtmHcKJX-UqUBKESOFAf_-jSP-Up6gON8ZXXSYDVzpO7JDgKofz7MqEVmqsGl213TL1n-Jiu7kRwt-x4AEU8_2WzHh2ddKq9CqBM70tJ6Lwp3RmUThHpR6A1l7g_RUdOOJCfs0ktynAAUVcCcYrAeidPg..AT1_eq1vEjEh';
 let leafMap = null, markers = [];
 
 const COUNTRIES = [
@@ -900,7 +1027,7 @@ function pushNotice(text) {
   row.className = 'msg-row assistant';
   row.innerHTML = `<div class="usage-notice">${esc(text)}</div>`;
   msgs.appendChild(row);
-  row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  scrollMessagesToBottom();
 }
 
 function sid() {
@@ -920,6 +1047,10 @@ function onCountryChange() {
   const val = document.getElementById('country-sel').value;
   if (val) sessionStorage.setItem('gt-country', val);
   else sessionStorage.removeItem('gt-country');
+  updateScopeBarState();
+}
+function updateScopeBarState() {
+  document.querySelector('.scope-bar')?.classList.toggle('set', !!countryCode());
 }
 function populateCountrySelect() {
   const sel = document.getElementById('country-sel');
@@ -937,18 +1068,19 @@ function populateCountrySelect() {
   sel.value = countryCode();
 }
 function newSession() {
+  // mountWelcome() below replaces #msgs' content outright, which would
+  // otherwise leave a stray #typing row's geoDotsInterval running
+  // forever if New Session is clicked mid-request.
+  clearTyping();
   sessionStorage.removeItem('gt-sid');
   sessionStorage.removeItem('gt-country');
   document.getElementById('country-sel').value = '';
-  document.getElementById('msgs').innerHTML = `
-    <div class="welcome">
-      <span class="welcome-glyph">⊕</span>
-      <div class="welcome-rule"></div>
-      <h2>Location Research</h2>
-      <div class="welcome-rule"></div>
-      <p class="welcome-sub">Standard geocoders rely on formal place names and clean administrative data. Humanitarian work rarely has either.</p>
-    </div>`;
+  updateScopeBarState();
+  mountWelcome();
   document.getElementById('inp').value = '';
+  hasSentMessage = false;
+  startPlaceholderTypewriter();
+  setSessionPlace(null);
   closeMap(); refreshLabel();
 }
 function closeMap() {
@@ -956,29 +1088,183 @@ function closeMap() {
   document.getElementById('map-bar').innerHTML = '';
 }
 
-let terrainLayer = null, imageryLayer = null, labelsLayer = null, currentBasemap = 'terrain';
+// ── Welcome panel (single source, mounted on load and on New Session) ──────
+function welcomeHtml() {
+  return `
+    <div class="welcome">
+      <p class="welcome-sub"><span class="welcome-sub-line">Standard geocoders rely on formal place names and clean administrative data.</span><span class="welcome-sub-line">Humanitarian work rarely has either.</span></p>
+      <span class="welcome-glyph">⊕</span>
+      <p class="welcome-scope-note">GeoTrace helps to locate inhabited places such as<br>villages, towns, settlements, camps, and<br>neighborhoods, even by local name or dialect.</p>
+      <p class="welcome-scope-note">This tool is not for locating specific<br>buildings, facilities, or infrastructure.</p>
+    </div>`;
+}
+function mountWelcome() {
+  document.getElementById('msgs').innerHTML = welcomeHtml();
+}
+
+// ── Typewriter placeholder — realistic example queries, each paired with
+// the country it needs, doubling as a demonstration of why Scope matters.
+// Types character by character, holds 4s once complete, then moves on.
+// Pressing Tab while a sample is showing "takes it over" into the real
+// value (Copilot-style ghost-text accept) — only while the field is empty,
+// so it never fights normal Tab focus movement once there's real content. ─
+const PLACEHOLDER_QUERIES = [
+  'Baidit, might be the same as Padak, north of Bor, South Sudan',
+  "There's a village called Beida, but I've also seen it as Bardai, right on the Chad border of Sudan",
+  'A village called Attan or maybe Ittan, southwest of Sanaa in Yemen',
+  'As Sunnatayn / al-Sinnatayn, just south of Khamir, Yemen',
+  'A neighborhood called Kaxda or Kahda, on the edge of Mogadishu Somalia',
+  "عين العرب right on the Turkish border in Syria. Locals call it 'Kobane'",
+  "In Syria - the name of the town sounds something like 'Gee-Ray Spee' in Kurdish",
+];
+// Shuffled once per page load (Fisher-Yates, in place) so the sample order
+// varies across visits rather than always starting with the same query;
+// newSession() replays this same shuffled order rather than reshuffling,
+// since only the page-load moment was asked to randomize.
+for (let i = PLACEHOLDER_QUERIES.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [PLACEHOLDER_QUERIES[i], PLACEHOLDER_QUERIES[j]] = [PLACEHOLDER_QUERIES[j], PLACEHOLDER_QUERIES[i]];
+}
+let twToken = 0;
+let twSampleIdx = 0;
+let twCurrentText = '';
+let twActive = false;
+
+function typewriterStep(token, text, charIdx) {
+  if (token !== twToken) return;
+  const el = document.getElementById('inp');
+  if (!el || el.value !== '') { twActive = false; return; }
+  if (charIdx <= text.length) {
+    el.placeholder = text.slice(0, charIdx);
+    setTimeout(() => typewriterStep(token, text, charIdx + 1), 45 + Math.random() * 35);
+  } else {
+    setTimeout(() => {
+      if (token !== twToken) return;
+      twSampleIdx = (twSampleIdx + 1) % PLACEHOLDER_QUERIES.length;
+      startTypewriterSample(token);
+    }, 4000);
+  }
+}
+function startTypewriterSample(token) {
+  if (token !== twToken) return;
+  const el = document.getElementById('inp');
+  if (!el || el.value !== '') { twActive = false; return; }
+  el.placeholder = '';
+  twCurrentText = PLACEHOLDER_QUERIES[twSampleIdx];
+  twActive = true;
+  typewriterStep(token, twCurrentText, 1);
+}
+function startPlaceholderTypewriter() {
+  twToken++;
+  twSampleIdx = 0;
+  twActive = false;
+  twCurrentText = '';
+  startTypewriterSample(twToken);
+}
+// Once the user has sent at least one message this session, the typewriter
+// stops for good and the placeholder goes empty — no instructional text
+// either, since by then they already know how to use it. Not paused and
+// resumed; hasSentMessage is reset (and the typewriter restarted) only by
+// newSession().
+let hasSentMessage = false;
+const STATIC_PLACEHOLDER = '';
+function stopPlaceholderTypewriter() {
+  twToken++; // halts any in-flight typewriterStep/startTypewriterSample
+  twActive = false;
+  const el = document.getElementById('inp');
+  if (el) el.placeholder = STATIC_PLACEHOLDER;
+}
+function takeOverPlaceholder() {
+  if (!twActive || !twCurrentText) return false;
+  const el = document.getElementById('inp');
+  if (!el || el.value !== '') return false;
+  twToken++; // halts the engine
+  twActive = false;
+  el.value = twCurrentText;
+  el.dispatchEvent(new Event('input'));
+  el.setSelectionRange(el.value.length, el.value.length);
+  return true;
+}
+
+// ── Session-place note ───────────────────────────────────────────────────
+function confirmNewSession() {
+  if (confirm("Hit cancel to go back and copy anything you want to keep first. Continue with new session?")) {
+    newSession();
+  }
+}
+function setSessionPlace(name) {
+  const el = document.getElementById('session-place-note');
+  if (!el) return;
+  if (!name) { el.hidden = true; el.innerHTML = ''; return; }
+  el.innerHTML = `This session is for <b>${esc(name)}</b>. <button type="button" class="inline-link" onclick="confirmNewSession()">New session</button> for another place.`;
+  el.hidden = false;
+}
+
+let basemapLayers = null, currentBasemap = 'canvas';
 
 function initLeaflet() {
   if (leafMap) return;
   leafMap = L.map('map', { zoomControl: true });
-  terrainLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors © CARTO',
-    subdomains: 'abcd', maxZoom: 19
-  });
-  imageryLayer = L.esri.Vector.vectorBasemapLayer('ArcGIS:Imagery:Standard', { apikey: ARCGIS_API_KEY });
-  labelsLayer = L.esri.Vector.vectorBasemapLayer('ArcGIS:Imagery:Labels', { apikey: ARCGIS_API_KEY });
-  terrainLayer.addTo(leafMap);
+  basemapLayers = {
+    canvas: [
+      L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri, HERE, Garmin, © OpenStreetMap contributors', maxZoom: 19
+      }),
+      L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+      })
+    ],
+    imagery: [
+      L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri, Maxar, Earthstar Geographics, and the GIS User Community', maxZoom: 19
+      }),
+      L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+      })
+    ],
+    // Esri's "OpenStreetMap Style (English)" item, built on their
+    // OpenBasemap_v2 VectorTileServer — its own item description says
+    // it's Overture data (OSM-derived, but a distinct multi-source
+    // dataset, not raw OSM) rendered in OSM-style cartography; its
+    // service copyrightText credits "OpenStreetMap contributors,
+    // Microsoft, Esri Community Maps contributors" directly. Closer to
+    // the "OSM" label than the Esri-authored World_Street_Map raster it
+    // replaces, but still not literally raw OpenStreetMap tiles — say
+    // so if this needs to be exact rather than close. Requires esri-leaflet +
+    // esri-leaflet-vector (which bundles MapLibre GL JS internally and
+    // renders this one layer as a synced WebGL overlay) — see Runtime
+    // Constraints for why that dependency is back. The key is the
+    // item's ID, not the style URL itself: vectorTileLayer()'s
+    // loadStyle() only treats a key as a service URL when it matches
+    // /\/VectorTileServer\/?$/; anything else — including a root.json
+    // URL — is run through the item-ID path instead and mangled into a
+    // broken portal path. This item ID resolves (via the same
+    // item-ID path, CDN-rewritten) to the exact root.json style URL.
+    // No attribution option is set deliberately — the layer pulls the
+    // real one ("Map data © OpenStreetMap contributors, Microsoft, Esri
+    // Community Maps contributors, Map layer by Esri") from the
+    // service's own metadata once loaded, which is more accurate than
+    // anything hand-written here.
+    streets: [
+      L.esri.Vector.vectorTileLayer('165d7a1e43164d828064eb2027e219d5')
+    ]
+  };
+  basemapLayers[currentBasemap].forEach(l => l.addTo(leafMap));
+  L.control.scale({ metric: true, imperial: false, position: 'bottomright', maxWidth: 120 }).addTo(leafMap);
 }
 
 function setBasemap(mode) {
   if (!leafMap || mode === currentBasemap) return;
-  if (mode === 'imagery') {
-    leafMap.removeLayer(terrainLayer);
-    imageryLayer.addTo(leafMap); labelsLayer.addTo(leafMap);
-  } else {
-    leafMap.removeLayer(imageryLayer); leafMap.removeLayer(labelsLayer);
-    terrainLayer.addTo(leafMap);
-  }
+  basemapLayers[currentBasemap].forEach(l => {
+    // esri-leaflet-vector's VectorTileLayer.onRemove() reaches into a
+    // this._maplibreGL it only sets once its (async, multi-request)
+    // style/item load resolves. Switching away from the OSM layer
+    // before that finishes throws on the plain tile layers' behalf too
+    // (this loop would otherwise stop partway through), so this guard
+    // is needed even though canvas/imagery never fail here themselves.
+    try { leafMap.removeLayer(l); } catch (e) {}
+  });
+  basemapLayers[mode].forEach(l => l.addTo(leafMap));
   currentBasemap = mode;
   document.querySelectorAll('#basemap-toggle .bt-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
 }
@@ -998,38 +1284,93 @@ function placeMap(data) {
   const latStr = lat.toFixed(5), lngStr = lng.toFixed(5);
   const coordStr = `${latStr}, ${lngStr}`;
 
-  document.getElementById('map-panel').classList.add('open');
-  setTimeout(() => {
-    initLeaflet(); leafMap.invalidateSize();
-    markers.forEach(m => leafMap.removeLayer(m)); markers = [];
-    const m = L.marker([lat, lng], { icon: PIN_ICON() }).addTo(leafMap);
-    markers.push(m);
-    m.bindPopup(`
-      <div style="font-family:'Raleway',sans-serif">
-        <div style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:rgba(180,210,120,.92);margin-bottom:6px">${name}</div>
-        <div style="font-size:11px;color:rgba(130,165,90,.75);letter-spacing:.07em;font-family:'Courier New',monospace">${latStr}, ${lngStr}</div>
-        ${precision ? `<div style="margin-top:4px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(150,140,110,.55)">${precision}</div>` : ''}
-      </div>`);
-    const zoom = precision==='exact'?12 : precision==='approximate'?9 : 7;
-    leafMap.setView([lat, lng], zoom, { animate: true, duration: 1 });
+  const panel = document.getElementById('map-panel');
+  const wasOpen = panel.classList.contains('open');
+  panel.classList.add('open');
+  initLeaflet();
 
-    document.getElementById('map-bar').innerHTML = `
-      <div class="map-coord-group">
-        <div class="map-coord-label">Lat</div>
-        <div class="map-coord-val" title="Click to copy" onclick="copyText('${latStr}', this)">${latStr}</div>
-      </div>
-      <div class="map-coord-group">
-        <div class="map-coord-label">Lng</div>
-        <div class="map-coord-val" title="Click to copy" onclick="copyText('${lngStr}', this)">${lngStr}</div>
-      </div>
-      ${precision ? `<span class="map-precision-badge">${precision}</span>` : ''}
-      <button class="copy-btn" onclick="copyText('${coordStr}', this)">copy coords</button>
-      <div class="map-place-name">${name}</div>`;
-  }, 320);
+  markers.forEach(m => leafMap.removeLayer(m)); markers = [];
+  const m = L.marker([lat, lng], { icon: PIN_ICON() }).addTo(leafMap);
+  markers.push(m);
+  m.bindPopup(`
+    <div style="font-family:'Raleway',sans-serif">
+      <div style="font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:rgba(180,210,120,.92);margin-bottom:6px">${name}</div>
+      <div style="font-size:11px;color:rgba(130,165,90,.75);letter-spacing:.07em;font-family:'Courier New',monospace">${latStr}, ${lngStr}</div>
+      ${precision ? `<div style="margin-top:4px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(150,140,110,.55)">${precision}</div>` : ''}
+    </div>`);
+
+  // Set the map-bar's final content before sizing the map: it's an
+  // in-flow flex sibling of #map (wraps, and its precision badge is
+  // conditional), so its height can change between answers and affects
+  // how much vertical space #map actually gets. Sizing against the
+  // *previous* answer's bar height (then changing it right after) is
+  // its own way to leave the map short a row — this ordering is
+  // load-bearing, same lesson as setSessionPlace() before pushMsg().
+  document.getElementById('map-bar').innerHTML = `
+    <div class="map-coord-group">
+      <div class="map-coord-label">Lat</div>
+      <div class="map-coord-val" title="Click to copy" onclick="copyText('${latStr}', this)">${latStr}</div>
+    </div>
+    <div class="map-coord-group">
+      <div class="map-coord-label">Lng</div>
+      <div class="map-coord-val" title="Click to copy" onclick="copyText('${lngStr}', this)">${lngStr}</div>
+    </div>
+    ${precision ? `<span class="map-precision-badge">${precision}</span>` : ''}
+    <button class="copy-btn" onclick="copyText('${coordStr}', this)">copy coords</button>
+    <div class="map-place-name">${name}</div>`;
+
+  const zoom = precision==='exact'?12 : precision==='approximate'?9 : 7;
+  const focusMap = () => {
+    leafMap.invalidateSize();
+    leafMap.setView([lat, lng], zoom, { animate: true, duration: 1 });
+  };
+  if (wasOpen) {
+    // Panel is already at its final width/height — no transition will
+    // fire, so there's nothing to wait for.
+    focusMap();
+  } else {
+    // Panel is animating open (width on desktop, height on mobile).
+    // Sizing the map before that finishes would lay tiles out against
+    // whatever partial size the container has mid-transition — the
+    // root cause of the partial-frame render bug. Wait for the real
+    // transitionend instead of guessing the 0.6s/0.55s CSS duration
+    // with a setTimeout, same pattern already used below for the
+    // scroll re-affirm.
+    panel.addEventListener('transitionend', function onOpen(e) {
+      if (e.target !== e.currentTarget) return;
+      if (e.propertyName !== 'width' && e.propertyName !== 'height') return;
+      panel.removeEventListener('transitionend', onOpen);
+      if (panel.classList.contains('open')) focusMap();
+    });
+  }
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Scrolls the messages list to its true bottom rather than scrolling a
+// specific row into view. Doing it this way (vs. row.scrollIntoView) means
+// it can safely be called again after layout shifts that happen *after*
+// the row was appended — the map panel's open/close width (desktop) or
+// height (mobile) transition can rewrap bubble text mid-animation, and
+// the session-place-note appearing changes .messages' own flex-computed
+// height — either of which can leave a scrollIntoView snapshot stale and
+// the bottom of the new message visually cut off behind the chrome below
+// .messages. See the transitionend listener near init, and send().
+function scrollMessagesToBottom() {
+  const msgs = document.getElementById('msgs');
+  msgs.scrollTo({ top: msgs.scrollHeight, behavior: 'smooth' });
+}
+
+// Small flag image from flagcdn.com (real graphics — Unicode regional-
+// indicator emoji flags don't render on Windows; Segoe UI Emoji omits flag
+// glyphs and falls back to showing the two bare letters). flagcdn has a
+// real Kosovo flag under 'xk', so no special-casing needed there.
+function flagImg(cc) {
+  if (!cc || cc.length !== 2) return '';
+  const code = cc.toLowerCase();
+  return `<img class="scope-flag" src="https://flagcdn.com/24x18/${code}.png" srcset="https://flagcdn.com/48x36/${code}.png 2x" width="24" height="18" alt="">`;
+}
 
 function adminStr(h) {
   if (!h) return null;
@@ -1071,8 +1412,27 @@ function dataDrawer(data) {
 }
 
 function toggleDr(id) {
-  document.getElementById(id).classList.toggle('open');
+  const drawer = document.getElementById(id);
+  const opening = !drawer.classList.contains('open');
+  drawer.classList.toggle('open');
   document.getElementById('btn-'+id).classList.toggle('open');
+  // Opening: scroll so the newly-revealed drawer content is fully visible.
+  // If it belongs to the last message, scroll .messages to its true
+  // bottom instead of scrollIntoView-ing just the drawer — the drawer
+  // isn't the last thing in that message (msg-meta chips and the
+  // sources row follow it), so aligning the drawer's own bottom edge to
+  // the viewport would push those out of view. For an older message's
+  // drawer, target the drawer itself since scrolling to the list's
+  // bottom would be wrong there.
+  // Closing: no explicit scroll needed — the scrolling container clamps
+  // its own scrollTop to the new (shorter) max automatically once the
+  // drawer's content collapses, so there's never leftover empty space.
+  if (opening) {
+    const msgs = document.getElementById('msgs');
+    const isLastMessage = drawer.closest('.msg-row') === msgs.lastElementChild;
+    if (isLastMessage) scrollMessagesToBottom();
+    else drawer.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
 }
 
 function pushMsg(role, payload) {
@@ -1093,7 +1453,7 @@ function pushMsg(role, payload) {
     const srcHtml = sources_with_results.length
       ? `<div class="sources-row">${sources_with_results.map(s=>`<span class="src-chip">${esc(s)}</span>`).join('')}</div>` : '';
     const scopeHtml = country_code
-      ? `<span class="scope-chip">${esc(country_code)} · ${country_source === 'user' ? 'selected' : 'inferred'}</span>` : '';
+      ? `<span class="scope-chip">${flagImg(country_code)}${esc(country_code)} · ${country_source === 'user' ? 'selected' : 'inferred'}</span>` : '';
 
     row.innerHTML = `
       <div class="bubble">
@@ -1110,7 +1470,7 @@ function pushMsg(role, payload) {
       ${srcHtml}`;
   }
   msgs.appendChild(row);
-  row.scrollIntoView({ behavior:'smooth', block:'end' });
+  scrollMessagesToBottom();
 }
 
 // Candidate search points the magnifying glass sweeps between.
@@ -1143,17 +1503,31 @@ function geoLoaderSvg() {
 }
 
 let geoAnimToken = 0;
+let geoDotsInterval = null;
 
 function pushTyping() {
   const msgs = document.getElementById('msgs');
   const el = document.createElement('div');
   el.className = 'msg-row assistant typing-row'; el.id = 'typing';
-  el.innerHTML = `<div class="geo-loader">${geoLoaderSvg()}</div>`;
+  el.innerHTML = `<div class="geo-loader">${geoLoaderSvg()}</div>
+    <div class="geo-status">Searching, please wait<span id="geo-dots">.</span></div>`;
   msgs.appendChild(el);
-  el.scrollIntoView({ behavior:'smooth', block:'end' });
+  scrollMessagesToBottom();
   runGeoLoaderAnim(++geoAnimToken);
+
+  let dotCount = 1;
+  clearInterval(geoDotsInterval);
+  geoDotsInterval = setInterval(() => {
+    dotCount = dotCount % 3 + 1;
+    const dots = document.getElementById('geo-dots');
+    if (dots) dots.textContent = '.'.repeat(dotCount);
+  }, 500);
 }
-function clearTyping() { geoAnimToken++; document.getElementById('typing')?.remove(); }
+function clearTyping() {
+  geoAnimToken++;
+  clearInterval(geoDotsInterval);
+  document.getElementById('typing')?.remove();
+}
 
 function runGeoLoaderAnim(token) {
   const glass = document.querySelector('#typing .geo-glass');
@@ -1214,6 +1588,8 @@ async function send() {
 
   const btn = document.getElementById('go');
   btn.disabled = true; inp.value = ''; inp.style.height = 'auto';
+  hasSentMessage = true;
+  stopPlaceholderTypewriter();
   pushMsg('user', msg); pushTyping(); refreshLabel();
 
   usage.count += 1;
@@ -1227,7 +1603,14 @@ async function send() {
       body: JSON.stringify(country ? {message:msg, country} : {message:msg})
     });
     const json = await res.json();
-    clearTyping(); pushMsg('assistant', json);
+    clearTyping();
+    // setSessionPlace() before pushMsg(): it can reveal the previously-
+    // hidden session-place-note row, which shrinks .messages' own flex-
+    // computed height. Doing that first means pushMsg's scroll-to-bottom
+    // is computed against the final post-answer layout, not a snapshot
+    // that's about to shrink out from under it.
+    if (json.type==='answer') setSessionPlace(json.data?.name);
+    pushMsg('assistant', json);
     if (json.type==='answer') placeMap(json.data);
   } catch(e) {
     clearTyping();
@@ -1245,11 +1628,36 @@ const inp = document.getElementById('inp');
 inp.addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+  if (this.value === '') {
+    if (hasSentMessage) this.placeholder = STATIC_PLACEHOLDER;
+    else startPlaceholderTypewriter();
+  }
 });
-inp.addEventListener('keydown', e => { if (e.key==='Enter' && (e.ctrlKey||e.metaKey)) send(); });
+inp.addEventListener('keydown', e => {
+  if (e.isComposing) return;
+  if (e.key === 'Tab' && !e.shiftKey && inp.value === '' && takeOverPlaceholder()) {
+    e.preventDefault();
+    return;
+  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+
+// The map panel's open/close transition (width on desktop, height on
+// mobile — see .map-panel / @media 780px) can narrow or shorten the chat
+// column enough to rewrap the just-added answer bubble mid-animation,
+// after pushMsg() already scrolled. Re-affirm the scroll once that
+// transition actually finishes, using the real event rather than a
+// setTimeout guessing the CSS duration.
+document.getElementById('map-panel').addEventListener('transitionend', e => {
+  if (e.target !== e.currentTarget) return; // ignore bubbled transitions from descendants (buttons, Leaflet controls)
+  if (e.propertyName === 'width' || e.propertyName === 'height') scrollMessagesToBottom();
+});
 
 populateCountrySelect();
 refreshLabel();
+mountWelcome();
+startPlaceholderTypewriter();
+updateScopeBarState();
 </script>
 </body>
 </html>
