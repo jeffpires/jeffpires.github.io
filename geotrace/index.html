@@ -62,6 +62,13 @@ header {
 }
 .brand-parent:hover { color: rgba(190,218,130,0.92); }
 
+/* Mobile-only "GA" badge standing in for .brand-parent (hidden below
+   780px, see media query) — hidden here unconditionally so it never
+   appears in the desktop grid at all, not just visually suppressed;
+   desktop's three visible children keep auto-placing into
+   header's 1fr/auto/1fr exactly as before. */
+.brand-mobile { display: none; }
+
 .header-actions { display: flex; align-items: center; gap: 1.5rem; justify-self: end; }
 
 /* Kept in the DOM and still updated by refreshLabel() — sid()-derived
@@ -624,8 +631,29 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
      header. New Session is still reachable post-answer via the inline
      "New session" link in #session-place-note (confirmNewSession());
      there's nothing to reset before a first answer exists anyway. */
-  header { grid-template-columns: 1fr; }
+  header { grid-template-columns: 1fr; position: relative; }
   .brand-parent, .header-actions { display: none; }
+
+  /* Small "GA" badge standing in for the hidden .brand-parent link,
+     linking back to gaiaanalytica.ch. Absolutely positioned (against
+     header's mobile-only position: relative above) rather than given a
+     grid column, specifically so it doesn't touch the single-column
+     .brand-name centering above — adding it to the grid's normal flow
+     would stack it in its own implicit row above/below "GeoTrace"
+     instead of sitting beside it on the left. */
+  .brand-mobile {
+    display: inline-flex; align-items: center; justify-content: center;
+    position: absolute; left: 1.1rem; top: 50%; transform: translateY(-50%);
+    font-family: 'Raleway', sans-serif; font-weight: 300;
+    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(150,185,105,0.82);
+    border: 1px solid rgba(130,165,90,0.4);
+    padding: 0.32rem 0.5rem;
+    text-decoration: none; transition: all 0.3s;
+  }
+  .brand-mobile:hover, .brand-mobile:active {
+    color: rgba(190,218,130,0.92); border-color: rgba(150,190,105,0.6);
+  }
 
   /* 3. Shrinking .scope-select alone can't make the hint fit inline — at
      360px, "Scope" + the select + "← set this first for best results" is
@@ -663,6 +691,7 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
 
 <div class="app">
   <header>
+    <a class="brand-mobile" href="https://gaiaanalytica.ch" target="_blank" rel="noopener" aria-label="Gaia Analytica">GA</a>
     <a class="brand-parent" href="https://gaiaanalytica.ch" target="_blank" rel="noopener">Gaia Analytica</a>
     <span class="brand-name">GeoTrace</span>
     <div class="header-actions">
