@@ -593,6 +593,66 @@ main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   header { padding: 0.9rem 1.1rem; }
   #inp { min-height: 70px; }
   .welcome-scope-note br { display: none; }
+
+  /* 5. Enter/Shift+Enter hint is meaningless without a physical keyboard
+     visible by default — hidden first since it changes what .input-right
+     contains, which the 2:1 split below accounts for. */
+  .hint { display: none; }
+
+  /* 4. ~2/3 input : ~1/3 button. flex-basis: 0 on both is what makes the
+     ratio exact rather than content-weighted; min-width: 0 on
+     .input-right is load-bearing — without it, the default min-width:auto
+     would floor the column at #go's intrinsic (nowrap, tracked-out) text
+     width and the ratio would never materialize. #go's own font-size/
+     letter-spacing/padding are pulled in to fit "Search" inside its
+     narrower third instead of clipping. height matches #inp's mobile
+     min-height (70px) now that .hint is gone and it's the sole content
+     of .input-right under align-items: flex-end. */
+  .inp-glass { flex: 2 1 0; }
+  .input-right { flex: 1 1 0; min-width: 0; }
+  #go {
+    width: 100%; height: 70px;
+    font-size: 0.78rem; letter-spacing: 0.18em; padding: 0 0.4rem;
+  }
+
+  /* 1. Drop the parent-site link and New Session from the header, leaving
+     just the centered wordmark. Collapsing the grid's track list (rather
+     than display:none-ing two of its three auto-placed children) is what
+     keeps .brand-name centered: with the 1fr/auto/1fr tracks still in
+     place, a lone remaining child auto-places into the first 1fr column
+     and its justify-self: center would center it in that column, not the
+     header. New Session is still reachable post-answer via the inline
+     "New session" link in #session-place-note (confirmNewSession());
+     there's nothing to reset before a first answer exists anyway. */
+  header { grid-template-columns: 1fr; }
+  .brand-parent, .header-actions { display: none; }
+
+  /* 3. Shrinking .scope-select alone can't make the hint fit inline — at
+     360px, "Scope" + the select + "← set this first for best results" is
+     wider than the viewport before the select gets any width at all. The
+     label is the most redundant element in the row (the hint's own "←"
+     already points at the control), so it's hidden rather than the hint
+     being cut short or wrapped. width + min-width: 0 together are needed
+     to shrink the native <select> below its widest <option> text — width
+     alone still respects the default min-width: auto content floor.
+     .scope-bar's existing flex-wrap: wrap is the fallback if this still
+     doesn't fit on a given phone: same wrapped-hint layout as before this
+     pass, not a broken one. */
+  .scope-label { display: none; }
+  .scope-hint { font-size: 0.7rem; }
+  .scope-select { width: 112px; min-width: 0; }
+
+  /* 2b/2c. Font size and line-spacing/gap reductions for the intro text.
+     .welcome-sub's letter-spacing is cut along with its font-size — the
+     0.2em uppercase Cinzel tracking is what was driving that line to
+     wrap 3-4 times on a narrow phone; font-size alone wouldn't have
+     fixed it. Also narrows .welcome's own side padding, which returns
+     real characters-per-line and further cuts the wrap count. */
+  .welcome { margin: 0.5rem auto auto; padding: 1rem 0.75rem 1.5rem; }
+  .welcome-glyph { margin: 1.4rem 0 1.1rem; }
+  .welcome-sub { font-size: 0.95rem; letter-spacing: 0.12em; line-height: 1.45; }
+  .welcome-sub-line + .welcome-sub-line { margin-top: 0.45rem; }
+  .welcome-scope-note { font-size: 0.88rem; line-height: 1.45; margin-bottom: 0.4rem; }
 }
 </style>
 </head>
