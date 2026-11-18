@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="paper">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Practical geospatial solutions for informed action. GIS, data visualization and humanitarian mapping.">
@@ -12,806 +13,229 @@
 <title>Gaia Analytica</title>
 <link rel="canonical" href="https://gaiaanalytica.ch/">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@300;400&family=Raleway:wght@200;300&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/cinzel-normal-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/alegreya-normal-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
+:root {
+  --ground: #eceee8; --ink: #1d2b21; --ink-soft: #4b5b4f; --rule: #c3cabd;
+  --forest: #2f5a3a; --ochre: #7a5a12; --water: #b6ccd3; --coast: rgba(29, 43, 33, 0.35);
+  --relief-filter: none; --relief-blend: normal; --relief-opacity: 1; --fade: #eceee8;
+  --serif: 'Alegreya', Georgia, serif; --display: 'Cinzel', serif;
+}
+:root[data-theme="dark"] {
+  --ground: #0b120d; --ink: #e6e1cf; --ink-soft: #b4b8a4; --rule: #2a3a2d;
+  --forest: #a9c47a; --ochre: #d8b862; --water: #1a2f36; --coast: rgba(200, 215, 170, 0.28);
+  --relief-filter: none; --relief-blend: screen; --relief-opacity: 0.55; --fade: #0b120d;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #090f0b; }
-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+html, body { height: 100%; }
+body { background: var(--ground); color: var(--ink); font-family: var(--serif); font-size: 1.1875rem; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow: hidden; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 2px; }
 
-#fog {
-  z-index: 3;
-  pointer-events: none;
-  mix-blend-mode: screen; /* near-black pixels are a no-op; only the
-                              glow itself adds light over the terrain */
-}
+/* light theme shows the layer-cake terrain, dark theme shows the original ink relief */
+:root[data-theme="dark"] .map.cake { display: none; }
+:root:not([data-theme="dark"]) .map.ink { display: none; }
+.hero { --hh: 100svh; position: fixed; inset: 0; overflow: hidden; isolation: isolate; }
+.map { --ratio: 2.348; --mw: max(118%, calc(var(--hh) * var(--ratio))); --gx: 0.465;
+  position: absolute; top: 50%; transform: translateY(-50%); width: var(--mw); aspect-ratio: var(--ratio);
+  left: clamp(calc(100% - var(--mw)), calc(58% - var(--gx) * var(--mw)), 0px); }
+.map-inner { position: absolute; inset: 0; }
+.map img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.relief { filter: var(--relief-filter); mix-blend-mode: var(--relief-blend); opacity: 0; transition: opacity 1.8s ease; }
+.relief.on { opacity: var(--relief-opacity); }
+.map svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.lake { fill: var(--water); stroke: var(--coast); stroke-width: 0.8; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 1.2s ease 0.6s; }
+.on-lakes .lake { opacity: 1; }
+.hero::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to right, var(--fade) 0%, var(--fade) 18%, transparent 50%), linear-gradient(to bottom, transparent 75%, var(--fade) 100%); }
 
-.vignette {
-  position: fixed; inset: 0; z-index: 5; pointer-events: none;
-  background: radial-gradient(ellipse at center,
-    transparent 30%,
-    rgba(9,15,11,0.5) 65%,
-    rgba(9,15,11,0.85) 100%);
-}
+.pin { position: absolute; transform: translate(-50%, -50%); z-index: 3; }
+.dot { display: block; width: 11px; height: 11px; border-radius: 50%; background: var(--forest); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ground) 80%, transparent); }
+.lbl { font-weight: 400; position: absolute; left: 16px; top: -0.6em; white-space: nowrap; font-style: italic; font-size: 1rem; text-shadow: 0 0 6px var(--ground), 0 0 6px var(--ground), 0 0 2px var(--ground); }
+.lbl small { display: block; font-size: 0.85rem; color: var(--ink-soft); }
+.pin::before { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--forest); transform: translate(-50%, -50%); opacity: 0; }
+.go .pin::before { animation: ripple 2.4s ease-out 1.6s 2; }
+@keyframes ripple { 0% { opacity: .8; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(6); } }
 
-.overlay {
-  position: fixed; inset: 0; z-index: 10;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  pointer-events: none;
-}
+.copy { position: relative; z-index: 2; height: 100%; padding: 0 clamp(1.25rem, 6vw, 5rem); padding-bottom: 6vh; max-width: 46rem; display: flex; flex-direction: column; justify-content: center; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(2.4rem, 6vw, 5rem); line-height: 1.05; letter-spacing: 0.06em; }
+.tag { margin-top: 1rem; font-style: italic; color: var(--ink-soft); font-size: 1.2rem; }
+.what { margin-top: 2rem; font-size: clamp(1.3rem, 2.2vw, 1.7rem); line-height: 1.35; font-weight: 500; max-width: 28ch; }
+.actions { margin-top: 2.25rem; display: flex; flex-wrap: wrap; gap: 0.9rem 1.6rem; align-items: baseline; }
+.btn { display: inline-block; padding: 0.7rem 1.35rem; font-size: 1.1rem; font-weight: 500; text-decoration: none; color: var(--ink); border-radius: 999px; background: color-mix(in srgb, var(--ink) 7%, transparent); border: 1px solid var(--rule); transition: background 0.25s, border-color 0.25s; }
+.btn:hover { background: color-mix(in srgb, var(--ink) 13%, transparent); border-color: var(--ink-soft); }
+.textlink { font-size: 1.1rem; text-underline-offset: 5px; }
 
-.site-name {
-  font-family: 'Cinzel', serif;
-  font-weight: 300;
-  font-size: clamp(2.2rem, 5.5vw, 5rem);
-  letter-spacing: 0.25em;
-  color: rgba(225, 215, 190, 0.95);
-  text-shadow: 0 2px 40px rgba(90, 130, 70, 0.4);
-  text-transform: uppercase;
-  text-align: center;
+/* the lab: a labelled disclosure, so the beaker is not a mystery icon */
+.lab { position: fixed; left: clamp(1.25rem, 6vw, 5rem); bottom: 1.5rem; z-index: 15; }
+.lab button { display: inline-flex; align-items: center; gap: 0.7rem; font: inherit; font-size: 1.2rem; font-weight: 500; color: var(--ink); background: color-mix(in srgb, var(--ground) 82%, transparent); border: 1px solid var(--rule); border-radius: 999px; cursor: pointer; padding: 0.45rem 1.15rem 0.45rem 0.95rem; transition: border-color 0.2s, background 0.2s; }
+.lab button:hover { border-color: var(--ink); background: var(--ground); }
+.lab button svg { width: 22px; height: 26px; }
+.lab .liquid { fill: var(--forest); fill-opacity: 0.45; }
+.lab .bubble { fill: var(--ground); fill-opacity: 0.9; transform-box: fill-box; transform-origin: center; animation: labBubble 3.6s ease-in infinite; }
+.lab .bubble.b2 { animation-delay: 1s; }
+.lab .bubble.b3 { animation-delay: 2s; }
+.lab button:hover .bubble, .lab.open .bubble { animation-duration: 1s; }
+.lab button:hover svg, .lab.open button svg { animation: labShake 0.5s ease-in-out infinite; }
+@keyframes labBubble { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 0.9; } 85% { opacity: 0.5; } 100% { transform: translateY(-16px); opacity: 0; } }
+@keyframes labShake { 0%, 100% { transform: rotate(0deg) translateX(0); } 20% { transform: rotate(-3deg) translateX(-1px); } 40% { transform: rotate(2deg) translateX(1px); } 60% { transform: rotate(-2deg) translateX(-1px); } 80% { transform: rotate(3deg) translateX(1px); } }
+/* the Spatial Lab panel: a map legend whose swatches are tiny strata, echoing the layer-tint terrain */
+.lab-panel { position: absolute; bottom: 3.7rem; left: 0; width: max-content; min-width: 15rem; padding: 1rem 1.1rem 0.6rem; background: var(--ground); border: 1px solid var(--rule); border-radius: 6px; box-shadow: 0 14px 34px -18px color-mix(in srgb, var(--ink) 55%, transparent);
+  visibility: hidden; clip-path: inset(100% 0 0 0 round 6px); transition: clip-path 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.42s; }
+.lab.open .lab-panel { visibility: visible; clip-path: inset(0 round 6px); transition: clip-path 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s; }
+.lab-head { font-style: italic; color: var(--ink-soft); font-size: 0.98rem; padding-bottom: 0.6rem; margin-bottom: 0.3rem; border-bottom: 1px solid var(--rule); }
+.lab-panel ul { list-style: none; }
+.lab-panel a { display: grid; grid-template-columns: 48px 8.6rem minmax(0, 15rem); align-items: center; column-gap: 0.9rem; padding: 0.55rem 0.2rem; text-decoration: none; font-size: 1.2rem; font-weight: 500; }
+.lab-panel .strata { width: 48px; height: 31px; flex: none; border-radius: 4px; overflow: hidden; border: 1px solid var(--rule); color: #1d2b21; }
+.strata .glace { transform-box: fill-box; transform-origin: 50% 90%; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.lab-panel a:hover .glace, .lab-panel a:focus-visible .glace { transform: rotate(-4deg) scale(1.08); }
+.strata .s1 { fill: var(--c1); } .strata .s2 { fill: var(--c2); } .strata .s3 { fill: var(--c3); }
+/* each icon sits on the same layer-tint strata, carrying a small motif drawn from what the project does */
+.strata .g { fill: none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+.strata .ice { fill: #eef5f6; stroke: currentColor; }
+.strata .ghost { stroke-dasharray: 1.6 1.8; stroke-opacity: 0.55; }
+.strata .tongue { transform-box: view-box; transform-origin: 6px 4px; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.strata .ring { transform-box: fill-box; transform-origin: center; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.strata .hit { fill: #a4532a; stroke: none; }
+.strata .cell { fill: color-mix(in srgb, #f2eee2 85%, transparent); stroke: currentColor; stroke-width: 0.9; }
+.strata .gone { fill: none; stroke: currentColor; stroke-width: 0.9; stroke-opacity: 0.55; }
+.strata .q { font-family: Georgia, serif; font-size: 8.5px; font-weight: 700; fill: #f2eee2; text-anchor: middle; }
+.strata .t-mid { transform: scale(0.82); }
+.strata .tongue-in { transform: scale(0.64); }
+.lab-panel a:hover .tongue-in, .lab-panel a:focus-visible .tongue-in { transform: scale(0.4); }
+.lab-panel a:hover .ring-out, .lab-panel a:focus-visible .ring-out { transform: scale(0.68); }
+.lab-panel a:hover .hit, .lab-panel a:focus-visible .hit { transform: translateY(-0.6px); }
+.lab-panel a .txt { display: contents; }
+.lab-panel a .nm { justify-self: start; line-height: 1.2; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size 0.3s ease; padding-bottom: 0.2rem; }
+.lab-panel a:hover .nm, .lab-panel a:focus-visible .nm { background-size: 100% 1px; }
+@media (max-width: 600px) {
+  .lab-panel { max-width: calc(100vw - 2.5rem); }
+  .lab-panel a { grid-template-columns: 48px minmax(0, 1fr); row-gap: 0.1rem; }
+  .lab-panel a .strata, .lab-panel a img.glace { grid-row: 1 / span 2; }
+  .lab-panel a small { grid-column: 2; }
 }
+.lab-panel a small { display: block; margin-top: 0; font-size: 0.92rem; font-weight: 400; font-style: italic; line-height: 1.3; color: var(--ink-soft); }
+.lab-default { display: none; }
+/* mouse users: the panel stays compact and the tagline appears in a reserved caption line as you hover; touch keeps them inline */
+@media (hover: hover) and (pointer: fine) {
+  .lab-panel { padding-bottom: 3.6rem; }
+  .lab-panel a { grid-template-columns: 48px 8.6rem; }
+  .lab-panel a small { position: absolute; left: 1.1rem; right: 1.1rem; bottom: 0.8rem; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+  .lab-panel a:hover small, .lab-panel a:focus-visible small { opacity: 1; }
+  .lab-default { display: block; position: absolute; left: 1.1rem; right: 1.1rem; bottom: 0.8rem; font-size: 0.92rem; font-style: italic; line-height: 1.3; color: var(--ink-soft); transition: opacity 0.2s ease; }
+  .lab-panel:has(a:hover) .lab-default, .lab-panel:has(a:focus-visible) .lab-default { opacity: 0; }
+}.lab-note { position: absolute; bottom: 2.4rem; }
 
-.rule {
-  display: flex; align-items: center; gap: 1.2rem;
-  margin: 1.8rem 0;
-}
-.rule-line {
-  width: 60px; height: 1px;
-  background: linear-gradient(to right, transparent, rgba(130,165,90,0.55));
-}
-.rule-line.r { transform: scaleX(-1); }
-.rule-dot {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: rgba(130, 165, 90, 0.7);
-  transition: transform 0.6s ease-out, opacity 0.6s ease-out, box-shadow 0.3s ease-out;
-}
+/* light/dark switch: sun and moon side by side, the active one filled */
+.theme { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--rule); border-radius: 999px; background: var(--ground); color: var(--ink-soft); cursor: pointer; font: inherit; }
+.theme .seg { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; transition: background 0.2s, color 0.2s; }
+.theme .seg svg { width: 20px; height: 20px; }
+.theme[aria-checked="false"] .seg-light, .theme[aria-checked="true"] .seg-dark { background: var(--forest); color: var(--ground); }
+.theme:hover { color: var(--ink); border-color: var(--ink-soft); }
 
-.tagline {
-  font-family: 'Raleway', sans-serif;
-  font-weight: 300;
-  font-size: clamp(0.85rem, 1.6vw, 1.2rem);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(210, 200, 170, 0.85);
-  text-align: center;
-  text-shadow: 0 0 80px rgba(180, 160, 100, 0.15);
-  /* max-width: 38ch;  
-  margin-inline: auto;
-  line-height: 1.9; */
+@media (max-width: 860px) {
+  .map { --hh: 52svh; position: relative; top: auto; transform: none; left: auto; width: 100%; height: var(--hh); aspect-ratio: auto; overflow: hidden; }
+  .map-inner { inset: auto; top: 0; height: 100%; width: calc(var(--hh) * var(--ratio)); left: calc(24% - var(--gx) * var(--hh) * var(--ratio)); }
+  .hero { overflow-y: auto; }
+  .hero::after { background: linear-gradient(to bottom, transparent calc(52svh * 0.55), var(--fade) calc(52svh * 0.95)); }
+  .copy { height: auto; margin-top: -3rem; padding-bottom: 5rem; max-width: none; justify-content: flex-start; }
 }
-
-.coming-soon {
-  font-family: 'Raleway', sans-serif;
-  font-weight: 200;
-  font-size: clamp(0.5rem, 0.8vw, 0.65rem);
-  letter-spacing: 0.75em;
-  text-transform: uppercase;
-  color: rgba(95, 125, 70, 0.65);
-  margin-top: 3.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(100, 140, 75, 0.2);
-}
-
-/* Subtle fade-in on load */
-.overlay { animation: fadeIn 2.5s ease forwards; opacity: 0; }
-@keyframes fadeIn { to { opacity: 1; } }
-
-.page-links {
-  display: flex; flex-direction: column; align-items: center; gap: 1.4rem;
-  margin-top: 3rem;
-  text-transform: uppercase;
-  pointer-events: all;
-}
-.page-link {
-  color: rgba(180, 210, 120, 0.72);
-  text-decoration: none;
-  transition: color 0.35s;
-}
-.page-link:hover { color: rgba(225, 215, 190, 0.95); }
-.cv-button {
-  position: relative;
-  isolation: isolate;
-  display: inline-block;
-  font-family: 'Cinzel', serif;
-  font-weight: 300;
-  font-size: clamp(0.72rem, 1.15vw, 0.82rem);
-  letter-spacing: 0.32em;
-  color: rgba(225, 215, 190, 0.9);
-  padding: 0.9rem 2.1rem 0.9rem calc(2.1rem + 0.32em);
-  border: 1px solid rgba(100, 140, 75, 0.35);
-  border-radius: 3px;
-  background: rgba(14, 26, 16, 0.55);
-  box-shadow: 0 0 0 rgba(130, 165, 90, 0);
-  transition: color 0.35s, border-color 0.35s, background 0.35s, box-shadow 0.45s ease-out;
-}
-
-/* faint glass sheen in the upper-left, brightens slightly on hover;
-   a toned-down, sage-retinted take on the gaiaglow composer's glass
-   background (see gaiaglow.html for the fuller-strength original) */
-.cv-button::before {
-  content: "";
-  position: absolute; inset: 0; z-index: -1;
-  border-radius: inherit;
-  background: radial-gradient(120% 160% at 10% -20%, rgba(225, 235, 195, 0.14) 0%, rgba(130, 165, 90, 0.06) 40%, transparent 70%);
-  opacity: 0.7;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-}
-.cv-button:hover::before { opacity: 1; }
-
-/* bright rim-light ring, same conic-gradient + mask-exclude technique
-   as the gaiaglow composer's glow border, retinted sage/ochre and
-   toned down to sit quietly until hovered */
-.cv-button::after {
-  content: "";
-  position: absolute; inset: 0; z-index: 1;
-  border-radius: inherit;
-  padding: 1px;
-  background:
-    conic-gradient(from 218deg at 50% 50%,
-      rgba(130,165,90,.05) 0deg, rgba(225,215,190,.32) 38deg,
-      rgba(130,165,90,.05) 94deg, transparent 150deg, transparent 228deg,
-      rgba(130,165,90,.05) 282deg, rgba(225,215,190,.24) 326deg,
-      rgba(130,165,90,.05) 1turn);
-  filter: drop-shadow(0 0 2px rgba(225,215,190,.3)) drop-shadow(0 0 8px rgba(130,165,90,.2));
-  opacity: 0.55;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  transition: opacity 0.4s ease, filter 0.4s ease;
-}
-.cv-button:hover::after {
-  opacity: 1;
-  filter:
-    drop-shadow(0 0 3px rgba(225,215,190,.55))
-    drop-shadow(0 0 14px rgba(130,165,90,.4))
-    drop-shadow(0 0 30px rgba(130,165,90,.22));
-}
-
-.cv-button:hover {
-  color: rgba(225, 215, 190, 1);
-  border-color: rgba(130, 165, 90, 0.6);
-  background: rgba(20, 36, 22, 0.7);
-  box-shadow: 0 0 22px rgba(130, 165, 90, 0.18), 0 0 46px rgba(130, 165, 90, 0.1);
-}
-.page-email {
-  font-family: 'Raleway', sans-serif;
-  font-weight: 200;
-  font-size: clamp(0.58rem, 0.9vw, 0.7rem);
-  letter-spacing: 0.32em;
-}
-
-/* Lab beaker widget */
-.lab-widget {
-  position: fixed; left: 1.8rem; bottom: 1.8rem; z-index: 15;
-  display: flex; flex-direction: column; align-items: flex-start;
-  justify-content: flex-end; gap: 0.6rem;
-}
-
-.lab-links {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
-}
-.lab-link {
-  font-family: 'Raleway', sans-serif;
-  font-weight: 200;
-  font-size: 0.62rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(180, 210, 120, 0.85);
-  text-decoration: none;
-  background: rgba(9, 15, 11, 0.6);
-  border: 1px solid rgba(100, 140, 75, 0.3);
-  border-radius: 3px;
-  padding: 0.4rem 0.75rem;
-  opacity: 0; transform: translateY(6px);
-  pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-.lab-link:hover { color: rgba(225, 215, 190, 0.95); border-color: rgba(130, 165, 90, 0.5); }
-.lab-widget.open .lab-link {
-  opacity: 1; transform: translateY(0); pointer-events: auto;
-}
-.lab-link:nth-child(2) { transition-delay: 0.05s; }
-.lab-link:nth-child(3) { transition-delay: 0.1s; }
-
-.lab-beaker {
-  background: none; border: none; padding: 0.3rem;
-  cursor: pointer; line-height: 0;
-}
-.lab-beaker svg { width: 30px; height: 36px; display: block; }
-.lab-beaker:hover svg, .lab-widget.open .lab-beaker svg {
-  animation: labShake 0.5s ease-in-out infinite;
-}
-
-@keyframes labShake {
-  0%, 100% { transform: rotate(0deg) translateX(0); }
-  20% { transform: rotate(-3deg) translateX(-1px); }
-  40% { transform: rotate(2deg) translateX(1px); }
-  60% { transform: rotate(-2deg) translateX(-1px); }
-  80% { transform: rotate(3deg) translateX(1px); }
-}
-
-.lab-bubble {
-  transform-box: fill-box; transform-origin: center;
-  animation: labBubble 3.6s ease-in infinite;
-}
-.lab-bubble.b1 { animation-delay: 0s; }
-.lab-bubble.b2 { animation-delay: 1s; }
-.lab-bubble.b3 { animation-delay: 2s; }
-.lab-beaker:hover .lab-bubble, .lab-widget.open .lab-bubble {
-  animation-duration: 1s;
-}
-
-@keyframes labBubble {
-  0% { transform: translateY(0); opacity: 0; }
-  15% { opacity: 0.85; }
-  85% { opacity: 0.5; }
-  100% { transform: translateY(-16px); opacity: 0; }
-}
-
-.copyright {
-  position: fixed; left: 0; right: 0; bottom: 1.5rem; z-index: 12;
-  text-align: center; pointer-events: none;
-  font-family: 'Raleway', sans-serif; font-weight: 200;
-  font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase;
-  color: rgba(210, 200, 170, 0.35);
-  animation: fadeIn 2.5s ease forwards; opacity: 0;
-}
-
-@media (max-width: 480px) {
-  .lab-widget { left: 1.1rem; bottom: 1.1rem; }
-  .lab-beaker svg { width: 26px; height: 31px; }
-  .page-links { margin-top: 2.4rem; gap: 1.2rem; }
-  .cv-button {
-    letter-spacing: 0.24em;
-    padding: 0.8rem 1.5rem 0.8rem calc(1.5rem + 0.24em);
-  }
-  .page-email { letter-spacing: 0.26em; }
-}
+.lakeimg { opacity: 0; transition: opacity 1.2s ease 0.6s; pointer-events: none; }
+.on-lakes .lakeimg { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .relief, .lake, .lakeimg { transition: none; } .go .pin::before { animation: none; } .lab .bubble, .lab svg { animation: none !important; } }
 </style>
 </head>
 <body>
 
-<canvas id="terrain"></canvas>
-<canvas id="fog"></canvas>
-<div class="vignette"></div>
-
-<div class="overlay">
-  <!-- ✏️ -->
-  <h1 class="site-name">Gaia Analytica</h1>
-
-  <div class="rule">
-    <div class="rule-line"></div>
-    <div class="rule-dot"></div>
-    <div class="rule-line r"></div>
+<main class="hero" id="hero">
+  <div class="map cake" id="heroMap">
+    <div class="map-inner" id="heroInner">
+      <img class="relief" id="heroRelief" src="img/layer-cake.webp" alt="" decoding="async">
+      <svg id="heroSvg" aria-hidden="true"></svg>
+      <span class="pin" id="genevaPin"><i class="dot"></i><b class="lbl">Geneva</b></span>
+    </div>
   </div>
-
-  <!-- ✏️ -->
-  <div class="tagline">Practical Geospatial Solutions<br>for Informed Action</div>
-
-  <!--
-  <div class="coming-soon">Coming Soon</div>
-  -->
-
-  <div class="page-links">
-    <a href="cv" class="page-link cv-button">Explore My Work</a>
-    <a href="mailto:jeff@gaiaanalytica.ch" class="page-link page-email">jeff@gaiaanalytica.ch</a>
+  <div class="map ink" id="heroMapD">
+    <div class="map-inner" id="heroInnerD">
+      <img class="relief" id="heroReliefD" src="img/dark-ink.webp" alt="" decoding="async" loading="lazy">
+      <img class="lakeimg" src="img/dark-lake.webp" alt="" decoding="async" loading="lazy">
+      <svg id="heroSvgD" aria-hidden="true"></svg>
+      <span class="pin" id="genevaPinD"><i class="dot"></i><b class="lbl">Geneva</b></span>
+    </div>
   </div>
-</div>
-
-<div class="lab-widget" id="labWidget">
-  <div class="lab-links" id="labLinks">
-    <a href="https://moraine.gaiaanalytica.ch" class="lab-link">Moraine</a>
-    <a href="https://gaiaanalytica.ch/geotrace" class="lab-link">GeoTrace</a>
-    <a href="https://gaiaanalytica.ch/GuessWhere" class="lab-link">Guess Where?</a>
+  <div class="copy">
+    <h1>Gaia Analytica</h1>
+    <p class="tag">Practical geospatial solutions for informed action</p>
+    <p class="what">Maps, data systems and spatial analysis for public health, humanitarian response and critical infrastructure.</p>
+    <div class="actions">
+      <a class="btn" href="cv.html">See Jeff's CV</a>
+      <a class="textlink" href="mailto:jeff@gaiaanalytica.ch">jeff@gaiaanalytica.ch</a>
+    </div>
   </div>
-  <button class="lab-beaker" id="labBeaker" aria-label="Open lab projects" aria-expanded="false">
-    <svg viewBox="0 0 40 50" fill="none">
-      <defs>
-        <clipPath id="flaskClip">
-          <path d="M16 4 L16 14 L6 40 Q6 46 12 46 L28 46 Q34 46 34 40 L24 14 L24 4 Z"/>
-        </clipPath>
-      </defs>
-      <rect x="6" y="27" width="28" height="19" fill="rgba(180,210,120,0.4)" clip-path="url(#flaskClip)"/>
-      <circle class="lab-bubble b1" cx="15" cy="40" r="1.4" fill="rgba(225,215,190,0.8)" clip-path="url(#flaskClip)"/>
-      <circle class="lab-bubble b2" cx="20" cy="38" r="1.1" fill="rgba(225,215,190,0.8)" clip-path="url(#flaskClip)"/>
-      <circle class="lab-bubble b3" cx="25" cy="41" r="1.6" fill="rgba(225,215,190,0.8)" clip-path="url(#flaskClip)"/>
-      <path d="M16 4 L16 14 L6 40 Q6 46 12 46 L28 46 Q34 46 34 40 L24 14 L24 4 Z"
-        stroke="rgba(130,165,90,0.75)" stroke-width="1.3" stroke-linejoin="round"/>
-      <line x1="14" y1="4" x2="26" y2="4" stroke="rgba(130,165,90,0.75)" stroke-width="1.3" stroke-linecap="round"/>
+</main>
+
+<div class="lab" id="lab">
+  <div class="lab-panel" id="labList">
+    <p class="lab-head">Side projects</p>
+    <ul>
+      <li><a href="https://moraine.gaiaanalytica.ch" target="_blank" rel="noopener" style="--c1:#7ea5b8;--c2:#628ba1;--c3:#4a738a"><svg class="strata" viewBox="0 0 40 26" aria-hidden="true"><path class="s1" d="M0 0H40V26H0Z"/><path class="s2" d="M0 12C8 9 14 14 22 11S34 10 40 12V30H0Z"/><path class="s3" d="M0 19C9 16 15 21 23 18S35 17 40 19V30H0Z"/><image class="glace" href="img/glace.webp" x="7.4" y="1.2" width="25.2" height="24"/></svg><span class="txt"><span class="nm">Moraine</span><small>A conversation with Switzerland's vanishing glaciers</small></span></a></li>
+      <li><a href="https://gaiaanalytica.ch/geotrace" target="_blank" rel="noopener" style="--c1:#d8d8b8;--c2:#c2cba0;--c3:#a9b886"><svg class="strata" viewBox="0 0 40 26" aria-hidden="true"><path class="s1" d="M0 0H40V26H0Z"/><path class="s2" d="M0 12C8 9 14 14 22 11S34 10 40 12V30H0Z"/><path class="s3" d="M0 19C9 16 15 21 23 18S35 17 40 19V30H0Z"/><circle class="g ghost ring ring-out" cx="20" cy="13" r="10"/><circle class="g" cx="20" cy="13" r="5.2"/><path class="g" d="M20 5.5V9.5M20 16.5V20.5M12.5 13H16.5M23.5 13H27.5"/><circle class="hit" cx="20" cy="13" r="1.9"/></svg><span class="txt"><span class="nm">GeoTrace</span><small>Humanitarian geocoder</small></span></a></li>
+      <li><a href="https://gaiaanalytica.ch/GuessWhere" target="_blank" rel="noopener" style="--c1:#e0cfa8;--c2:#cfae82;--c3:#bc9172"><svg class="strata" viewBox="0 0 40 26" aria-hidden="true"><path class="s1" d="M0 0H40V26H0Z"/><path class="s2" d="M0 12C8 9 14 14 22 11S34 10 40 12V30H0Z"/><path class="s3" d="M0 19C9 16 15 21 23 18S35 17 40 19V30H0Z"/><rect class="cell" x="3.6" y="3.4" width="7" height="8.4" rx="1"/><path class="gone" d="M5.0 5.0L9.2 10.2M9.2 5.0L5.0 10.2"/><rect class="cell" x="12.2" y="3.4" width="7" height="8.4" rx="1"/><rect class="cell" x="20.8" y="3.4" width="7" height="8.4" rx="1"/><rect class="cell" x="29.4" y="3.4" width="7" height="8.4" rx="1"/><path class="gone" d="M30.799999999999997 5.0L35.0 10.2M35.0 5.0L30.799999999999997 10.2"/><rect class="cell" x="3.6" y="14.2" width="7" height="8.4" rx="1"/><rect class="cell" x="12.2" y="14.2" width="7" height="8.4" rx="1"/><path class="gone" d="M13.6 15.799999999999999L17.799999999999997 21.0M17.799999999999997 15.799999999999999L13.6 21.0"/><rect class="hit" x="20.8" y="14.2" width="7" height="8.4" rx="1"/><text class="q" x="24.3" y="20.799999999999997">?</text><rect class="cell" x="29.4" y="14.2" width="7" height="8.4" rx="1"/></svg><span class="txt"><span class="nm">Guess Where?</span><small>A geography deduction game</small></span></a></li>
+    </ul>
+    <p class="lab-default">Experiments in maps, data and AI</p>
+  </div>
+  <button type="button" id="labBtn" aria-expanded="false" aria-controls="labList">
+    <svg viewBox="0 0 40 50" fill="none" aria-hidden="true">
+      <defs><clipPath id="flaskClip"><path d="M16 4 L16 14 L6 40 Q6 46 12 46 L28 46 Q34 46 34 40 L24 14 L24 4 Z"/></clipPath></defs>
+      <rect class="liquid" x="6" y="27" width="28" height="19" clip-path="url(#flaskClip)"/>
+      <circle class="bubble b1" cx="15" cy="40" r="1.6" clip-path="url(#flaskClip)"/>
+      <circle class="bubble b2" cx="20" cy="38" r="1.3" clip-path="url(#flaskClip)"/>
+      <circle class="bubble b3" cx="25" cy="41" r="1.8" clip-path="url(#flaskClip)"/>
+      <path d="M16 4 L16 14 L6 40 Q6 46 12 46 L28 46 Q34 46 34 40 L24 14 L24 4 Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+      <line x1="14" y1="4" x2="26" y2="4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
     </svg>
+    Spatial Lab
   </button>
 </div>
 
-<div class="copyright">© 2026 Gaia Analytica</div>
+<button class="theme" id="themeBtn" type="button" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch between light and dark">
+  <span class="seg seg-light" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="12" cy="12" r="3.6"/><path d="M12 5.5V2M12 18.5V22M5.5 12H2M18.5 12H22M17.4 6.6l1.4-1.4M6.6 6.6L5.2 5.2M17.4 17.4l1.4 1.4M6.6 17.4l-1.4 1.4"/></svg></span>
+  <span class="seg seg-dark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M19.4 14A7.8 7.8 0 0 1 10 4.6a7.8 7.8 0 1 0 9.4 9.4z"/></svg></span>
+</button>
 
-<script>
-const canvas = document.getElementById('terrain');
-const ctx = canvas.getContext('2d');
-let W, H, t = 0;
-
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-// Lightweight terrain field (sum of sines as cheap noise)
-function field(x, y, t) {
-  const s = 0.003;
-  return (
-    Math.sin(x * s * 1.1 + t * 0.17 + Math.cos(y * s * 0.9 - t * 0.05)) * 1.2 +
-    Math.sin(y * s * 1.25 - t * 0.12 + Math.cos(x * s * 1.1 + t * 0.07)) * 0.9 +
-    Math.sin((x - y) * s * 0.8 + t * 0.085) * 0.6
-  );
-}
-
-// Earthy contour palette: deep forest → sage → ochre ridge
-const contours = [
-  { v: -1.8, rgba: [22, 44, 25, 0.82] },
-  { v: -0.8, rgba: [38, 65, 42, 0.72] },
-  { v:  0.1, rgba: [58, 88, 52, 0.65] },
-  { v:  0.7, rgba: [82, 108, 62, 0.58] },
-  { v:  1.2, rgba: [112, 132, 72, 0.5]  },
-  { v:  1.6, rgba: [140, 150, 85, 0.42] },
-  { v:  2.0, rgba: [165, 148, 95, 0.34] },
-];
-
-function draw() {
-  ctx.fillStyle = '#090f0b';
-  ctx.fillRect(0, 0, W, H);
-
-  const res = 13;
-  const cols = Math.ceil(W / res) + 2;
-  const rows = Math.ceil(H / res) + 2;
-
-  // Precompute field grid
-  const g = [];
-  for (let j = 0; j < rows; j++) {
-    g[j] = new Float32Array(cols);
-    for (let i = 0; i < cols; i++) {
-      g[j][i] = field(i * res, j * res, t);
-    }
-  }
-
-  // Marching squares: draw contour lines at each threshold
-  for (const { v: thr, rgba: [r, gv, b, a] } of contours) {
-    ctx.beginPath();
-    ctx.strokeStyle = `rgba(${r},${gv},${b},${a})`;
-    ctx.lineWidth = 0.75;
-    ctx.lineCap = 'round';
-
-    for (let j = 0; j < rows - 1; j++) {
-      for (let i = 0; i < cols - 1; i++) {
-        const x0 = i * res, y0 = j * res;
-        const tl = g[j][i], tr = g[j][i+1];
-        const bl = g[j+1][i], br = g[j+1][i+1];
-
-        const pts = [];
-
-        // Top edge
-        if ((tl - thr) * (tr - thr) < 0)
-          pts.push([x0 + res * (thr - tl) / (tr - tl), y0]);
-        // Right edge
-        if ((tr - thr) * (br - thr) < 0)
-          pts.push([x0 + res, y0 + res * (thr - tr) / (br - tr)]);
-        // Bottom edge
-        if ((bl - thr) * (br - thr) < 0)
-          pts.push([x0 + res * (thr - bl) / (br - bl), y0 + res]);
-        // Left edge
-        if ((tl - thr) * (bl - thr) < 0)
-          pts.push([x0, y0 + res * (thr - tl) / (bl - tl)]);
-
-        if (pts.length === 2) {
-          ctx.moveTo(pts[0][0], pts[0][1]);
-          ctx.lineTo(pts[1][0], pts[1][1]);
-        } else if (pts.length === 4) {
-          // Saddle: connect in two pairs
-          ctx.moveTo(pts[0][0], pts[0][1]);
-          ctx.lineTo(pts[1][0], pts[1][1]);
-          ctx.moveTo(pts[2][0], pts[2][1]);
-          ctx.lineTo(pts[3][0], pts[3][1]);
-        }
-      }
-    }
-    ctx.stroke();
-  }
-}
-
-let lastFrame = 0;
-function animate(ts) {
-  requestAnimationFrame(animate);
-  if (document.hidden) return;
-  if (ts - lastFrame < 40) return; // ~25fps ceiling
-  lastFrame = ts;
-  t += 0.0084;
-  draw();
-}
-requestAnimationFrame(animate);
-
-  // Sticky dot movement + link hover glow
-  const dot = document.querySelector('.rule-dot');
-  let linkActive = false;
-
-  document.querySelectorAll('.page-link:not(.cv-button)').forEach(link => {
-    link.addEventListener('mouseenter', () => {
-      linkActive = true;
-      dot.style.opacity = '1';
-      dot.style.boxShadow = '0 0 18px 9px rgba(180, 210, 120, 0.88)';
-    });
-    link.addEventListener('mouseleave', () => {
-      linkActive = false;
-      dot.style.boxShadow = '';
-    });
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (linkActive) return;
-    const pct = e.clientX / window.innerWidth;
-    const offset = Math.pow(pct - 0.5, 3) * 120;
-    // Keep dot visible across the full screen; dims toward edges but stays at min 0.35
-    const opacity = 0.35 + 0.65 * Math.pow(Math.max(0, 1 - Math.abs(pct - 0.5) * 2), 2);
-    dot.style.transform = `translateX(${offset}px)`;
-    dot.style.opacity = opacity;
-  });
-
-  // Lab beaker toggle: click to reveal lab project links, click outside or Escape to close
-  const labWidget = document.getElementById('labWidget');
-  const labBeaker = document.getElementById('labBeaker');
-
-  function closeLab() {
-    labWidget.classList.remove('open');
-    labBeaker.setAttribute('aria-expanded', 'false');
-  }
-
-  labBeaker.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isOpen = labWidget.classList.toggle('open');
-    labBeaker.setAttribute('aria-expanded', String(isOpen));
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!labWidget.contains(e.target)) closeLab();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeLab();
-  });
-
-</script>
-
-<!--
-  ============================================================
-  Ambient fog glow — WebGL volumetric raymarch anchored to the
-  "Explore My Work" button, retinted to this page's sage/ochre
-  contour palette and blended with `mix-blend-mode: screen` over
-  the terrain canvas (so near-black pixels are a no-op and only
-  the glow itself adds light). Reacts to hovering/clicking the
-  button only; does not track the cursor elsewhere on the page.
-  On hover, a wind term also builds and blows the fog apart and
-  clear of the box, echoing the "chaos into clarity" pitch; it
-  settles back once the cursor leaves.
-  ============================================================
--->
 <script>
 (function () {
-  const FREQS = [4, 8, 16, 32];
-  const WEIGHTS = [.48, .27, .16, .09];
-  const TILE = 128;
+  /* Layer-cake terrain (Lake Geneva and the Alps), 2400 x 1600 px; Geneva sits at 37.2% across, 56.0% down. The lake is baked into the image. */
+  var NS = 'http://www.w3.org/2000/svg';
+  var cake = { w: 2400, h: 1600, lakes: [], pins: { geneva: { x: 892.9, y: 896 } } };
+  var ink = cake; /* dark map is rendered on exactly the same extent, so the two themes line up */
 
-  function bilinear(grid, size, u, v) {
-    const s = u * size, o = v * size;
-    const l = Math.floor(s) % size, c = Math.floor(o) % size;
-    const d = (l + 1) % size, uu = (c + 1) % size;
-    const fx = s - Math.floor(s), fy = o - Math.floor(o);
-    const m = fx * fx * (3 - 2 * fx);
-    const h = fy * fy * (3 - 2 * fy);
-    const p = grid[c * size + l], f = grid[c * size + d];
-    const b = grid[uu * size + l], w = grid[uu * size + d];
-    const x = p + (f - p) * m;
-    return x + (b + (w - b) * m - x) * h;
+  function setup(hero, sfx) {
+    var g = hero.pins.geneva, hm = document.getElementById('heroMap' + sfx);
+    hm.style.setProperty('--gx', (g.x / hero.w).toFixed(4));
+    hm.style.setProperty('--ratio', (hero.w / hero.h).toFixed(4));
+    var img = document.getElementById('heroRelief' + sfx); img.width = hero.w; img.height = hero.h;
+    var svg = document.getElementById('heroSvg' + sfx); svg.setAttribute('viewBox', '0 0 ' + hero.w + ' ' + hero.h); svg.setAttribute('preserveAspectRatio', 'none');
+    hero.lakes.forEach(function (d) { var p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); p.setAttribute('class', 'lake'); svg.appendChild(p); });
+    var gp = document.getElementById('genevaPin' + sfx);
+    gp.style.left = (g.x / hero.w * 100) + '%'; gp.style.top = (g.y / hero.h * 100) + '%';
+    function go() { img.classList.add('on'); document.getElementById('hero').classList.add('on-lakes', 'go'); }
+    if (img.complete) { requestAnimationFrame(go); } else { img.addEventListener('load', go); img.addEventListener('error', go); }
   }
+  setup(cake, '');
+  setup(ink, 'D');
 
-  function buildNoiseTexture() {
-    const layers = Array.from({ length: 4 }, (_, ch) =>
-      FREQS.map((size, fi) => {
-        let seed = (0x6d2b79f5 ^ ((ch + 1) * 0x45d9f3b) ^ ((fi + 1) * 0x9e3779b9)) >>> 0;
-        const rand = () => {
-          seed ^= seed << 13; seed >>>= 0;
-          seed ^= seed >>> 17;
-          seed ^= seed << 5; seed >>>= 0;
-          return seed / 0xffffffff;
-        };
-        const arr = new Float32Array(size * size);
-        for (let i = 0; i < arr.length; i++) arr[i] = rand();
-        return arr;
-      })
-    );
-    const tex = new Uint8Array(TILE * TILE * 4);
-    for (let y = 0; y < TILE; y++) {
-      for (let x = 0; x < TILE; x++) {
-        const u = x / TILE, v = y / TILE;
-        const px = (TILE * y + x) * 4;
-        for (let ch = 0; ch < 4; ch++) {
-          let val = 0;
-          for (let fi = 0; fi < FREQS.length; fi++) {
-            val += bilinear(layers[ch][fi], FREQS[fi], u, v) * WEIGHTS[fi];
-          }
-          val = (val - 0.5) * 1.9 + 0.5;
-          tex[px + ch] = Math.round(255 * Math.min(1, Math.max(0, val)));
-        }
-      }
-    }
-    return tex;
-  }
-  const NOISE_BYTES = buildNoiseTexture();
+  var lab = document.getElementById('lab'), lb = document.getElementById('labBtn');
+  lb.addEventListener('click', function () { var o = lab.classList.toggle('open'); lb.setAttribute('aria-expanded', o); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { lab.classList.remove('open'); lb.setAttribute('aria-expanded', 'false'); } });
+  document.addEventListener('click', function (e) { if (lab.classList.contains('open') && !lab.contains(e.target)) { lab.classList.remove('open'); lb.setAttribute('aria-expanded', 'false'); } });
 
-  function compile(gl, type, src) {
-    const sh = gl.createShader(type);
-    gl.shaderSource(sh, src);
-    gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      console.warn(gl.getShaderInfoLog(sh));
-      return null;
-    }
-    return sh;
-  }
-  function makeProgram(gl, vsSrc, fsSrc) {
-    const vs = compile(gl, gl.VERTEX_SHADER, vsSrc);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, fsSrc);
-    const prog = gl.createProgram();
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      console.warn(gl.getProgramInfoLog(prog));
-      return null;
-    }
-    return prog;
-  }
-  function makeNoiseTexture(gl) {
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, TILE, TILE, 0, gl.RGBA, gl.UNSIGNED_BYTE, NOISE_BYTES);
-    return tex;
-  }
-
-  const VERT_SRC = `
-attribute vec2 a_position;
-varying vec2 v_uv;
-void main() {
-  v_uv = a_position * 0.5 + 0.5;
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}`;
-
-  // Retinted toward the page's own contour palette (deep forest ->
-  // sage -> warm ochre ridge) instead of the original neon green.
-  const SMOKE_FRAG = `
-precision highp float;
-varying vec2 v_uv;
-uniform sampler2D u_noise;
-uniform vec2 u_resolution;
-uniform float u_time;
-uniform vec4 u_emitter;
-uniform float u_focus;
-uniform float u_pulse;
-uniform float u_wind;
-
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
-
-float roundedBoxDistance(vec2 p, vec2 halfSize, float radius) {
-  vec2 edge = abs(p) - halfSize + radius;
-  return min(max(edge.x, edge.y), 0.0) + length(max(edge, 0.0)) - radius;
-}
-
-float smokeDensity(vec3 p, vec2 halfSize, float radius, float time, vec2 windOffset) {
-  vec2 rise = vec2(-time * 0.021, time * 0.035) + windOffset * 0.6;
-  vec2 depthA = vec2(p.z * 0.082, -p.z * 0.047);
-  vec4 macroNoise = texture2D(u_noise, p.xy * 0.42 + depthA + rise);
-  vec2 warp = (macroNoise.rg - 0.5) * 0.11;
-  vec4 mediumNoise = texture2D(u_noise, p.xy * 0.85 + vec2(-p.z * 0.13, p.z * 0.074) + rise * 1.7 + warp + 0.31);
-  vec4 fineNoise = texture2D(u_noise, p.xy * 1.7 + vec2(p.z * 0.21, p.z * 0.11) + rise * 2.9 - warp * 0.65 + 0.63);
-
-  float billow = macroNoise.r * 0.5 + mediumNoise.g * 0.34 + fineNoise.b * 0.16;
-  float erosion = mediumNoise.b * 0.62 + fineNoise.a * 0.38;
-  float filament = 1.0 - abs(macroNoise.g - mediumNoise.r);
-  float structure = smoothstep(0.32, 0.59, billow);
-  structure *= smoothstep(0.24, 0.64, erosion);
-  structure *= mix(0.38, 1.0, smoothstep(0.32, 0.82, filament));
-  structure *= mix(0.24, 1.0, smoothstep(0.31, 0.61, macroNoise.a));
-
-  // Wind dispersal: hovering the button builds up a gust (windOffset) that
-  // shatters the cloud into wisps and thins it, while the envelope below
-  // carries those wisps bodily away from the box, like a puff dissolving.
-  float windAmt = clamp(length(windOffset), 0.0, 1.0);
-  vec4 shatterNoise = texture2D(u_noise, p.xy * 2.6 + windOffset * 1.3 + 0.91);
-  float shatter = smoothstep(0.2, 0.85, shatterNoise.r);
-  structure *= mix(1.0, shatter, windAmt * 0.85);
-  structure *= mix(1.0, 0.28, windAmt);
-
-  vec2 driftedP = p.xy - windOffset;
-  float frameDistance = abs(roundedBoxDistance(driftedP, halfSize, radius));
-  vec2 cloudScale = max(halfSize * vec2(3.4, 5.4), vec2(0.001));
-  vec2 cloudPoint = driftedP / cloudScale;
-  float heroEnvelope = exp(-dot(cloudPoint, cloudPoint) * 0.42);
-
-  float frameEnvelope = clamp(exp(-frameDistance * 1.1) + heroEnvelope * 0.46, 0.0, 1.0);
-  float depthEnvelope = exp(-abs(p.z) * 0.68);
-  float verticalBreakup = 0.72 + 0.28 * sin(p.y * 2.1 - time * 0.22 + macroNoise.a * 4.0);
-
-  return clamp(structure * frameEnvelope * depthEnvelope * verticalBreakup, 0.0, 1.0);
-}
-
-float phaseFunction(float cosA) {
-  const float g = 0.24;
-  float g2 = g * g;
-  return (1.0 - g2) / pow(max(1.0 + g2 - 2.0 * g * cosA, 0.001), 1.5);
-}
-
-void main() {
-  float aspect = u_resolution.x / max(u_resolution.y, 1.0);
-  vec2 screenPoint = (v_uv - u_emitter.xy) * vec2(aspect, 1.0);
-  vec2 halfSize = u_emitter.zw * vec2(aspect, 1.0);
-  float radius = 0.05;
-  float time = u_time * 1.05;
-  float energy = 0.85 + u_focus * 0.3 + u_pulse * 0.22;
-
-  // Gentle upward-and-right gust; magnitude grows the longer the button
-  // stays hovered, carrying the dispersing fog up and clear of the box.
-  const vec2 WIND_DIR = vec2(0.33, 0.945);
-  vec2 windOffset = WIND_DIR * u_wind;
-
-  const float rayStart = -0.72;
-  const float rayLength = 1.44;
-  const float stepLength = rayLength / 14.0;
-  float jitter = hash(gl_FragCoord.xy);
-  float transmittance = 1.0;
-  vec3 radiance = vec3(0.0);
-
-  for (int i = 0; i < 14; i++) {
-    float rayPos = (float(i) + 0.34 + jitter * 0.32) * stepLength;
-    float depth = rayStart + rayPos;
-    vec3 sp = vec3(screenPoint, depth);
-    float density = smokeDensity(sp, halfSize, radius, time, windOffset);
-
-    float edgeDist = abs(roundedBoxDistance(sp.xy, halfSize, radius));
-    float lightDist = sqrt(edgeDist * edgeDist + sp.z * sp.z * 0.58 + 0.0007);
-    float attenuation = exp(-lightDist * 3.6) / (1.0 + lightDist * lightDist * 4.2);
-
-    vec2 shadowUv = sp.xy * 0.72 + vec2(sp.z * 0.07, -sp.z * 0.04) + vec2(-time * 0.004, time * 0.007) + 0.17;
-    float shadowNoise = texture2D(u_noise, shadowUv).a;
-    float opticalShadow = exp(-density * lightDist * mix(1.8, 3.2, shadowNoise));
-    float viewCos = abs(sp.z) / max(lightDist, 0.001);
-    float phase = phaseFunction(clamp(viewCos, 0.0, 1.0));
-    float scattering = attenuation * opticalShadow * mix(0.58, 1.0, shadowNoise) * (0.54 + phase * 0.19) * energy;
-
-    // sage -> warm ochre highlight, matching the terrain's own ridge tone
-    vec3 lightColor = mix(vec3(0.05, 0.09, 0.04), vec3(0.62, 0.66, 0.42), clamp(exp(-lightDist * 8.0) * 1.1, 0.0, 1.0));
-    vec3 ambient = vec3(0.004, 0.006, 0.004);
-
-    radiance += transmittance * density * (ambient + lightColor * scattering) * stepLength * 3.0;
-    transmittance *= exp(-density * stepLength * 3.2);
-  }
-
-  float verticalVignette = smoothstep(0.0, 0.17, v_uv.y) * (1.0 - smoothstep(0.84, 1.0, v_uv.y));
-  float centeredVignette = smoothstep(1.14, 0.2, length((v_uv - u_emitter.xy) * vec2(0.72, 1.0)));
-  radiance *= mix(0.42, 1.0, verticalVignette * centeredVignette);
-
-  radiance += (hash(gl_FragCoord.xy) - 0.5) / 540.0;
-  // reduced to ~25% of original brightness (two 50% cuts)
-  radiance *= 0.25;
-  radiance = 1.0 - exp(-max(radiance, vec3(0.0)) * 3.2);
-  radiance = pow(radiance, vec3(0.86));
-
-  gl_FragColor = vec4(radiance, 1.0);
-}
-`;
-
-  const canvas = document.getElementById('fog');
-  const gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false });
-  if (!gl) return;
-
-  const prog = makeProgram(gl, VERT_SRC, SMOKE_FRAG);
-  const buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
-  gl.useProgram(prog);
-  const posLoc = gl.getAttribLocation(prog, 'a_position');
-  gl.enableVertexAttribArray(posLoc);
-  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-  const tex = makeNoiseTexture(gl);
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.uniform1i(gl.getUniformLocation(prog, 'u_noise'), 0);
-  gl.clearColor(0, 0, 0, 1);
-
-  const u = {};
-  ['u_resolution','u_time','u_emitter','u_focus','u_pulse','u_wind']
-    .forEach(n => u[n] = gl.getUniformLocation(prog, n));
-
-  const anchor = document.querySelector('.cv-button');
-  let focusTarget = 0, focusVal = 0, pulseVal = 0, windVal = 0;
-  let start = performance.now();
-
-  if (anchor) {
-    anchor.addEventListener('mouseenter', () => focusTarget = 1);
-    anchor.addEventListener('mouseleave', () => focusTarget = 0);
-    anchor.addEventListener('click', () => pulseVal = 1);
-  }
-
-  const SMOKE_DPR_CAP = 0.65;
-  const RENDER_FPS = 24;
-  const RENDER_INTERVAL = 1000 / RENDER_FPS;
-  let lastRenderTime = 0;
-
-  let cachedAnchorRect = null;
-  function refreshLayoutCache() {
-    cachedAnchorRect = anchor ? anchor.getBoundingClientRect() : null;
-  }
-  refreshLayoutCache();
-  window.addEventListener('resize', refreshLayoutCache, { passive: true });
-  window.addEventListener('scroll', refreshLayoutCache, { passive: true });
-  new ResizeObserver(refreshLayoutCache).observe(document.body);
-
-  function resizeCanvasToDisplaySize(canvas, dprCap) {
-    const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
-    const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
-    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-  }
-
-  function frame(now) {
-    if (document.hidden) { requestAnimationFrame(frame); return; }
-    const dt = Math.min(0.05, Math.max(0.001, (now - start) / 1000));
-    start = now;
-    const t = now / 1000 * 1.05 + 6.0;
-
-    focusVal += (focusTarget - focusVal) * (1 - Math.exp(-6 * dt));
-    pulseVal = Math.max(0, pulseVal - 1.0 * dt);
-    // Wind builds while hovered (puff blows the fog clear over ~1.3s); once
-    // the cursor leaves it isn't forced back, it just eases off slowly so
-    // the fog reforms at the same unhurried pace it does on page load.
-    if (focusTarget) {
-      windVal = Math.min(2.2, windVal + dt * 0.75);
-    } else {
-      windVal *= Math.exp(-0.22 * dt);
-    }
-
-    if (now - lastRenderTime >= RENDER_INTERVAL) {
-      lastRenderTime = now;
-      resizeCanvasToDisplaySize(canvas, SMOKE_DPR_CAP);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-
-      const stageW = window.innerWidth, stageH = window.innerHeight;
-      const r = cachedAnchorRect;
-      const emitter = r ? [
-        (r.left + r.width / 2) / stageW,
-        1 - (r.top + r.height / 2) / stageH,
-        Math.min(0.34, r.width * 0.5 / stageW * 1.6),
-        Math.min(0.26, r.height * 0.5 / stageH * 2.4),
-      ] : [0.5, 0.35, 0.3, 0.22];
-
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform2f(u.u_resolution, canvas.width, canvas.height);
-      gl.uniform1f(u.u_time, t);
-      gl.uniform4f(u.u_emitter, emitter[0], emitter[1], emitter[2], emitter[3]);
-      gl.uniform1f(u.u_focus, focusVal);
-      gl.uniform1f(u.u_pulse, pulseVal);
-      gl.uniform1f(u.u_wind, windVal);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
-
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
+  var btn = document.getElementById('themeBtn'), root = document.documentElement;
+  function setTheme(dark) { root.setAttribute('data-theme', dark ? 'dark' : 'paper'); btn.setAttribute('aria-checked', dark ? 'true' : 'false'); }
+  btn.addEventListener('click', function () { setTheme(root.getAttribute('data-theme') !== 'dark'); });
+  if (/theme=dark/.test(location.search)) setTheme(true);
 })();
 </script>
 </body>
